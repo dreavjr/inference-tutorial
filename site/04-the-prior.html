@@ -45,13 +45,16 @@
           <td>b₀ is a slider (where you expect σ²); a₀ held fixed and gentle</td></tr>
     </table>
 
-    <p>The three square panels below are drawn the way Wikipedia draws this
-    distribution: filled contours over the (Δ, σ²) plane — a teardrop of belief. On the
-    left, the <strong style="color:#8E6FAE">prior</strong>; on the right, the
-    <strong>posterior</strong>; and between them, where it belongs in the
-    multiplication, the <strong style="color:#C96A5E">Gaussian likelihood</strong> of
-    the observed sample. The small green cross is the simulation's true (Δ, σ²) — in
-    real life, the one thing you never get to see. Below the triptych, the data and the
+    <p>The three panels below are drawn the way Wikipedia draws this distribution:
+    filled contours over the <strong>(Δ, σ)</strong> plane — a teardrop of belief — with
+    σ the <em>standard deviation</em>, so both axes carry the same units at the same
+    scale and a circular blob really is circular. All three share one density scale and
+    the same contour levels, so a lax prior reads faint and broad next to a vivid,
+    concentrated posterior. On the left, the <strong style="color:#8E6FAE">prior</strong>;
+    on the right, the <strong>posterior</strong>; and between them, where it belongs in
+    the multiplication, the <strong style="color:#C96A5E">Gaussian likelihood</strong> of
+    the observed sample. The small green cross is the simulation's true (Δ, σ) — in real
+    life, the one thing you never get to see. Below the triptych, the data and the
     <strong>marginal over Δ</strong>: the three curves are the 1-D shadows of the three
     panels, on the same square scale as steps 1 and 3.</p>
 
@@ -160,13 +163,17 @@ const PRIOR_RGB = [142, 111, 174], LIK_RGB = [201, 106, 94], POST_RGB = [74, 74,
    prior expects σ²_d ≈ 2σ²₀ (i.e. σ² ≈ σ²₀). E[σ²_d] = b₀/(a₀−1) = b₀. -------- */
 const A0 = 2;
 
-/* ---- geometry: contour squares ------------------------------------------- */
-const S2 = 320, ML2 = 16, MR2 = 16, BH2 = 30;
-const FW2 = ML2 + S2 + MR2, TOP2 = 14, BASE2 = TOP2 + S2, FH2 = BASE2 + BH2;
+/* ---- geometry: contour panels --------------------------------------------
+   Wider than tall, and EQUAL pixels-per-unit on both axes (60 px / data-unit).
+   The y axis shows the standard deviation σ (not the variance) so it is
+   commensurable with Δ: a step of 1 along Δ is the same length as a step of 1
+   along σ. S2W/(2·HALF2) === S2H/SY by construction. */
+const S2W = 360, S2H = 180, ML2 = 32, MR2 = 14, BH2 = 22;
+const FW2 = ML2 + S2W + MR2, TOP2 = 12, BASE2 = TOP2 + S2H, FH2 = BASE2 + BH2;
 const HALF2 = 3.0;                 // Δ axis: ±3
-const VMAX = 5.0;                  // σ² axis (group units): 0..5
-const X2 = (d) => ML2 + (d + HALF2) / (2 * HALF2) * S2;
-const Y2 = (v) => BASE2 - v / VMAX * S2;
+const SY = 3.0;                    // σ axis (group std dev): 0..3
+const X2 = (d) => ML2 + (d + HALF2) / (2 * HALF2) * S2W;
+const Y2 = (s) => BASE2 - s / SY * S2H;
 
 /* ---- geometry: the 1-D panels (same scale as steps 1 & 3) ---------------- */
 const S = 460, SH = 300, HALF = 5.0, YMAX = 0.9;
@@ -191,68 +198,88 @@ function logLik(d, s2, n, dbar, ssd) {
   return -(n / 2) * Math.log(2 * Math.PI * s2) - (ssd + n * (dbar - d) ** 2) / (2 * s2);
 }
 
-/* ---- a contour panel: banded heatmap (canvas) inside an SVG frame --------- */
+/* ---- a contour panel: banded heatmap (canvas) inside an SVG frame ---------
+   The three panels are rendered against ONE shared density scale (the global
+   maximum over all three fields), with the SAME band levels — so a colour value
+   means the same density everywhere, and a lax low prior reads as faint and
+   broad next to a concentrated, vivid posterior. */
 
-const GRID = 190, NBANDS = 7;
+const GRID_W = 220, GRID_H = 110;
+// contour levels as a fraction of the global-max density — common to all panels
+const LEVELS = [0.035, 0.09, 0.18, 0.30, 0.45, 0.62, 0.80];
 
-function heatmapURI(logf, rgb) {
-  const cv = document.createElement("canvas");
-  cv.width = GRID; cv.height = GRID;
-  const ctx = cv.getContext("2d");
-  const img = ctx.createImageData(GRID, GRID);
-  const vals = new Float64Array(GRID * GRID);
+function computeField(logf) {
+  const vals = new Float64Array(GRID_W * GRID_H);
+  const sig = new Float64Array(GRID_H);
   let mx = -Infinity;
-  for (let j = 0; j < GRID; j++) {
-    const v = VMAX * (1 - (j + 0.5) / GRID);   // σ² (group units), top → bottom
-    const s2 = 2 * v;                           // σ²_d = 2σ²
-    for (let i = 0; i < GRID; i++) {
-      const d = -HALF2 + 2 * HALF2 * (i + 0.5) / GRID;
+  for (let j = 0; j < GRID_H; j++) {
+    sig[j] = SY * (1 - (j + 0.5) / GRID_H);        // σ (group std), top → bottom
+    const s2 = 2 * sig[j] * sig[j];                 // σ²_d = 2σ²
+    for (let i = 0; i < GRID_W; i++) {
+      const d = -HALF2 + 2 * HALF2 * (i + 0.5) / GRID_W;
       const lv = logf(d, s2);
-      vals[j * GRID + i] = lv;
+      vals[j * GRID_W + i] = lv;
       if (lv > mx) mx = lv;
     }
   }
-  for (let idx = 0; idx < GRID * GRID; idx++) {
-    const r = Math.exp(vals[idx] - mx);         // density / max ∈ (0, 1]
-    const k = Math.min(NBANDS, Math.floor(r * NBANDS));
+  // turn each field into a proper density over the shown (Δ, σ²_d) region by
+  // numeric integration (Jacobian dσ²_d/dσ = 4σ; the common dΔ·dσ cancels across
+  // panels). The likelihood is NOT a density on its own — this is what makes the
+  // three colour scales commensurable.
+  let Z = 0;
+  for (let j = 0; j < GRID_H; j++) {
+    const w = 4 * sig[j];
+    for (let i = 0; i < GRID_W; i++) Z += Math.exp(vals[j * GRID_W + i] - mx) * w;
+  }
+  const logNorm = Math.log(Z) + mx;                 // log ∫ field  (the normaliser)
+  return { vals, logNorm, peak: mx - logNorm };      // peak normalised log-density
+}
+
+function fieldURI(vals, rgb, logNorm, gpeak) {
+  const cv = document.createElement("canvas");
+  cv.width = GRID_W; cv.height = GRID_H;
+  const ctx = cv.getContext("2d");
+  const img = ctx.createImageData(GRID_W, GRID_H);
+  for (let idx = 0; idx < GRID_W * GRID_H; idx++) {
+    const r = Math.exp(vals[idx] - logNorm - gpeak); // normalised density / GLOBAL peak
+    let k = 0; for (const L of LEVELS) if (r >= L) k++;
     const o = idx * 4;
     img.data[o] = rgb[0]; img.data[o + 1] = rgb[1]; img.data[o + 2] = rgb[2];
-    img.data[o + 3] = k <= 0 ? 0 : Math.round(Math.pow(k / NBANDS, 1.15) * 0.55 * 255);
+    img.data[o + 3] = k <= 0 ? 0 : Math.round(Math.pow(k / LEVELS.length, 1.05) * 0.6 * 255);
   }
   ctx.putImageData(img, 0, 0);
   return cv.toDataURL("image/png");
 }
 
-function contourSvg(logf, rgb, mode, truth) {
+function contourSvg(uri, rgb, mode, truth) {
   const p = [];
-  p.push(`<image href='${heatmapURI(logf, rgb)}' x='${ML2}' y='${TOP2}' width='${S2}' height='${S2}' preserveAspectRatio='none'/>`);
+  p.push(`<image href='${uri}' x='${ML2}' y='${TOP2}' width='${S2W}' height='${S2H}' preserveAspectRatio='none'/>`);
 
   // frame: baseline + left rule, light ticks
-  p.push(`<line x1='${ML2}' x2='${ML2 + S2}' y1='${BASE2}' y2='${BASE2}' stroke='${PAL.rule}' stroke-width='1'/>`);
+  p.push(`<line x1='${ML2}' x2='${ML2 + S2W}' y1='${BASE2}' y2='${BASE2}' stroke='${PAL.rule}' stroke-width='1'/>`);
   p.push(`<line x1='${ML2}' x2='${ML2}' y1='${TOP2}' y2='${BASE2}' stroke='${PAL.rule}' stroke-width='1'/>`);
-  for (let v = 1; v <= 4; v++) {
-    p.push(`<line x1='${ML2 - 4}' x2='${ML2}' y1='${Y2(v).toFixed(1)}' y2='${Y2(v).toFixed(1)}' stroke='${PAL.muted}' stroke-width='1'/>`);
-    p.push(`<text x='${ML2 - 7}' y='${(Y2(v) + 3.5).toFixed(1)}' text-anchor='end' font-size='9.5' fill='${PAL.muted}'>${v}</text>`);
+  for (let s = 1; s <= 3; s++) {
+    p.push(`<line x1='${ML2 - 4}' x2='${ML2}' y1='${Y2(s).toFixed(1)}' y2='${Y2(s).toFixed(1)}' stroke='${PAL.muted}' stroke-width='1'/>`);
+    p.push(`<text x='${ML2 - 7}' y='${(Y2(s) + 3.5).toFixed(1)}' text-anchor='end' font-size='9.5' fill='${PAL.muted}'>${s}</text>`);
   }
   for (let d = -2; d <= 2; d++) {
     p.push(`<line x1='${X2(d).toFixed(1)}' x2='${X2(d).toFixed(1)}' y1='${BASE2}' y2='${BASE2 + 4}' stroke='${PAL.muted}' stroke-width='1'/>`);
-    p.push(`<text x='${X2(d).toFixed(1)}' y='${BASE2 + 16}' text-anchor='middle' font-size='9.5' fill='${PAL.muted}'>${d}</text>`);
+    p.push(`<text x='${X2(d).toFixed(1)}' y='${BASE2 + 15}' text-anchor='middle' font-size='9.5' fill='${PAL.muted}'>${d}</text>`);
   }
-  p.push(`<text x='${ML2 + S2 + 4}' y='${BASE2 + 16}' font-size='10.5' font-style='italic' fill='${PAL.muted}'>Δ</text>`);
-  p.push(`<text x='${ML2 + 6}' y='${TOP2 + 13}' font-size='10.5' font-style='italic' fill='${PAL.muted}'>σ²</text>`);
+  p.push(`<text x='${ML2 + S2W + 3}' y='${BASE2 + 15}' font-size='10.5' font-style='italic' fill='${PAL.muted}'>Δ</text>`);
+  p.push(`<text x='${ML2 + 5}' y='${TOP2 + 12}' font-size='10.5' font-style='italic' fill='${PAL.muted}'>σ</text>`);
 
-  // the mode of this surface — the dot Wikipedia draws
+  // the mode of this surface — the dot Wikipedia draws (mode = [Δ, σ])
   if (mode) {
-    const [md, mv] = mode;
-    if (Math.abs(md) < HALF2 && mv > 0 && mv < VMAX) {
-      p.push(`<circle cx='${X2(md).toFixed(1)}' cy='${Y2(mv).toFixed(1)}' r='2.6' fill='rgb(${rgb.join(",")})'/>`);
-    }
+    const [md, ms] = mode;
+    if (Math.abs(md) < HALF2 && ms > 0 && ms < SY)
+      p.push(`<circle cx='${X2(md).toFixed(1)}' cy='${Y2(ms).toFixed(1)}' r='2.6' fill='rgb(${rgb.join(",")})'/>`);
   }
 
-  // the simulation's true (Δ, σ²) — a small green cross
-  const [td, tv] = truth;
-  if (Math.abs(td) < HALF2 && tv < VMAX) {
-    const cx = X2(td), cy = Y2(tv);
+  // the simulation's true (Δ, σ) — a small green cross
+  const [td, ts] = truth;
+  if (Math.abs(td) < HALF2 && ts > 0 && ts < SY) {
+    const cx = X2(td), cy = Y2(ts);
     p.push(`<path d='M${(cx - 5).toFixed(1)},${cy.toFixed(1)} h10 M${cx.toFixed(1)},${(cy - 5).toFixed(1)} v10' ` +
            `stroke='${PAL.green}' stroke-width='1.8' opacity='0.95'/>`);
   }
@@ -327,13 +354,13 @@ function marginalSvg(prior, lik, post, delta) {
   p.push(marker(0, PAL.muted, "0", delta > 0.05 ? -1 : 0));
   p.push(marker(delta, PAL.green, "Δ", 1));
 
-  // legend, top-right inside the box
-  const lx = ML + S - 168;
+  // legend, flush to the right edge — labels right-aligned to the LEFT of each swatch
+  const lineX2 = ML + S, lineX1 = lineX2 - 24, labelX = lineX1 - 9;
   const item = (y, col, txt, sw = 2) =>
-    `<line x1='${lx}' x2='${lx + 22}' y1='${y}' y2='${y}' stroke='${col}' stroke-width='${sw}'/>` +
-    `<text x='${lx + 28}' y='${y + 4}' font-size='12' fill='${PAL.ink}'>${txt}</text>`;
+    `<line x1='${lineX1}' x2='${lineX2}' y1='${y}' y2='${y}' stroke='${col}' stroke-width='${sw}'/>` +
+    `<text x='${labelX}' y='${y + 4}' text-anchor='end' font-size='12' fill='${PAL.ink}'>${txt}</text>`;
   p.push(item(TOP + 34, PRIOR_C, "prior"));
-  p.push(item(TOP + 53, LIK_C, "likelihood (scaled)", 1.8));
+  p.push(item(TOP + 53, LIK_C, "likelihood", 1.8));
   p.push(item(TOP + 72, POST_C, "posterior", 2.2));
 
   return `<svg viewBox='0 0 ${FW} ${FH}' xmlns='http://www.w3.org/2000/svg'>${p.join("")}</svg>`;
@@ -372,18 +399,28 @@ function render() {
   const an = A0 + n / 2;
   const bn = B0 + ssd / 2 + k0 * n * (dbar - m0) ** 2 / (2 * kn);
 
-  const truth = [delta, varr];
+  // truth in (Δ, σ) — σ is the group standard deviation, the y axis of the panels
+  const truth = [delta, sigma];
+  const toSig = (s2group) => Math.sqrt(Math.max(s2group, 0));   // σ²_group → σ
 
-  // 2-D panels (σ² axis in group units; fields take σ²_d = 2σ²)
-  document.getElementById("figPrior").innerHTML = contourSvg(
-    (dd, s2) => logNIG(dd, s2, m0, k0, A0, B0), PRIOR_RGB,
-    [m0, B0 / (A0 + 1.5) / 2], truth);
-  document.getElementById("figLik").innerHTML = contourSvg(
-    (dd, s2) => logLik(dd, s2, n, dbar, ssd), LIK_RGB,
-    [dbar, ssd / n / 2], truth);
-  document.getElementById("figPost2d").innerHTML = contourSvg(
-    (dd, s2) => logNIG(dd, s2, mn, kn, an, bn), POST_RGB,
-    [mn, bn / (an + 1.5) / 2], truth);
+  // 2-D panels: compute all three fields first, then paint them against one
+  // shared global-max density so colours and levels are commensurable
+  const fPrior = computeField((dd, s2) => logNIG(dd, s2, m0, k0, A0, B0));
+  const fLik   = computeField((dd, s2) => logLik(dd, s2, n, dbar, ssd));
+  const fPost  = computeField((dd, s2) => logNIG(dd, s2, mn, kn, an, bn));
+  const gpeak = Math.max(fPrior.peak, fLik.peak, fPost.peak);
+
+  // modes, converted from the σ²_d mode to the group std dev σ = √(σ²_d / 2)
+  const sgPrior = toSig(B0 / (A0 + 1.5) / 2);
+  const sgLik   = toSig(ssd / n / 2);
+  const sgPost  = toSig(bn / (an + 1.5) / 2);
+
+  document.getElementById("figPrior").innerHTML =
+    contourSvg(fieldURI(fPrior.vals, PRIOR_RGB, fPrior.logNorm, gpeak), PRIOR_RGB, [m0, sgPrior], truth);
+  document.getElementById("figLik").innerHTML =
+    contourSvg(fieldURI(fLik.vals, LIK_RGB, fLik.logNorm, gpeak), LIK_RGB, [dbar, sgLik], truth);
+  document.getElementById("figPost2d").innerHTML =
+    contourSvg(fieldURI(fPost.vals, POST_RGB, fPost.logNorm, gpeak), POST_RGB, [mn, sgPost], truth);
 
   // 1-D row
   document.getElementById("figPop").innerHTML = populationSvg(delta, varr, n, pool);

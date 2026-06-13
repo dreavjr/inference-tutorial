@@ -9,21 +9,26 @@
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="assets/style.css">
 <style>
-  /* the 2×2 contingency table — large, uniform cells, vertical row labels */
-  table.cmx { border-collapse: collapse; font-family: var(--sans); margin: 4px 0; width: 100%; }
-  .cmx td, .cmx th { padding: 8px 10px; text-align: center; font-weight: 400; }
+  /* the 2×2 contingency table — large, four equal quadrants, vertical labels */
+  table.cmx { border-collapse: collapse; font-family: var(--sans); margin: 4px 0; width: 100%; table-layout: fixed; }
+  .cmx td, .cmx th { padding: 6px 8px; text-align: center; font-weight: 400; }
   .cmx th.colhead { font-size: 12.5px; color: var(--muted); font-weight: 600; padding-bottom: 12px; }
-  .cmx th.rowlab { width: 30px; padding: 0 4px; }
+  .cmx th.rowlab { padding: 0 2px; }
   .cmx th.rowlab span { writing-mode: vertical-rl; transform: rotate(180deg); display: inline-block;
     font-size: 13px; font-weight: 600; letter-spacing: .02em; white-space: nowrap; }
-  .cmx td.count { border: 1.5px solid var(--rule); width: 50%; height: 104px; vertical-align: middle; }
-  .cmx td.count .n { display: block; font-size: 30px; font-weight: 600; color: #2A2A2A; font-variant-numeric: tabular-nums; line-height: 1; }
+  .cmx td.count { border: 1.5px solid var(--rule); height: 124px; vertical-align: middle; }
+  .cmx td.count .n { display: block; font-size: 32px; font-weight: 600; color: #2A2A2A; font-variant-numeric: tabular-nums; line-height: 1; }
   .cmx td.count .code { display: block; font-size: 11px; color: var(--muted); letter-spacing: .08em; margin-top: 6px; }
   .cmx td.tot { color: var(--muted); font-size: 13.5px; font-variant-numeric: tabular-nums; }
-  .cmx td.metric .name { display: block; font-size: 10px; color: var(--muted); letter-spacing: .04em; white-space: nowrap; }
-  .cmx td.metric .val { display: block; font-size: 17px; font-weight: 600; color: #333; margin-top: 3px; font-variant-numeric: tabular-nums; }
-  .cmx td.metric.strong .val { font-weight: 700; font-size: 19px; }
-  .cmx td.metric.strong .name { color: var(--soft); font-weight: 600; }
+  /* row metrics (sensitivity, specificity) read vertically, mirroring the row
+     labels; name and number sit on two parallel lines, each centred */
+  .cmx td.metric.vert { padding: 0; }
+  .cmx td.metric.vert .mwrap { writing-mode: vertical-rl; transform: rotate(180deg); display: inline-block; white-space: nowrap; text-align: center; }
+  .cmx td.metric.vert .name { display: block; font-size: 10px; color: var(--muted); letter-spacing: .06em; }
+  .cmx td.metric.vert .val { display: block; font-size: 16px; font-weight: 700; color: #333; font-variant-numeric: tabular-nums; }
+  /* column metrics (PPV, NPV) stay horizontal, beneath their columns */
+  .cmx td.metric.col .name { display: block; font-size: 10px; color: var(--soft); letter-spacing: .04em; font-weight: 600; }
+  .cmx td.metric.col .val { display: block; font-size: 19px; font-weight: 700; color: #333; margin-top: 3px; font-variant-numeric: tabular-nums; }
   .bg-tp { background: #E7EEF7; } .bg-fn { background: #F4F8FB; }
   .bg-fp { background: #FCF4E8; } .bg-tn { background: #FAEBDB; }
   .figwrap { overflow-x: auto; }
@@ -167,20 +172,25 @@ function tableHtml(prev, sens, spec, total) {
   const c = confusion(prev, sens, spec, total);
   const count = (k) =>
     `<td class="count ${TCLS[k]}"><span class="n">${fmtN(c[k])}</span><span class="code">${k}</span></td>`;
-  const metric = (name, val, strong) =>
-    `<td class="metric${strong ? " strong" : ""}"><span class="name">${name}</span><span class="val">${val}</span></td>`;
+  const metricV = (name, val) =>
+    `<td class="metric vert"><div class="mwrap"><span class="name">${name}</span><span class="val">${val}</span></div></td>`;
+  const metricC = (name, val) =>
+    `<td class="metric col"><span class="name">${name}</span><span class="val">${val}</span></td>`;
+  const vlab = (color, txt) => `<th class="rowlab"><span style="color:${color}">${txt}</span></th>`;
 
-  const rowlab = (color, txt) => `<th class="rowlab" rowspan="1"><span style="color:${color}">${txt}</span></th>`;
-
+  // 5 columns: [row label][predicted +][predicted −][total][row metric].
+  // table-layout fixed + this colgroup makes the two count columns equal, so all
+  // four quadrants are the same size.
   return `<table class="cmx">
-    <tr><td></td><td></td><th class="colhead">predicted +</th><th class="colhead">predicted −</th><th class="colhead">total</th><td></td></tr>
-    <tr>${rowlab(RC.TP, `condition + · P`)}<td></td>${count("TP")}${count("FN")}
-        <td class="tot">${fmtN(c.P)}</td>${metric("SENSITIVITY (power)", pct(c.TP, c.P))}</tr>
-    <tr>${rowlab(RC.TN, `condition − · N`)}<td></td>${count("FP")}${count("TN")}
-        <td class="tot">${fmtN(c.N)}</td>${metric("SPECIFICITY (1−α)", pct(c.TN, c.N))}</tr>
-    <tr><td></td><th class="colhead" style="text-align:right;font-weight:500">total</th>
-        <td class="tot">${fmtN(c.PP)}</td><td class="tot">${fmtN(c.PN)}</td><td class="tot">${fmtN(total)}</td><td></td></tr>
-    <tr><td></td><td></td>${metric("PPV (precision)", pct(c.TP, c.PP), true)}${metric("NPV", pct(c.TN, c.PN), true)}<td></td><td></td></tr>
+    <colgroup><col style="width:34px"><col><col><col style="width:54px"><col style="width:48px"></colgroup>
+    <tr><th class="rowlab"></th><th class="colhead">predicted +</th><th class="colhead">predicted −</th><th class="colhead">total</th><th></th></tr>
+    <tr>${vlab(RC.TP, "condition + · P")}${count("TP")}${count("FN")}
+        <td class="tot">${fmtN(c.P)}</td>${metricV("SENSITIVITY", pct(c.TP, c.P))}</tr>
+    <tr>${vlab(RC.TN, "condition − · N")}${count("FP")}${count("TN")}
+        <td class="tot">${fmtN(c.N)}</td>${metricV("SPECIFICITY", pct(c.TN, c.N))}</tr>
+    <tr>${vlab(PAL.muted, "total")}<td class="tot">${fmtN(c.PP)}</td><td class="tot">${fmtN(c.PN)}</td>
+        <td class="tot">${fmtN(total)}</td><td></td></tr>
+    <tr><th class="rowlab"></th>${metricC("PPV", pct(c.TP, c.PP))}${metricC("NPV", pct(c.TN, c.PN))}<td></td><td></td></tr>
   </table>`;
 }
 

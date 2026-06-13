@@ -59,7 +59,8 @@ h1 {
 
 /* ---- prose ----------------------------------------------------------- */
 
-.prose { max-width: 700px; }
+/* every block — prose, controls, figures, pager — shares the one content width */
+.prose { max-width: none; }
 .prose p { margin: 0 0 1.15em; }
 .prose ol, .prose ul { padding-left: 26px; margin: 0 0 1.2em; }
 .prose li { margin: 0 0 .7em; }
@@ -104,12 +105,13 @@ a { color: inherit; }
 .frac .num { padding: 0 10px 4px; border-bottom: 1.2px solid var(--ink); }
 .frac .den { padding: 4px 10px 0; }
 
-/* concept tables in prose */
+/* concept tables in prose — capped width, centred horizontally */
 table.concept {
   border-collapse: collapse;
   font-size: 15.5px;
-  margin: 1.4em 0;
+  margin: 1.4em auto;
   line-height: 1.45;
+  max-width: 760px;
 }
 .concept th, .concept td { border: 1px solid var(--rule); padding: 9px 16px; text-align: left; vertical-align: top; }
 .concept th {
