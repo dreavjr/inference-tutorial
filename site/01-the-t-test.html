@@ -1,0 +1,278 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>1 · How a classical test works: the t-test</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<main>
+  <header class="page">
+    <p class="kicker"><a href="index.html">From p-values to posteriors</a><span class="sep">·</span>Step 1 of 3</p>
+    <h1>How a classical test works: the t&#8209;test</h1>
+  </header>
+
+  <section class="prose">
+    <p>Somewhere out there are two <strong>populations</strong> — say, outcomes under
+    treatment A and under treatment B. Each is a whole distribution of individuals
+    (the blue and orange curves below). The truth has knobs we never observe directly:
+    the <strong>true difference of the means</strong> (Δ) and the
+    <strong>true variance</strong> (σ²).</p>
+
+    <p>What we <em>do</em> observe is a <strong>sample</strong>: n points from each
+    population — the dots.</p>
+
+    <p>The classical recipe goes:</p>
+    <ol>
+      <li>State the <strong>null hypothesis H₀</strong>: <em>the two populations have
+      the same mean</em> (Δ&nbsp;=&nbsp;0) — against the <strong>alternative H₁</strong>:
+      <em>they don't</em>.</li>
+      <li>Condense the entire sample into a single number, the <strong>test
+      statistic</strong>
+        <span class="formula">t&nbsp;=
+          <span class="frac">
+            <span class="num">x̄<sub>B</sub> − x̄<sub>A</sub></span>
+            <span class="den">s<sub>p</sub>&hairsp;√(2/n)</span>
+          </span>
+        </span>
+      — the observed difference of sample means, measured in units of its own
+      estimation noise.</li>
+      <li><em>If H₀ were true</em>, t would follow a known distribution:
+      <strong>Student's&nbsp;t</strong> (the dark curve). Notice that this is a statement
+      about the <em>statistic</em>, not about the data — it is a different curve with its
+      own shape (compare it with the pale gaussian).</li>
+      <li>The <strong>p-value</strong> is the probability, <em>under H₀</em>, of a t at
+      least as extreme as the one you got: the shaded two-sided <strong>tail
+      area</strong>.</li>
+      <li>If p ≤ <strong>α</strong> (fixed here at 0.05 — the small ticks on the
+      baseline), call the result <em>significant</em> and <strong>reject H₀</strong>.</li>
+    </ol>
+
+    <p>A map of the picture:</p>
+    <table class="concept">
+      <tr><th>concept</th><th>where to see it below</th></tr>
+      <tr><td>population</td><td>the two smooth curves — never observed directly</td></tr>
+      <tr><td>sample</td><td>the dots just above (blue) and below (orange) the line</td></tr>
+      <tr><td>H₀</td><td>“blue and orange coincide” — drag Δ to 0 to <em>make it true</em></td></tr>
+      <tr><td>test statistic</td><td>the marker labelled <em>t</em> on the second baseline</td></tr>
+      <tr><td>its null distribution</td><td>the dark Student-t curve — <em>not</em> the data's gaussian</td></tr>
+      <tr><td>p-value</td><td>the shaded tail area, also in numbers</td></tr>
+      <tr><td>α</td><td>the bar p must clear; ticks mark the critical t</td></tr>
+    </table>
+  </section>
+
+  <section class="demo">
+    <div class="controls">
+      <p class="hint">drag a slider — the truth changes; press the button — a new sample is drawn</p>
+      <div id="sliders"></div>
+      <div style="text-align:right"><button class="resample" id="resample">↻&ensp;new sample</button></div>
+    </div>
+
+    <div class="figrow">
+      <figure>
+        <figcaption class="figcap">1 · two populations, one sample</figcaption>
+        <div class="fig" id="figPop"></div>
+      </figure>
+      <figure>
+        <figcaption class="figcap">2 · the test statistic and its p-value</figcaption>
+        <div class="fig" id="figT"></div>
+        <div id="verdict" style="margin-top:12px"></div>
+      </figure>
+    </div>
+  </section>
+
+  <section class="prose">
+    <h2>Try this</h2>
+    <ol>
+      <li><strong>Drag Δ to 0.</strong> H₀ is now <em>true</em>. Press
+      <strong>new sample</strong> a dozen times: t dances around zero and the p-value
+      bounces all over the place. About one press in twenty will dip below 0.05 and
+      “discover” an effect that does not exist. That 1-in-20 is exactly α — the
+      false-positive rate you signed up for.</li>
+      <li><strong>Δ = 0.5, n = 12</strong>: a real but modest effect, rarely
+      significant — the test is <em>underpowered</em>. Now drag n to 100: same truth,
+      yet significance almost every time. t grows like √n, so <em>any</em> nonzero
+      difference becomes “significant” with enough data. Significance measures
+      evidence, not importance.</li>
+      <li><strong>Crank σ² up</strong> and watch significance melt away. The
+      t statistic is a tug of war: signal (Δ) against noise (σ, tamed by √n).</li>
+      <li><strong>Drop n to 3 or 4</strong> and compare the dark curve with the pale
+      gaussian: fat tails. With so little data, large t happen easily by chance, so the
+      test demands a bigger t before it is surprised. By n ≈ 30 the two curves are
+      indistinguishable.</li>
+    </ol>
+
+    <h2>The moral</h2>
+    <div class="moral">
+      <ul>
+        <li>The p-value answers exactly one question: <em>“<strong>If</strong> there
+        were truly no difference, how surprising would my t be?”</em> It is a tail
+        probability computed under H₀ — nothing more.</li>
+        <li>It is <strong>not</strong> the probability that H₀ is true, and a rejection
+        is <strong>not</strong> a measure of how big or important the effect is.</li>
+        <li>“Reject H₀” is simply the machine stamping <strong>positive</strong> on
+        this study. How much <em>belief</em> such a stamp deserves is a different
+        question entirely — it is the subject of the
+        <a href="02-pvalues-and-power.html">next step</a>.</li>
+      </ul>
+    </div>
+  </section>
+
+  <nav class="pager">
+    <a href="index.html"><span class="lbl">Series</span><span class="title">From p-values to posteriors</span></a>
+    <a class="next" href="02-pvalues-and-power.html"><span class="lbl">Next</span><span class="title">What p-values and power can't tell you&ensp;→</span></a>
+  </nav>
+</main>
+
+<script src="assets/common.js"></script>
+<script>
+"use strict";
+/* Geometry: every panel is a square box on ONE scale — SC px per x-unit,
+   K px per density-unit — identical in step 3, so the panels compare directly. */
+const S = 460, HALF = 5.0, YMAX = 1.25;
+const SC = S / (2 * HALF), K = S / YMAX;
+const ML = 16, MR = 16, BH = 30;
+const FW = ML + S + MR, X0 = ML + S / 2;
+const ALPHA = 0.05;
+
+const Xp = (x) => X0 + x * SC;
+const Yp = (base, dens, cap = S) => base - Math.min(dens * K, cap);
+
+function filledCurve(xs, dens, base, stroke, fill, op, sw = 2) {
+  const pts = xs.map((x, i) => [Xp(x), Yp(base, dens[i])]);
+  const line = pts.map(p => `${p[0].toFixed(1)},${p[1].toFixed(1)}`).join(" ");
+  const poly = `${pts[0][0].toFixed(1)},${base} ${line} ${pts[pts.length - 1][0].toFixed(1)},${base}`;
+  return `<polygon points='${poly}' fill='${fill}' opacity='${op}'/>` +
+         `<polyline points='${line}' fill='none' stroke='${stroke}' stroke-width='${sw}'/>`;
+}
+
+/* ---- panel 1: the two populations and the sample in hand ---------------- */
+
+function populationSvg(delta, varr, n, pool) {
+  const sigma = Math.sqrt(varr);
+  const top = 14, base = top + S, height = base + BH;
+  const xs = linspace(-HALF, HALF, 201);
+  const p = [];
+
+  for (const [mu, col] of [[-delta / 2, PAL.blue], [delta / 2, PAL.orange]]) {
+    const pdf = xs.map(x => Math.exp(-0.5 * ((x - mu) / sigma) ** 2) / (sigma * Math.sqrt(2 * Math.PI)));
+    p.push(filledCurve(xs, pdf, base, col, col, 0.10));
+  }
+
+  p.push(`<line x1='${ML}' x2='${ML + S}' y1='${base}' y2='${base}' stroke='${PAL.rule}' stroke-width='1'/>`);
+
+  for (const [z, j, mu, col, side] of [[pool.z1, pool.j1, -delta / 2, PAL.blue, -1],
+                                       [pool.z2, pool.j2, delta / 2, PAL.orange, 1]]) {
+    for (let i = 0; i < n; i++) {
+      const x = Math.max(-HALF, Math.min(HALF, mu + sigma * z[i]));
+      const y = base + side * (11 + j[i] * 8);
+      p.push(`<circle cx='${Xp(x).toFixed(1)}' cy='${y.toFixed(1)}' r='3' fill='${col}' opacity='0.75'/>`);
+    }
+  }
+
+  return `<svg viewBox='0 0 ${FW} ${height}' xmlns='http://www.w3.org/2000/svg'>${p.join("")}</svg>`;
+}
+
+/* ---- panel 2: the statistic, its null distribution, and the p-value ----- */
+
+function tstatSvg(t, p, df) {
+  const top = 14, base = top + S, height = base + BH;
+  const xs = linspace(-HALF, HALF, 241);
+  const tdens = xs.map(x => tPdf(x, df));
+  const parts = [filledCurve(xs, tdens, base, PAL.ink, PAL.ink, 0.05)];
+
+  // two-sided tail area = the p-value
+  const tt = Math.min(Math.abs(t), HALF);
+  for (const sign of [1, -1]) {
+    const xt = linspace(tt, HALF, 61).map(x => x * sign);
+    const seg = xt.map(x => `${Xp(x).toFixed(1)},${Yp(base, tPdf(x, df)).toFixed(1)}`).join(" ");
+    parts.push(`<polygon points='${Xp(sign * tt).toFixed(1)},${base} ${seg} ` +
+               `${Xp(sign * HALF).toFixed(1)},${base}' fill='${PAL.tail}' opacity='0.85'/>`);
+  }
+
+  // pale gaussian — reference only, to show t ≠ normal
+  const ptsN = xs.map(x => `${Xp(x).toFixed(1)},${Yp(base, normPdf(x)).toFixed(1)}`).join(" ");
+  parts.push(`<polyline points='${ptsN}' fill='none' stroke='${PAL.pale}' stroke-width='1.6'/>`);
+  // redraw the t stroke above the tail fill
+  const ptsT = xs.map((x, i) => `${Xp(x).toFixed(1)},${Yp(base, tdens[i]).toFixed(1)}`).join(" ");
+  parts.push(`<polyline points='${ptsT}' fill='none' stroke='${PAL.ink}' stroke-width='2'/>`);
+
+  parts.push(`<line x1='${ML}' x2='${ML + S}' y1='${base}' y2='${base}' stroke='${PAL.rule}' stroke-width='1'/>`);
+
+  // critical values: the tail points where the tail area equals alpha
+  const tc = tInv(1 - ALPHA / 2, df);
+  if (tc < HALF) {
+    const ytop = Math.min(Yp(base, tPdf(tc, df)), base - 66);
+    for (const sign of [1, -1]) {
+      const xc = Xp(sign * tc).toFixed(1);
+      parts.push(`<line x1='${xc}' x2='${xc}' y1='${base}' y2='${ytop.toFixed(1)}' ` +
+                 `stroke='${PAL.muted}' stroke-width='1.3' stroke-dasharray='2 3'/>`);
+      parts.push(`<text x='${xc}' y='${base + 19}' text-anchor='middle' font-size='11.5' ` +
+                 `fill='${PAL.muted}'>p = α</text>`);
+    }
+  }
+
+  // observed t — vertical marker with a label kept inside the box
+  const xm = Math.max(-HALF + 0.05, Math.min(HALF - 0.05, t));
+  const lblx = Math.min(Math.max(Xp(xm), ML + 44), ML + S - 44);
+  const lineTop = base - Math.round(S * 0.48);
+  parts.push(`<line x1='${Xp(xm).toFixed(1)}' x2='${Xp(xm).toFixed(1)}' y1='${base}' ` +
+             `y2='${lineTop}' stroke='${PAL.ink}' stroke-width='1.4'/>`);
+  const anchor = t < 0 ? "start" : "end", dx = t < 0 ? 7 : -7;
+  parts.push(`<text x='${(lblx + dx).toFixed(1)}' y='${lineTop - 6}' text-anchor='${anchor}' ` +
+             `font-size='13.5' font-weight='600' fill='${PAL.ink}'>t = ${t.toFixed(2)}</text>`);
+
+  // p-value, top-left inside the box
+  const ptxt = p >= 0.001 ? `p = ${p.toFixed(3)}` : "p &lt; 0.001";
+  parts.push(`<text x='${ML + 8}' y='${top + 26}' font-size='19' font-weight='700' fill='${PAL.tail}'>${ptxt}</text>`);
+  parts.push(`<text x='${ML + 8}' y='${top + 45}' font-size='11.5' fill='${PAL.muted}'>two-sided tail area</text>`);
+
+  // legend, top-right inside the box
+  const lx = ML + S - 208;
+  parts.push(`<line x1='${lx}' x2='${lx + 22}' y1='${top + 16}' y2='${top + 16}' stroke='${PAL.ink}' stroke-width='2'/>`);
+  parts.push(`<text x='${lx + 28}' y='${top + 20}' font-size='12' fill='${PAL.ink}'>t under H₀ (df = ${df})</text>`);
+  parts.push(`<line x1='${lx}' x2='${lx + 22}' y1='${top + 35}' y2='${top + 35}' stroke='${PAL.pale}' stroke-width='1.6'/>`);
+  parts.push(`<text x='${lx + 28}' y='${top + 39}' font-size='12' fill='${PAL.muted}'>gaussian, for comparison</text>`);
+
+  return `<svg viewBox='0 0 ${FW} ${height}' xmlns='http://www.w3.org/2000/svg'>${parts.join("")}</svg>`;
+}
+
+function verdictHtml(p) {
+  return p <= ALPHA
+    ? `<span class="badge reject">null hypothesis rejected</span><span class="alpha-note">α = ${ALPHA}</span>`
+    : `<span class="badge keep">null hypothesis not rejected</span><span class="alpha-note">α = ${ALPHA}</span>`;
+}
+
+/* ---- wiring -------------------------------------------------------------- */
+
+const sliders = document.getElementById("sliders");
+let pool = makePool(24); // one fixed draw — dots don't jitter as you drag
+
+const deltaS = makeSlider(sliders, { label: "true difference · Δ", min: 0, max: 3, step: 0.05, value: 0.8, fmt: v => v.toFixed(2), onInput: refresh });
+const varS   = makeSlider(sliders, { label: "true variance · σ²", min: 0.25, max: 4, step: 0.05, value: 1.0, fmt: v => v.toFixed(2), onInput: refresh });
+const nS     = makeSlider(sliders, { label: "sample size · n per group", min: 3, max: 100, step: 1, value: 12, fmt: v => v.toFixed(0), onInput: refresh });
+
+function refresh() {
+  const delta = deltaS.value, varr = varS.value, n = nS.value;
+  const sigma = Math.sqrt(varr);
+  const xa = pool.z1.slice(0, n).map(z => -delta / 2 + sigma * z);
+  const xb = pool.z2.slice(0, n).map(z =>  delta / 2 + sigma * z);
+  const res = tTest(xa, xb);
+  document.getElementById("figPop").innerHTML = populationSvg(delta, varr, n, pool);
+  document.getElementById("figT").innerHTML = tstatSvg(res.t, res.p, res.df);
+  document.getElementById("verdict").innerHTML = verdictHtml(res.p);
+}
+
+document.getElementById("resample").addEventListener("click", () => {
+  pool = makePool(); // only the button re-randomizes
+  refresh();
+});
+
+refresh();
+</script>
+</body>
+</html>

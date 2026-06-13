@@ -1,0 +1,17 @@
+jupyterlab
+notebook
+ipykernel
+
+pandas
+numpy
+scipy
+matplotlib
+seaborn
+
+ipywidgets
+ipympl
+plotly
+bokeh
+altair
+panel
+voila
