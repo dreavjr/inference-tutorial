@@ -13,11 +13,11 @@
 <main>
   <header class="page">
     <p class="kicker">From p-values to posteriors</p>
-    <h1>Three ways to look at the same experiment</h1>
-    <p class="lede">An interactive primer in three short steps. You set the hidden truth,
+    <h1>Four ways to look at the same experiment</h1>
+    <p class="lede">An interactive primer in four short steps. You set the hidden truth,
     draw samples, and watch the statistical machinery respond — first the classical
-    t&#8209;test, then what its guarantees do and don't promise, and finally the same
-    mathematics read the Bayesian way round.</p>
+    t&#8209;test, then what its guarantees do and don't promise, then the same
+    mathematics read the Bayesian way round, and finally the prior made explicit.</p>
   </header>
 
   <nav class="cards">
@@ -70,6 +70,36 @@
       </svg>
       <p>The same t&#8209;distribution, re-centred on the data: from <em>is there an
       effect?</em> to <em>how big is it, and how sure are we?</em></p>
+    </a>
+
+    <a class="card" href="04-the-prior.html">
+      <span class="num">STEP 4</span>
+      <h3>The role of the prior</h3>
+      <svg viewBox="0 0 260 84" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <g fill="#8E6FAE">
+          <ellipse cx="48" cy="46" rx="34" ry="30" opacity="0.12"/>
+          <ellipse cx="48" cy="50" rx="25" ry="22" opacity="0.18"/>
+          <ellipse cx="48" cy="54" rx="16" ry="14" opacity="0.26"/>
+          <circle cx="48" cy="57" r="2" opacity="0.9"/>
+        </g>
+        <text x="93" y="48" font-size="13" fill="#8A8579" font-family="system-ui,sans-serif">×</text>
+        <g fill="#C96A5E">
+          <ellipse cx="133" cy="42" rx="22" ry="26" opacity="0.12"/>
+          <ellipse cx="133" cy="45" rx="16" ry="19" opacity="0.18"/>
+          <ellipse cx="133" cy="48" rx="10" ry="12" opacity="0.26"/>
+          <circle cx="133" cy="50" r="2" opacity="0.9"/>
+        </g>
+        <text x="170" y="48" font-size="13" fill="#8A8579" font-family="system-ui,sans-serif">∝</text>
+        <g fill="#4A4A4A">
+          <ellipse cx="215" cy="44" rx="19" ry="22" opacity="0.12"/>
+          <ellipse cx="215" cy="47" rx="14" ry="16" opacity="0.18"/>
+          <ellipse cx="215" cy="50" rx="9" ry="10" opacity="0.26"/>
+          <circle cx="215" cy="52" r="2" opacity="0.9"/>
+        </g>
+        <line x1="10" y1="78" x2="250" y2="78" stroke="#DDDDDD"/>
+      </svg>
+      <p>Prior × likelihood ∝ posterior, drawn over the whole (Δ, σ²) plane — and why
+      a very lax prior is well-intentioned but rarely wise.</p>
     </a>
   </nav>
 

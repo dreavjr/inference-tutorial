@@ -10,28 +10,26 @@
 <link rel="stylesheet" href="assets/style.css">
 <style>
   /* the 2×2 contingency table */
-  table.cmx { border-collapse: collapse; font-family: var(--sans); margin: 4px 0; }
-  .cmx td, .cmx th { padding: 11px 22px; text-align: center; font-weight: 400; }
-  .cmx th.colhead { font-size: 11.5px; color: var(--muted); font-weight: 500; }
-  .cmx th.rowlab { font-size: 13px; font-weight: 600; text-align: right; white-space: nowrap; }
-  .cmx td.count { border: 1px solid var(--rule); min-width: 96px; }
-  .cmx td.count .n { display: block; font-size: 19px; font-weight: 600; color: #333; font-variant-numeric: tabular-nums; }
+  table.cmx { border-collapse: collapse; font-family: var(--sans); margin: 4px 0; width: 100%; max-width: 550px; }
+  .cmx td, .cmx th { padding: 10px 12px; text-align: center; font-weight: 400; }
+  .cmx th.colhead { font-size: 11px; color: var(--muted); font-weight: 500; }
+  .cmx th.rowlab { font-size: 12.5px; font-weight: 600; text-align: right; white-space: nowrap; }
+  .cmx td.count { border: 1px solid var(--rule); min-width: 78px; }
+  .cmx td.count .n { display: block; font-size: 18px; font-weight: 600; color: #333; font-variant-numeric: tabular-nums; }
   .cmx td.count .code { display: block; font-size: 10px; color: var(--muted); letter-spacing: .06em; margin-top: 2px; }
-  .cmx td.tot { color: var(--muted); font-size: 13.5px; font-variant-numeric: tabular-nums; }
-  .cmx td.metric .name { display: block; font-size: 10px; color: var(--muted); letter-spacing: .06em; white-space: nowrap; }
-  .cmx td.metric .val { display: block; font-size: 16px; font-weight: 600; color: #333; margin-top: 2px; font-variant-numeric: tabular-nums; }
-  .cmx td.metric.strong .val { font-weight: 700; font-size: 17px; }
+  .cmx td.tot { color: var(--muted); font-size: 13px; font-variant-numeric: tabular-nums; }
+  .cmx td.metric .name { display: block; font-size: 9.5px; color: var(--muted); letter-spacing: .05em; white-space: nowrap; }
+  .cmx td.metric .val { display: block; font-size: 15.5px; font-weight: 600; color: #333; margin-top: 2px; font-variant-numeric: tabular-nums; }
+  .cmx td.metric.strong .val { font-weight: 700; font-size: 16.5px; }
   .bg-tp { background: #E7EEF7; } .bg-fn { background: #F4F8FB; }
   .bg-fp { background: #FCF4E8; } .bg-tn { background: #FAEBDB; }
   .figwrap { overflow-x: auto; }
-  #figTable { min-width: 640px; }
-  #figRibbon svg { max-width: 860px; }
 </style>
 </head>
 <body>
 <main>
   <header class="page">
-    <p class="kicker"><a href="index.html">From p-values to posteriors</a><span class="sep">·</span>Step 2 of 3</p>
+    <p class="kicker"><a href="index.html">From p-values to posteriors</a><span class="sep">·</span>Step 2 of 4</p>
     <h1>What p-values and power can do for you — and what they can't</h1>
   </header>
 
@@ -75,18 +73,19 @@
   <section class="demo">
     <div class="controls">
       <p class="hint">drag a slider — both views below follow</p>
-      <div id="sliders"></div>
+      <div id="sliders" class="sliders"></div>
     </div>
 
-    <figure style="margin-top:44px">
-      <figcaption class="figcap">1 · the 2×2 table</figcaption>
-      <div class="figwrap"><div id="figTable"></div></div>
-    </figure>
-
-    <figure style="margin-top:44px">
-      <figcaption class="figcap">2 · the garden of forked paths</figcaption>
-      <div class="fig figwrap" id="figRibbon"></div>
-    </figure>
+    <div class="figrow">
+      <figure>
+        <figcaption class="figcap">1 · the 2×2 table</figcaption>
+        <div class="figwrap"><div id="figTable"></div></div>
+      </figure>
+      <figure>
+        <figcaption class="figcap">2 · the garden of forked paths</figcaption>
+        <div class="fig figwrap" id="figRibbon"></div>
+      </figure>
+    </div>
   </section>
 
   <section class="prose">
@@ -188,17 +187,17 @@ const PRED = { "+": ["TP", "FP"], "−": ["FN", "TN"] };
 
 function swatchLabel(x, yc, k, n) {
   return `<rect x='${x}' y='${(yc - 5).toFixed(1)}' width='10' height='10' fill='${RC[k]}'/>` +
-         `<text x='${x + 18}' y='${(yc - 1).toFixed(1)}' font-size='12.5' fill='${PAL.ink}'>` +
+         `<text x='${x + 16}' y='${(yc - 1).toFixed(1)}' font-size='11.5' fill='${PAL.ink}'>` +
          `<tspan font-weight='600'>${k}</tspan><tspan font-weight='600'> · ${fmtN(n)}</tspan></text>` +
-         `<text x='${x + 18}' y='${(yc + 12).toFixed(1)}' font-size='10.5' fill='${PAL.muted}'>${NAMES[k]}</text>`;
+         `<text x='${x + 16}' y='${(yc + 12).toFixed(1)}' font-size='10' fill='${PAL.muted}'>${NAMES[k]}</text>`;
 }
 
 function ribbonSvg(prev, sens, spec, total) {
   const c = confusion(prev, sens, spec, total);
-  const Hin = 360, gap = 18, mt = 28;
-  const gw = 12, gb = 48;            // within-group gap, between-group gap
-  const xl = 150, x1 = 470;          // ribbons run from xl to the arrow tips
-  const width = 820;
+  const Hin = 290, gap = 16, mt = 24;
+  const gw = 10, gb = 40;            // within-group gap, between-group gap
+  const xl = 118, x1 = 388;          // ribbons run from xl to the arrow tips
+  const width = 560;
 
   const h = {};
   for (const k of HEAD_ORDER) h[k] = c[k] / total * Hin;
@@ -222,7 +221,9 @@ function ribbonSvg(prev, sens, spec, total) {
   }
   const rightBottom = zone["−"][1];
 
-  const height = Math.max(leftBottom, rightBottom) + mt;
+  const flowBottom = Math.max(leftBottom, rightBottom);
+  const legendY = flowBottom + 44;          // horizontal legend row under the flows
+  const height = legendY + 22;
   const xm = (xl + x1) / 2;
   const parts = [];
 
@@ -249,21 +250,20 @@ function ribbonSvg(prev, sens, spec, total) {
   if (c.N) parts.push(leftLabel(yNtop + hN / 2, RC.TN, `N · ${fmtN(c.N)}`, "condition −"));
 
   // right prediction-zone brackets + labels, just past the arrow tips
-  const xbr = x1 + 16;
+  const xbr = x1 + 14;
   for (const [grp, sym] of [["+", "predicted +"], ["−", "predicted −"]]) {
     let [top, bot] = zone[grp];
     bot -= gw; // trim trailing within-gap
     parts.push(`<path d='M${xbr},${top.toFixed(1)} h6 V${bot.toFixed(1)} h-6' fill='none' ` +
                `stroke='${PAL.muted}' stroke-width='1.2'/>`);
-    parts.push(`<text x='${xbr + 12}' y='${((top + bot) / 2 + 4).toFixed(1)}' font-size='13' ` +
+    parts.push(`<text x='${xbr + 11}' y='${((top + bot) / 2 + 4).toFixed(1)}' font-size='12.5' ` +
                `font-weight='600' fill='${PAL.ink}'>${sym}</text>`);
   }
 
-  // legend, well to the right so nothing crowds the zone labels
-  const xleg = x1 + 185;
-  for (const k of HEAD_ORDER) {
-    if (c[k]) parts.push(swatchLabel(xleg, ycR[k], k, c[k]));
-  }
+  // legend — a horizontal row under the flows
+  HEAD_ORDER.forEach((k, i) => {
+    if (c[k]) parts.push(swatchLabel(14 + i * 137, legendY, k, c[k]));
+  });
 
   return `<svg viewBox='0 0 ${width} ${height.toFixed(0)}' xmlns='http://www.w3.org/2000/svg'>${parts.join("")}</svg>`;
 }
