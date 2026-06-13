@@ -1,0 +1,299 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>3 · The Bayesian t-test: from “is there an effect?” to “how big is it?”</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<main>
+  <header class="page">
+    <p class="kicker"><a href="index.html">From p-values to posteriors</a><span class="sep">·</span>Step 3 of 4</p>
+    <h1>The Bayesian t&#8209;test: from <em>is there an effect?</em> to <em>how big is it?</em></h1>
+  </header>
+
+  <section class="prose">
+    <p><a href="01-the-t-test.html">Step 1</a> asked one question: <em>if H₀ were true,
+    how surprising is our t?</em> It answers with a yes/no stamp — reject, or don't. But
+    it never tells us the thing we usually care about: <strong>how large is the effect,
+    and how sure are we?</strong></p>
+
+    <p>The Bayesian move needs no new machinery — just a change of reading. Take the
+    very same t-distribution and re-centre it: instead of parking it on 0 (the null) and
+    asking about our observed t, park it on <strong>our observed difference</strong> and
+    let it describe the whole range of effect sizes the data find plausible. (With flat
+    priors this <em>is</em> the posterior for the mean difference — a shifted, scaled
+    t.)</p>
+
+    <p>Both panels below are drawn on the <strong>same square scale as step 1</strong>,
+    so you can read one against the other. The right-hand panel is the distribution over
+    the effect size <strong>Δ</strong>:</p>
+
+    <table class="concept">
+      <tr><th>you see</th><th>it means</th></tr>
+      <tr><td>the curve's <strong>peak</strong></td>
+          <td>the observed difference <strong>Δ̂</strong> = x̄₂ − x̄₁ — our best estimate</td></tr>
+      <tr><td>the curve's <strong>width</strong></td>
+          <td>our uncertainty — wide when data are few or noisy</td></tr>
+      <tr><td>the curve's <strong>height</strong></td>
+          <td>it's a real density (area = 1), so concentrating ⇒ taller</td></tr>
+      <tr><td>the dashed line at <strong>0</strong></td>
+          <td>the null; if it sits out in the tail, the data doubt it</td></tr>
+      <tr><td>the green dashed <strong>Δ</strong></td>
+          <td>the real effect — unknown in life, shown here because we simulate</td></tr>
+    </table>
+
+    <p>Because it is a genuine density, a very certain posterior becomes a tall, thin
+    spike — and when it grows past the top of the box it simply <strong>fades out</strong>,
+    dissolving into the upper edge: <em>more certain than the panel can show.</em></p>
+
+    <p>And the bridge between the two panels: <strong>hover the Δ curve.</strong>
+    Pick any candidate effect size and the left panel shows the two population means it
+    would imply. The distribution over Δ is, quite literally, a distribution over
+    <em>how far apart the two worlds are.</em></p>
+  </section>
+
+  <section class="demo">
+    <div class="controls">
+      <p class="hint">drag a slider — the truth changes; press the button — a new
+      sample is drawn; <b>hover the Δ panel</b> to read off the implied population
+      means</p>
+      <div id="sliders" class="sliders"></div>
+      <div class="resample-row"><button class="resample" id="resample">↻&ensp;new sample</button></div>
+    </div>
+
+    <div class="figrow">
+      <figure>
+        <figcaption class="figcap">1 · two populations, one sample</figcaption>
+        <div class="fig" id="figPop"></div>
+      </figure>
+      <figure>
+        <figcaption class="figcap">2 · plausible effect sizes Δ</figcaption>
+        <div class="fig" id="figPost"></div>
+      </figure>
+    </div>
+  </section>
+
+  <section class="prose">
+    <h2>Try this</h2>
+    <ol>
+      <li><strong>Hover slowly across the Δ curve.</strong> Watch the two implied
+      means on the left panel slide apart and back together. The curve is showing you
+      <em>which separations the data consider plausible</em> — most weight near Δ̂,
+      little out in the tails.</li>
+      <li><strong>Is 0 under the curve?</strong> With the defaults, barely — almost all
+      the mass sits to the right of the null line, so the data clearly prefer a positive
+      effect. (This is the Bayesian echo of “significant.”) Now drag <strong>Δ toward
+      0</strong>: the curve drifts left until it straddles 0, and “no effect” becomes
+      the most plausible reading.</li>
+      <li><strong>Raise n.</strong> The curve concentrates — <em>taller and
+      narrower</em> — around the truth: more data buys certainty about the size, not
+      merely a smaller p. Push n far enough and the spike outgrows the box, fading out
+      at the top: certainty off the chart. This is what power looks like from the
+      inside.</li>
+      <li><strong>Raise σ².</strong> The curve fattens and sinks: noise widens the band
+      of effect sizes the data can't tell apart.</li>
+      <li><strong>Press “new sample” a few times.</strong> The curve jumps — its centre
+      Δ̂ is the <em>noisy</em> observed effect — but it usually keeps the true Δ within
+      its bulk. Each real study hands you exactly one of these curves, and you never get
+      to see the green line.</li>
+    </ol>
+
+    <h2>The moral</h2>
+    <div class="moral">
+      <ul>
+        <li>A p-value returns a <strong>verdict</strong>; this returns an
+        <strong>estimate with honest error bars</strong>. Same t-distribution, read the
+        other way round: from <em>“how surprising under H₀”</em> to <em>“which effects
+        are plausible given the data.”</em></li>
+        <li>The shape is the message. “Significant” can hide a curve so wide it spans
+        trivial and enormous effects alike; “not significant” can hide a curve tight
+        around zero. The stamp throws that away — the distribution keeps it.</li>
+        <li>One sleight of hand remains: “with flat priors” slipped by in the second
+        paragraph as if it were innocent. It isn't — it is itself a choice, and the
+        <a href="04-the-prior.html">next step</a> makes it explicit.</li>
+      </ul>
+    </div>
+  </section>
+
+  <nav class="pager">
+    <a href="02-pvalues-and-power.html"><span class="lbl">Previous</span><span class="title">←&ensp;What p-values and power can't tell you</span></a>
+    <a class="next" href="04-the-prior.html"><span class="lbl">Next</span><span class="title">The role of the prior&ensp;→</span></a>
+  </nav>
+</main>
+
+<script src="assets/common.js"></script>
+<script>
+"use strict";
+/* The shared scale — identical to step 1, so the panels compare directly. */
+const S = 460, SH = 300, HALF = 5.0, YMAX = 0.9;
+const SC = S / (2 * HALF), K = SH / YMAX;
+const ML = 16, MR = 16, BH = 30;
+const FW = ML + S + MR, X0 = ML + S / 2;
+const TOP = 14, BASE = TOP + SH, FH = BASE + BH;
+
+const Xp = (x) => X0 + x * SC;
+const Yp = (base, dens, cap = SH) => base - Math.min(dens * K, cap);
+const clampx = (px, pad = 28) => Math.min(Math.max(px, ML + pad), ML + S - pad);
+
+function filledCurve(xs, dens, base, stroke, fill, op, { sw = 2, cap = SH } = {}) {
+  const pts = xs.map((x, i) => [Xp(x), Yp(base, dens[i], cap)]);
+  const line = pts.map(p => `${p[0].toFixed(1)},${p[1].toFixed(1)}`).join(" ");
+  const poly = `${pts[0][0].toFixed(1)},${base} ${line} ${pts[pts.length - 1][0].toFixed(1)},${base}`;
+  return `<polygon points='${poly}' fill='${fill}' opacity='${op}'/>` +
+         `<polyline points='${line}' fill='none' stroke='${stroke}' stroke-width='${sw}'/>`;
+}
+
+/* ---- left panel: populations + sample, with hidden implied-mean guides --- */
+
+function populationSvg(delta, varr, n, pool) {
+  const sigma = Math.sqrt(varr);
+  const xs = linspace(-HALF, HALF, 201);
+  const p = [];
+
+  for (const [mu, col] of [[-delta / 2, PAL.blue], [delta / 2, PAL.orange]]) {
+    const pdf = xs.map(x => Math.exp(-0.5 * ((x - mu) / sigma) ** 2) / (sigma * Math.sqrt(2 * Math.PI)));
+    p.push(filledCurve(xs, pdf, BASE, col, col, 0.10));
+  }
+  p.push(`<line x1='${ML}' x2='${ML + S}' y1='${BASE}' y2='${BASE}' stroke='${PAL.rule}' stroke-width='1'/>`);
+
+  for (const [z, j, mu, col, side] of [[pool.z1, pool.j1, -delta / 2, PAL.blue, -1],
+                                       [pool.z2, pool.j2, delta / 2, PAL.orange, 1]]) {
+    for (let i = 0; i < n; i++) {
+      const x = Math.max(-HALF, Math.min(HALF, mu + sigma * z[i]));
+      const y = BASE + side * (11 + j[i] * 8);
+      p.push(`<circle cx='${Xp(x).toFixed(1)}' cy='${y.toFixed(1)}' r='3' fill='${col}' opacity='0.75'/>`);
+    }
+  }
+
+  // implied-mean guides (hidden until the Δ panel is hovered)
+  p.push(`<line id='impL' x1='${X0}' x2='${X0}' y1='${BASE}' y2='${TOP + 10}' ` +
+         `stroke='${PAL.ink}' stroke-width='1.2' stroke-dasharray='4 3' opacity='0'/>`);
+  p.push(`<line id='impR' x1='${X0}' x2='${X0}' y1='${BASE}' y2='${TOP + 10}' ` +
+         `stroke='${PAL.ink}' stroke-width='1.2' stroke-dasharray='4 3' opacity='0'/>`);
+  p.push(`<text id='impLbl' x='${X0}' y='${TOP + 16}' text-anchor='middle' font-size='11.5' ` +
+         `font-style='italic' fill='${PAL.muted}' opacity='0'>implied means</text>`);
+
+  return `<svg viewBox='0 0 ${FW} ${FH}' xmlns='http://www.w3.org/2000/svg'>${p.join("")}</svg>`;
+}
+
+/* ---- right panel: posterior density over Δ, fading out past the box top -- */
+
+function posteriorSvg(delta, dObs, se, df) {
+  const p = [];
+
+  // a luminance mask that dissolves the curve over the top fifth of the box
+  p.push(`<defs><linearGradient id='fadeG' gradientUnits='userSpaceOnUse' ` +
+         `x1='0' y1='${TOP}' x2='0' y2='${BASE}'>` +
+         `<stop offset='0' stop-color='#fff' stop-opacity='0'/>` +
+         `<stop offset='0.22' stop-color='#fff' stop-opacity='1'/>` +
+         `<stop offset='1' stop-color='#fff' stop-opacity='1'/></linearGradient>` +
+         `<mask id='fadeM'><rect x='0' y='${TOP}' width='${FW}' height='${SH}' fill='url(#fadeG)'/></mask></defs>`);
+
+  const ds = linspace(-HALF, HALF, 321);
+  const dens = ds.map(d => tPdf((d - dObs) / se, df) / se);
+  p.push(`<g mask='url(#fadeM)'>` + filledCurve(ds, dens, BASE, PAL.ink, PAL.ink, 0.06) + `</g>`);
+  p.push(`<line x1='${ML}' x2='${ML + S}' y1='${BASE}' y2='${BASE}' stroke='${PAL.rule}' stroke-width='1'/>`);
+
+  // reference markers — dashed, full height. The true Δ and observed Δ̂ share the
+  // top line but splay their labels to opposite sides (smaller→left, larger→right)
+  // so they never overprint each other; the null sits one line below, centred.
+  const marker = (xv, color, lbl, lblY, side) => {
+    const x = Xp(xv);
+    const anchor = side < 0 ? "end" : side > 0 ? "start" : "middle";
+    const tx = side ? Math.min(Math.max(x + side * 5, ML + 12), ML + S - 12) : clampx(x);
+    return `<line x1='${x.toFixed(1)}' x2='${x.toFixed(1)}' y1='${BASE}' y2='${lblY + 5}' ` +
+           `stroke='${color}' stroke-width='1.4' stroke-dasharray='5 4'/>` +
+           `<text x='${tx.toFixed(1)}' y='${lblY}' text-anchor='${anchor}' font-size='13.5' ` +
+           `font-weight='600' fill='${color}'>${lbl}</text>`;
+  };
+  const dLeft = delta <= dObs;            // which of Δ, Δ̂ is the left one
+  p.push(marker(delta, PAL.green, "Δ", TOP + 16, dLeft ? -1 : 1));
+  p.push(marker(dObs, PAL.ink, "Δ̂", TOP + 16, dLeft ? 1 : -1));
+  p.push(marker(0, PAL.muted, "0", TOP + 34, 0));
+
+  // hover guide (hidden until hover)
+  p.push(`<line id='hoverLine' x1='${X0}' x2='${X0}' y1='${BASE}' y2='${BASE}' ` +
+         `stroke='${PAL.ink}' stroke-width='1.2' stroke-dasharray='4 3' opacity='0'/>`);
+  p.push(`<text id='hoverLbl' x='${X0}' y='${BASE - 8}' text-anchor='middle' font-size='12' ` +
+         `font-weight='600' fill='${PAL.ink}' opacity='0'></text>`);
+
+  return `<svg id='postSvg' viewBox='0 0 ${FW} ${FH}' xmlns='http://www.w3.org/2000/svg' ` +
+         `style='cursor:crosshair'>${p.join("")}</svg>`;
+}
+
+/* ---- hover wiring: posterior x ⇄ implied population means ----------------- */
+
+function wireHover(state) {
+  const svg = document.getElementById("postSvg");
+  const hov = document.getElementById("hoverLine"), hl = document.getElementById("hoverLbl");
+  const iL = document.getElementById("impL"), iR = document.getElementById("impR");
+  const iLbl = document.getElementById("impLbl");
+
+  const curveY = (x) => { // posterior curve height (px) at pixel x, clipped like the drawing
+    const d = (x - X0) / SC;
+    return Yp(BASE, tPdf((d - state.dObs) / state.se, state.df) / state.se);
+  };
+  const usr = (e) => {
+    const pt = svg.createSVGPoint();
+    pt.x = e.clientX; pt.y = e.clientY;
+    return pt.matrixTransform(svg.getScreenCTM().inverse());
+  };
+  const hide = () => [hov, hl, iL, iR, iLbl].forEach(el => { el.style.opacity = 0; });
+
+  svg.addEventListener("pointermove", (e) => {
+    const u = usr(e);
+    if (u.x < ML || u.x > ML + S || u.y < TOP || u.y > BASE + 20) { hide(); return; }
+    const x = u.x, cy = curveY(x), d = (x - X0) / SC;
+    hov.setAttribute("x1", x); hov.setAttribute("x2", x);
+    hov.setAttribute("y1", BASE); hov.setAttribute("y2", cy);
+    hov.style.opacity = 1;
+    const ly = Math.min(Math.max(cy - 8, TOP + 66), BASE - 6);
+    hl.textContent = "Δ = " + d.toFixed(2);
+    hl.setAttribute("x", clampx(x)); hl.setAttribute("y", ly);
+    hl.style.opacity = 1;
+    const xl = X0 - (d / 2) * SC, xr = X0 + (d / 2) * SC;
+    iL.setAttribute("x1", xl); iL.setAttribute("x2", xl); iL.style.opacity = 1;
+    iR.setAttribute("x1", xr); iR.setAttribute("x2", xr); iR.style.opacity = 1;
+    iLbl.style.opacity = 1;
+  });
+  svg.addEventListener("pointerleave", hide);
+}
+
+/* ---- wiring -------------------------------------------------------------- */
+
+const sliders = document.getElementById("sliders");
+let pool = makePool(15); // one fixed draw — dots don't jitter as you drag
+
+const deltaS = makeSlider(sliders, { label: "true difference · Δ", min: 0, max: 3, step: 0.05, value: 0.8, fmt: v => v.toFixed(2), onInput: render });
+const varS   = makeSlider(sliders, { label: "true variance · σ²", min: 0.25, max: 4, step: 0.05, value: 1.0, fmt: v => v.toFixed(2), onInput: render });
+const nS     = makeSlider(sliders, { label: "sample size · n per group", min: 3, max: 100, step: 1, value: 12, fmt: v => v.toFixed(0), onInput: render });
+
+function render() {
+  const delta = deltaS.value, varr = varS.value, n = nS.value;
+  const sigma = Math.sqrt(varr);
+  const xa = pool.z1.slice(0, n).map(z => -delta / 2 + sigma * z);
+  const xb = pool.z2.slice(0, n).map(z =>  delta / 2 + sigma * z);
+  const dObs = mean(xb) - mean(xa);
+  const sp = Math.sqrt((svar(xa) + svar(xb)) / 2);
+  const se = sp * Math.sqrt(2 / n);
+  const df = 2 * n - 2;
+
+  document.getElementById("figPop").innerHTML = populationSvg(delta, varr, n, pool);
+  document.getElementById("figPost").innerHTML = posteriorSvg(delta, dObs, se, df);
+  wireHover({ dObs, se, df });
+}
+
+document.getElementById("resample").addEventListener("click", () => {
+  pool = makePool(); // only the button re-randomizes
+  render();
+});
+
+render();
+</script>
+</body>
+</html>

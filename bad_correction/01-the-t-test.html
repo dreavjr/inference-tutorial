@@ -1,0 +1,364 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>1 · How a classical test works: the t-test</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<main>
+  <header class="page">
+    <p class="kicker"><a href="index.html">From p-values to posteriors</a><span class="sep">·</span>Step 1 of 4</p>
+    <h1>How a classical test works: the t&#8209;test</h1>
+  </header>
+
+  <section class="prose">
+    <p>Somewhere out there are two <strong>populations</strong> — say, outcomes under
+    treatment A and under treatment B. Each is a whole distribution of individuals
+    (the blue and orange curves below). The truth has knobs we never observe directly:
+    the <strong>true difference of the means</strong> (Δ) and the
+    <strong>true variance</strong> (σ²).</p>
+
+    <p>What we <em>do</em> observe is a <strong>sample</strong>: n points from each
+    population — the dots.</p>
+
+    <p>The classical recipe goes:</p>
+    <ol>
+      <li>State the <strong>null hypothesis H₀</strong>: <em>the two populations have
+      the same mean</em> (Δ&nbsp;=&nbsp;0) — against the <strong>alternative H₁</strong>:
+      <em>they don't</em>.</li>
+      <li>Condense the entire sample into a single number, the <strong>test
+      statistic</strong>
+        <span class="formula">t&nbsp;=
+          <span class="frac">
+            <span class="num">x̄<sub>B</sub> − x̄<sub>A</sub></span>
+            <span class="den">s<sub>p</sub>&hairsp;√(2/n)</span>
+          </span>
+        </span>
+      — the observed difference of sample means, measured in units of its own
+      estimation noise.</li>
+      <li><em>If H₀ were true</em>, the observed difference would still wobble around 0
+      from sample to sample — and in a known way: a <strong>Student's&nbsp;t scaled by
+      the standard error</strong> (the dark curve). The right panel draws this on the
+      <em>same axis as the data</em>, so the observed difference <strong>D̂</strong> sits
+      in both pictures at once. Notice how tight this band is next to the populations:
+      the <em>difference of means</em> is pinned far more precisely than any single
+      individual — and the band tightens further, like 1/√n, as the sample grows.</li>
+      <li>The <strong>p-value</strong> is the probability, <em>under H₀</em>, of a
+      difference at least as extreme as the one you got: the shaded two-sided
+      <strong>tail area</strong>. (Standardised, D̂ becomes the statistic <em>t</em>,
+      shown beneath the marker.)</li>
+      <li>If p ≤ <strong>α</strong> (fixed here at 0.05 — the small ticks on the
+      baseline), call the result <em>significant</em> and <strong>reject H₀</strong>.</li>
+    </ol>
+
+    <p>A map of the picture:</p>
+    <table class="concept">
+      <tr><th>concept</th><th>where to see it below</th></tr>
+      <tr><td>population</td><td>the two smooth curves — never observed directly</td></tr>
+      <tr><td>sample</td><td>the dots just above (blue) and below (orange) the line</td></tr>
+      <tr><td>H₀</td><td>“blue and orange coincide” — drag Δ to 0 to <em>make it true</em></td></tr>
+      <tr><td>observed difference</td><td>the marker <strong>D̂</strong> (with its <em>t</em> value) in the right panel</td></tr>
+      <tr><td>its null distribution</td><td>the dark scaled-t curve — how the difference scatters if H₀ holds</td></tr>
+      <tr><td>p-value</td><td>the shaded tail area beyond ±D̂, also in numbers</td></tr>
+      <tr><td>α</td><td>the bar p must clear; ticks mark the critical difference ±t·se</td></tr>
+    </table>
+  </section>
+
+  <section class="demo">
+    <div class="controls">
+      <p class="hint">drag a slider — the truth changes; press the button — a new sample is drawn;
+      <b>hover the right panel</b> to read off the implied population means</p>
+      <div id="sliders" class="sliders"></div>
+      <div class="resample-row"><button class="resample" id="resample">↻&ensp;new sample</button></div>
+    </div>
+
+    <div class="figrow">
+      <figure>
+        <figcaption class="figcap">1 · two populations, one sample</figcaption>
+        <div class="fig" id="figPop"></div>
+      </figure>
+      <figure>
+        <figcaption class="figcap">2 · the difference under H₀, and the p-value</figcaption>
+        <div class="fig" id="figT"></div>
+      </figure>
+    </div>
+  </section>
+
+  <section class="prose">
+    <h2>Try this</h2>
+    <ol>
+      <li><strong>Drag Δ to 0.</strong> H₀ is now <em>true</em>. Press
+      <strong>new sample</strong> a dozen times: D̂ dances around zero and the p-value
+      bounces all over the place. About one press in twenty will dip below 0.05 and
+      “discover” an effect that does not exist. That 1-in-20 is exactly α — the
+      false-positive rate you signed up for.</li>
+      <li><strong>Δ = 0.5, n = 12</strong>: a real but modest effect, rarely
+      significant — the test is <em>underpowered</em>. Now drag n to 100: same truth,
+      yet significance almost every time. The null band tightens like 1/√n while D̂
+      stays put, so <em>any</em> nonzero difference eventually lands in the tail.
+      Significance measures evidence, not importance.</li>
+      <li><strong>Crank σ² up</strong> and watch the null band widen and significance
+      melt away. The test is a tug of war: signal (D̂) against noise (the band's width,
+      se = s<sub>p</sub>√(2/n)).</li>
+      <li><strong>Drop n to 3 or 4</strong> and watch the band turn squat and wide — and
+      the <em>±t·se</em> critical ticks slide far out: with so little data the test
+      demands a much bigger difference before it is surprised. Raise n and the band
+      grows so tall and tight it <strong>fades out at the top</strong> — pinned tighter
+      than the panel can show.</li>
+    </ol>
+
+    <h2>The moral</h2>
+    <div class="moral">
+      <ul>
+        <li>The p-value answers exactly one question: <em>“<strong>If</strong> there
+        were truly no difference, how surprising would my t be?”</em> It is a tail
+        probability computed under H₀ — nothing more.</li>
+        <li>It is <strong>not</strong> the probability that H₀ is true, and a rejection
+        is <strong>not</strong> a measure of how big or important the effect is.</li>
+        <li>“Reject H₀” is simply the machine stamping <strong>positive</strong> on
+        this study. How much <em>belief</em> such a stamp deserves is a different
+        question entirely — it is the subject of the
+        <a href="02-pvalues-and-power.html">next step</a>.</li>
+      </ul>
+    </div>
+  </section>
+
+  <nav class="pager">
+    <a href="index.html"><span class="lbl">Series</span><span class="title">From p-values to posteriors</span></a>
+    <a class="next" href="02-pvalues-and-power.html"><span class="lbl">Next</span><span class="title">What p-values and power can't tell you&ensp;→</span></a>
+  </nav>
+</main>
+
+<script src="assets/common.js"></script>
+<script>
+"use strict";
+/* Geometry: one shared scale — SC px per x-unit (width), K px per density-unit
+   (height) — identical in steps 3 and 4, so the panels compare directly. The box
+   is wider than tall (SH < width) to keep curves filling the frame. */
+const S = 460, SH = 300, HALF = 5.0, YMAX = 0.9;
+const SC = S / (2 * HALF), K = SH / YMAX;
+const ML = 16, MR = 16, BH = 30;
+const FW = ML + S + MR, X0 = ML + S / 2;
+const TOP1 = 14, BASE1 = TOP1 + SH;
+const ALPHA = 0.05;
+
+const Xp = (x) => X0 + x * SC;
+const Yp = (base, dens, cap = SH) => base - Math.min(dens * K, cap);
+
+function filledCurve(xs, dens, base, stroke, fill, op, sw = 2) {
+  const pts = xs.map((x, i) => [Xp(x), Yp(base, dens[i])]);
+  const line = pts.map(p => `${p[0].toFixed(1)},${p[1].toFixed(1)}`).join(" ");
+  const poly = `${pts[0][0].toFixed(1)},${base} ${line} ${pts[pts.length - 1][0].toFixed(1)},${base}`;
+  return `<polygon points='${poly}' fill='${fill}' opacity='${op}'/>` +
+         `<polyline points='${line}' fill='none' stroke='${stroke}' stroke-width='${sw}'/>`;
+}
+
+/* ---- panel 1: the two populations and the sample in hand ---------------- */
+
+function populationSvg(delta, varr, n, pool) {
+  const sigma = Math.sqrt(varr);
+  const top = 14, base = top + SH, height = base + BH;
+  const xs = linspace(-HALF, HALF, 201);
+  const p = [];
+
+  for (const [mu, col] of [[-delta / 2, PAL.blue], [delta / 2, PAL.orange]]) {
+    const pdf = xs.map(x => Math.exp(-0.5 * ((x - mu) / sigma) ** 2) / (sigma * Math.sqrt(2 * Math.PI)));
+    p.push(filledCurve(xs, pdf, base, col, col, 0.10));
+  }
+
+  p.push(`<line x1='${ML}' x2='${ML + S}' y1='${base}' y2='${base}' stroke='${PAL.rule}' stroke-width='1'/>`);
+
+  for (const [z, j, mu, col, side] of [[pool.z1, pool.j1, -delta / 2, PAL.blue, -1],
+                                       [pool.z2, pool.j2, delta / 2, PAL.orange, 1]]) {
+    for (let i = 0; i < n; i++) {
+      const x = Math.max(-HALF, Math.min(HALF, mu + sigma * z[i]));
+      const y = base + side * (11 + j[i] * 8);
+      p.push(`<circle cx='${Xp(x).toFixed(1)}' cy='${y.toFixed(1)}' r='3' fill='${col}' opacity='0.75'/>`);
+    }
+  }
+
+  // implied-mean guides (hidden until the difference panel is hovered)
+  p.push(`<line id='impL' x1='${X0}' x2='${X0}' y1='${base}' y2='${top + 10}' ` +
+         `stroke='${PAL.ink}' stroke-width='1.2' stroke-dasharray='4 3' opacity='0'/>`);
+  p.push(`<line id='impR' x1='${X0}' x2='${X0}' y1='${base}' y2='${top + 10}' ` +
+         `stroke='${PAL.ink}' stroke-width='1.2' stroke-dasharray='4 3' opacity='0'/>`);
+  p.push(`<text id='impLbl' x='${X0}' y='${top + 16}' text-anchor='middle' font-size='11.5' ` +
+         `font-style='italic' fill='${PAL.muted}' opacity='0'>implied means</text>`);
+
+  return `<svg viewBox='0 0 ${FW} ${height}' xmlns='http://www.w3.org/2000/svg'>${p.join("")}</svg>`;
+}
+
+/* ---- panel 2: the null distribution OF THE DIFFERENCE, in data units ------
+   Plotted on the identical scale as panel 1 (same Xp, same Yp/K), so x = 2 is
+   the same pixel here as there and the observed difference D̂ lines up with the
+   gap between the sample means on the left. Under H₀ the difference scatters as
+   a Student's t scaled by the standard error: D ~ se·t(df). Because se shrinks
+   like 1/√n, more data makes this band visibly tighter and taller — it fades
+   out at the top when it outgrows the frame. */
+
+function nullDistSvg(dObs, se, df, p, t) {
+  const top = 14, base = top + SH, height = base + BH;
+  const parts = [];
+
+  // a luminance mask that dissolves tall, tight null bands at the top of the box
+  parts.push(`<defs><linearGradient id='fadeG' gradientUnits='userSpaceOnUse' x1='0' y1='${top}' x2='0' y2='${base}'>` +
+             `<stop offset='0' stop-color='#fff' stop-opacity='0'/>` +
+             `<stop offset='0.22' stop-color='#fff' stop-opacity='1'/>` +
+             `<stop offset='1' stop-color='#fff' stop-opacity='1'/></linearGradient>` +
+             `<mask id='fadeM'><rect x='0' y='${top}' width='${FW}' height='${SH}' fill='url(#fadeG)'/></mask></defs>`);
+
+  const xs = linspace(-HALF, HALF, 321);
+  const dens = xs.map(x => tPdf(x / se, df) / se);     // density of the difference under H₀
+  const inner = [filledCurve(xs, dens, base, PAL.ink, PAL.ink, 0.12)];
+
+  // two-sided tail area beyond ±|D̂| = the p-value
+  const dt = Math.min(Math.abs(dObs), HALF);
+  for (const sign of [1, -1]) {
+    const xt = linspace(dt, HALF, 81).map(x => x * sign);
+    const seg = xt.map(x => `${Xp(x).toFixed(1)},${Yp(base, tPdf(x / se, df) / se).toFixed(1)}`).join(" ");
+    inner.push(`<polygon points='${Xp(sign * dt).toFixed(1)},${base} ${seg} ` +
+               `${Xp(sign * HALF).toFixed(1)},${base}' fill='${PAL.tail}' opacity='0.85'/>`);
+  }
+  const ptsT = xs.map((x, i) => `${Xp(x).toFixed(1)},${Yp(base, dens[i]).toFixed(1)}`).join(" ");
+  inner.push(`<polyline points='${ptsT}' fill='none' stroke='${PAL.ink}' stroke-width='2'/>`);
+  parts.push(`<g mask='url(#fadeM)'>${inner.join("")}</g>`);
+
+  parts.push(`<line x1='${ML}' x2='${ML + S}' y1='${base}' y2='${base}' stroke='${PAL.rule}' stroke-width='1'/>`);
+
+  // H₀ sits at the centre — a difference of zero
+  parts.push(`<line x1='${X0}' x2='${X0}' y1='${base}' y2='${base + 5}' stroke='${PAL.muted}' stroke-width='1'/>`);
+  parts.push(`<text x='${X0}' y='${base + 18}' text-anchor='middle' font-size='11.5' fill='${PAL.muted}'>H₀ · 0</text>`);
+
+  // critical difference ±t·se, where the tail area equals alpha
+  const tc = tInv(1 - ALPHA / 2, df), dc = tc * se;
+  if (dc < HALF) {
+    const ytop = Math.min(Yp(base, tPdf(tc, df) / se), base - 44);
+    for (const sign of [1, -1]) {
+      const xc = Xp(sign * dc).toFixed(1);
+      parts.push(`<line x1='${xc}' x2='${xc}' y1='${base}' y2='${ytop.toFixed(1)}' ` +
+                 `stroke='${PAL.muted}' stroke-width='1.3' stroke-dasharray='2 3'/>`);
+      parts.push(`<text x='${xc}' y='${base + 18}' text-anchor='middle' font-size='11.5' ` +
+                 `fill='${PAL.muted}'>±t·se</text>`);
+    }
+  }
+
+  // observed difference D̂ — vertical marker; label toward centre, flag off-scale
+  const off = Math.abs(dObs) > HALF;
+  const dm = Math.max(-HALF + 0.05, Math.min(HALF - 0.05, dObs));
+  const mx = Xp(dm);
+  const lineTop = base - Math.round(SH * 0.5);
+  parts.push(`<line x1='${mx.toFixed(1)}' x2='${mx.toFixed(1)}' y1='${base}' ` +
+             `y2='${lineTop}' stroke='${PAL.ink}' stroke-width='1.4'/>`);
+  const leftHalf = mx < X0;
+  const anchor = leftHalf ? "start" : "end", dx = leftHalf ? 8 : -8;
+  const arrow = off ? (dObs > 0 ? " →" : "← ") : "";
+  const lbl = leftHalf ? `${arrow}D̂ = ${dObs.toFixed(2)}` : `D̂ = ${dObs.toFixed(2)}${arrow}`;
+  parts.push(`<text x='${(mx + dx).toFixed(1)}' y='${(lineTop - 7).toFixed(1)}' text-anchor='${anchor}' ` +
+             `font-size='13.5' font-weight='600' fill='${PAL.ink}'>${lbl}</text>`);
+  parts.push(`<text x='${(mx + dx).toFixed(1)}' y='${(lineTop + 9).toFixed(1)}' text-anchor='${anchor}' ` +
+             `font-size='11.5' fill='${PAL.muted}'>t = ${t.toFixed(2)}</text>`);
+
+  // α above the p-value, top-left inside the box
+  const ptxt = p >= 0.001 ? `p = ${p.toFixed(3)}` : "p &lt; 0.001";
+  parts.push(`<text x='${ML + 8}' y='${top + 16}' font-size='11.5' fill='${PAL.muted}'>α = ${ALPHA}</text>`);
+  parts.push(`<text x='${ML + 8}' y='${top + 41}' font-size='19' font-weight='700' fill='${PAL.tail}'>${ptxt}</text>`);
+  parts.push(`<text x='${ML + 8}' y='${top + 59}' font-size='11.5' fill='${PAL.muted}'>two-sided tail area</text>`);
+
+  // the verdict pill, just below the p-value / tail-area label
+  const reject = p <= ALPHA;
+  const vtxt = reject ? "H₀ rejected" : "H₀ not rejected";
+  const vw = vtxt.length * 6.7 + 24, vy = top + 70;
+  parts.push(`<rect x='${ML + 8}' y='${vy}' width='${vw.toFixed(0)}' height='23' rx='11.5' fill='${reject ? "#C0392B" : "#9AA0A6"}'/>`);
+  parts.push(`<text x='${(ML + 8 + vw / 2).toFixed(1)}' y='${vy + 16}' text-anchor='middle' ` +
+             `font-size='12.5' font-weight='600' fill='#fff'>${vtxt}</text>`);
+
+  // legend, top-right inside the box
+  const lx = ML + S - 196;
+  parts.push(`<line x1='${lx}' x2='${lx + 22}' y1='${top + 14}' y2='${top + 14}' stroke='${PAL.ink}' stroke-width='2'/>`);
+  parts.push(`<text x='${lx + 28}' y='${top + 18}' font-size='12' fill='${PAL.ink}'>the difference under H₀ (df = ${df})</text>`);
+
+  // hover guide (hidden until hover) — mirrors step 3
+  parts.push(`<line id='hoverLine' x1='${X0}' x2='${X0}' y1='${base}' y2='${base}' ` +
+             `stroke='${PAL.ink}' stroke-width='1.2' stroke-dasharray='4 3' opacity='0'/>`);
+  parts.push(`<text id='hoverLbl' x='${X0}' y='${base - 8}' text-anchor='middle' font-size='12' ` +
+             `font-weight='600' fill='${PAL.ink}' opacity='0'></text>`);
+
+  return `<svg id='diffSvg' viewBox='0 0 ${FW} ${height}' xmlns='http://www.w3.org/2000/svg' ` +
+         `style='cursor:crosshair'>${parts.join("")}</svg>`;
+}
+
+/* ---- hover wiring: difference panel x ⇄ implied population means ---------- */
+
+function wireHover(state) {
+  const svg = document.getElementById("diffSvg");
+  const hov = document.getElementById("hoverLine"), hl = document.getElementById("hoverLbl");
+  const iL = document.getElementById("impL"), iR = document.getElementById("impR");
+  const iLbl = document.getElementById("impLbl");
+
+  const curveY = (x) => {                       // null-density height (px) at pixel x
+    const d = (x - X0) / SC;
+    return Yp(BASE1, tPdf(d / state.se, state.df) / state.se);
+  };
+  const usr = (e) => {
+    const pt = svg.createSVGPoint();
+    pt.x = e.clientX; pt.y = e.clientY;
+    return pt.matrixTransform(svg.getScreenCTM().inverse());
+  };
+  const hide = () => [hov, hl, iL, iR, iLbl].forEach(el => { el.style.opacity = 0; });
+
+  svg.addEventListener("pointermove", (e) => {
+    const u = usr(e);
+    if (u.x < ML || u.x > ML + S || u.y < 14 || u.y > BASE1 + 20) { hide(); return; }
+    const x = u.x, cy = curveY(x), d = (x - X0) / SC;
+    hov.setAttribute("x1", x); hov.setAttribute("x2", x);
+    hov.setAttribute("y1", BASE1); hov.setAttribute("y2", cy);
+    hov.style.opacity = 1;
+    const ly = Math.min(Math.max(cy - 8, 14 + 90), BASE1 - 6);
+    hl.textContent = "difference = " + d.toFixed(2);
+    hl.setAttribute("x", Math.min(Math.max(x, ML + 60), ML + S - 60)); hl.setAttribute("y", ly);
+    hl.style.opacity = 1;
+    const xl = X0 - (d / 2) * SC, xr = X0 + (d / 2) * SC;
+    iL.setAttribute("x1", xl); iL.setAttribute("x2", xl); iL.style.opacity = 1;
+    iR.setAttribute("x1", xr); iR.setAttribute("x2", xr); iR.style.opacity = 1;
+    iLbl.style.opacity = 1;
+  });
+  svg.addEventListener("pointerleave", hide);
+}
+
+/* ---- wiring -------------------------------------------------------------- */
+
+const sliders = document.getElementById("sliders");
+let pool = makePool(24); // one fixed draw — dots don't jitter as you drag
+
+const deltaS = makeSlider(sliders, { label: "true difference · Δ", min: 0, max: 3, step: 0.05, value: 0.8, fmt: v => v.toFixed(2), onInput: refresh });
+const varS   = makeSlider(sliders, { label: "true variance · σ²", min: 0.25, max: 4, step: 0.05, value: 1.0, fmt: v => v.toFixed(2), onInput: refresh });
+const nS     = makeSlider(sliders, { label: "sample size · n per group", min: 3, max: 100, step: 1, value: 12, fmt: v => v.toFixed(0), onInput: refresh });
+
+function refresh() {
+  const delta = deltaS.value, varr = varS.value, n = nS.value;
+  const sigma = Math.sqrt(varr);
+  const xa = pool.z1.slice(0, n).map(z => -delta / 2 + sigma * z);
+  const xb = pool.z2.slice(0, n).map(z =>  delta / 2 + sigma * z);
+  const res = tTest(xa, xb);
+  const dObs = mean(xb) - mean(xa);
+  const sp = Math.sqrt((svar(xa) + svar(xb)) / 2);
+  const se = sp * Math.sqrt(2 / n);          // standard error of the difference
+  document.getElementById("figPop").innerHTML = populationSvg(delta, varr, n, pool);
+  document.getElementById("figT").innerHTML = nullDistSvg(dObs, se, res.df, res.p, res.t);
+  wireHover({ se, df: res.df });
+}
+
+document.getElementById("resample").addEventListener("click", () => {
+  pool = makePool(); // only the button re-randomizes
+  refresh();
+});
+
+refresh();
+</script>
+</body>
+</html>
