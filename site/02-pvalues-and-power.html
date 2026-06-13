@@ -9,18 +9,21 @@
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="assets/style.css">
 <style>
-  /* the 2×2 contingency table */
-  table.cmx { border-collapse: collapse; font-family: var(--sans); margin: 4px 0; width: 100%; max-width: 550px; }
-  .cmx td, .cmx th { padding: 10px 12px; text-align: center; font-weight: 400; }
-  .cmx th.colhead { font-size: 11px; color: var(--muted); font-weight: 500; }
-  .cmx th.rowlab { font-size: 12.5px; font-weight: 600; text-align: right; white-space: nowrap; }
-  .cmx td.count { border: 1px solid var(--rule); min-width: 78px; }
-  .cmx td.count .n { display: block; font-size: 18px; font-weight: 600; color: #333; font-variant-numeric: tabular-nums; }
-  .cmx td.count .code { display: block; font-size: 10px; color: var(--muted); letter-spacing: .06em; margin-top: 2px; }
-  .cmx td.tot { color: var(--muted); font-size: 13px; font-variant-numeric: tabular-nums; }
-  .cmx td.metric .name { display: block; font-size: 9.5px; color: var(--muted); letter-spacing: .05em; white-space: nowrap; }
-  .cmx td.metric .val { display: block; font-size: 15.5px; font-weight: 600; color: #333; margin-top: 2px; font-variant-numeric: tabular-nums; }
-  .cmx td.metric.strong .val { font-weight: 700; font-size: 16.5px; }
+  /* the 2×2 contingency table — large, uniform cells, vertical row labels */
+  table.cmx { border-collapse: collapse; font-family: var(--sans); margin: 4px 0; width: 100%; }
+  .cmx td, .cmx th { padding: 8px 10px; text-align: center; font-weight: 400; }
+  .cmx th.colhead { font-size: 12.5px; color: var(--muted); font-weight: 600; padding-bottom: 12px; }
+  .cmx th.rowlab { width: 30px; padding: 0 4px; }
+  .cmx th.rowlab span { writing-mode: vertical-rl; transform: rotate(180deg); display: inline-block;
+    font-size: 13px; font-weight: 600; letter-spacing: .02em; white-space: nowrap; }
+  .cmx td.count { border: 1.5px solid var(--rule); width: 50%; height: 104px; vertical-align: middle; }
+  .cmx td.count .n { display: block; font-size: 30px; font-weight: 600; color: #2A2A2A; font-variant-numeric: tabular-nums; line-height: 1; }
+  .cmx td.count .code { display: block; font-size: 11px; color: var(--muted); letter-spacing: .08em; margin-top: 6px; }
+  .cmx td.tot { color: var(--muted); font-size: 13.5px; font-variant-numeric: tabular-nums; }
+  .cmx td.metric .name { display: block; font-size: 10px; color: var(--muted); letter-spacing: .04em; white-space: nowrap; }
+  .cmx td.metric .val { display: block; font-size: 17px; font-weight: 600; color: #333; margin-top: 3px; font-variant-numeric: tabular-nums; }
+  .cmx td.metric.strong .val { font-weight: 700; font-size: 19px; }
+  .cmx td.metric.strong .name { color: var(--soft); font-weight: 600; }
   .bg-tp { background: #E7EEF7; } .bg-fn { background: #F4F8FB; }
   .bg-fp { background: #FCF4E8; } .bg-tn { background: #FAEBDB; }
   .figwrap { overflow-x: auto; }
@@ -167,15 +170,17 @@ function tableHtml(prev, sens, spec, total) {
   const metric = (name, val, strong) =>
     `<td class="metric${strong ? " strong" : ""}"><span class="name">${name}</span><span class="val">${val}</span></td>`;
 
+  const rowlab = (color, txt) => `<th class="rowlab" rowspan="1"><span style="color:${color}">${txt}</span></th>`;
+
   return `<table class="cmx">
-    <tr><td></td><th class="colhead">predicted +</th><th class="colhead">predicted −</th><th class="colhead">total</th><td></td></tr>
-    <tr><th class="rowlab" style="color:${RC.TP}">condition +&ensp;P</th>${count("TP")}${count("FN")}
+    <tr><td></td><td></td><th class="colhead">predicted +</th><th class="colhead">predicted −</th><th class="colhead">total</th><td></td></tr>
+    <tr>${rowlab(RC.TP, `condition + · P`)}<td></td>${count("TP")}${count("FN")}
         <td class="tot">${fmtN(c.P)}</td>${metric("SENSITIVITY (power)", pct(c.TP, c.P))}</tr>
-    <tr><th class="rowlab" style="color:${RC.TN}">condition −&ensp;N</th>${count("FP")}${count("TN")}
+    <tr>${rowlab(RC.TN, `condition − · N`)}<td></td>${count("FP")}${count("TN")}
         <td class="tot">${fmtN(c.N)}</td>${metric("SPECIFICITY (1−α)", pct(c.TN, c.N))}</tr>
-    <tr><th class="colhead" style="text-align:right;font-weight:500">total</th>
+    <tr><td></td><th class="colhead" style="text-align:right;font-weight:500">total</th>
         <td class="tot">${fmtN(c.PP)}</td><td class="tot">${fmtN(c.PN)}</td><td class="tot">${fmtN(total)}</td><td></td></tr>
-    <tr><td></td>${metric("PPV (precision)", pct(c.TP, c.PP), true)}${metric("NPV", pct(c.TN, c.PN), true)}<td></td><td></td></tr>
+    <tr><td></td><td></td>${metric("PPV (precision)", pct(c.TP, c.PP), true)}${metric("NPV", pct(c.TN, c.PN), true)}<td></td><td></td></tr>
   </table>`;
 }
 
@@ -194,9 +199,9 @@ function swatchLabel(x, yc, k, n) {
 
 function ribbonSvg(prev, sens, spec, total) {
   const c = confusion(prev, sens, spec, total);
-  const Hin = 290, gap = 16, mt = 24;
-  const gw = 10, gb = 40;            // within-group gap, between-group gap
-  const xl = 118, x1 = 388;          // ribbons run from xl to the arrow tips
+  const Hin = 320, gap = 18, mt = 24;
+  const gw = 10, gb = 44;            // within-group gap, between-group gap
+  const xl = 104, x1 = 476;          // ribbons run from xl to the arrow tips — wide
   const width = 560;
 
   const h = {};
@@ -249,15 +254,16 @@ function ribbonSvg(prev, sens, spec, total) {
   if (c.P) parts.push(leftLabel(yPtop + hP / 2, RC.TP, `P · ${fmtN(c.P)}`, "condition +"));
   if (c.N) parts.push(leftLabel(yNtop + hN / 2, RC.TN, `N · ${fmtN(c.N)}`, "condition −"));
 
-  // right prediction-zone brackets + labels, just past the arrow tips
-  const xbr = x1 + 14;
+  // right prediction-zone brackets + vertical labels, just past the arrow tips
+  const xbr = x1 + 12;
   for (const [grp, sym] of [["+", "predicted +"], ["−", "predicted −"]]) {
     let [top, bot] = zone[grp];
     bot -= gw; // trim trailing within-gap
     parts.push(`<path d='M${xbr},${top.toFixed(1)} h6 V${bot.toFixed(1)} h-6' fill='none' ` +
                `stroke='${PAL.muted}' stroke-width='1.2'/>`);
-    parts.push(`<text x='${xbr + 11}' y='${((top + bot) / 2 + 4).toFixed(1)}' font-size='12.5' ` +
-               `font-weight='600' fill='${PAL.ink}'>${sym}</text>`);
+    const ly = ((top + bot) / 2).toFixed(1), lxv = xbr + 26;
+    parts.push(`<text x='${lxv}' y='${ly}' text-anchor='middle' font-size='12.5' font-weight='600' ` +
+               `fill='${PAL.ink}' transform='rotate(-90 ${lxv} ${ly})'>${sym}</text>`);
   }
 
   // legend — a horizontal row under the flows

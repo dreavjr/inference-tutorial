@@ -63,7 +63,7 @@
       sample is drawn; <b>hover the Δ panel</b> to read off the implied population
       means</p>
       <div id="sliders" class="sliders"></div>
-      <div style="text-align:right"><button class="resample" id="resample">↻&ensp;new sample</button></div>
+      <div class="resample-row"><button class="resample" id="resample">↻&ensp;new sample</button></div>
     </div>
 
     <div class="figrow">
@@ -129,18 +129,18 @@
 <script src="assets/common.js"></script>
 <script>
 "use strict";
-/* The shared square + scale — identical to step 1, so the panels compare directly. */
-const S = 460, HALF = 5.0, YMAX = 1.25;
-const SC = S / (2 * HALF), K = S / YMAX;
+/* The shared scale — identical to step 1, so the panels compare directly. */
+const S = 460, SH = 300, HALF = 5.0, YMAX = 0.9;
+const SC = S / (2 * HALF), K = SH / YMAX;
 const ML = 16, MR = 16, BH = 30;
 const FW = ML + S + MR, X0 = ML + S / 2;
-const TOP = 14, BASE = TOP + S, FH = BASE + BH;
+const TOP = 14, BASE = TOP + SH, FH = BASE + BH;
 
 const Xp = (x) => X0 + x * SC;
-const Yp = (base, dens, cap = S) => base - Math.min(dens * K, cap);
+const Yp = (base, dens, cap = SH) => base - Math.min(dens * K, cap);
 const clampx = (px, pad = 28) => Math.min(Math.max(px, ML + pad), ML + S - pad);
 
-function filledCurve(xs, dens, base, stroke, fill, op, { sw = 2, cap = S } = {}) {
+function filledCurve(xs, dens, base, stroke, fill, op, { sw = 2, cap = SH } = {}) {
   const pts = xs.map((x, i) => [Xp(x), Yp(base, dens[i], cap)]);
   const line = pts.map(p => `${p[0].toFixed(1)},${p[1].toFixed(1)}`).join(" ");
   const poly = `${pts[0][0].toFixed(1)},${base} ${line} ${pts[pts.length - 1][0].toFixed(1)},${base}`;
@@ -192,25 +192,29 @@ function posteriorSvg(delta, dObs, se, df) {
          `<stop offset='0' stop-color='#fff' stop-opacity='0'/>` +
          `<stop offset='0.22' stop-color='#fff' stop-opacity='1'/>` +
          `<stop offset='1' stop-color='#fff' stop-opacity='1'/></linearGradient>` +
-         `<mask id='fadeM'><rect x='0' y='${TOP}' width='${FW}' height='${S}' fill='url(#fadeG)'/></mask></defs>`);
+         `<mask id='fadeM'><rect x='0' y='${TOP}' width='${FW}' height='${SH}' fill='url(#fadeG)'/></mask></defs>`);
 
   const ds = linspace(-HALF, HALF, 321);
   const dens = ds.map(d => tPdf((d - dObs) / se, df) / se);
   p.push(`<g mask='url(#fadeM)'>` + filledCurve(ds, dens, BASE, PAL.ink, PAL.ink, 0.06) + `</g>`);
   p.push(`<line x1='${ML}' x2='${ML + S}' y1='${BASE}' y2='${BASE}' stroke='${PAL.rule}' stroke-width='1'/>`);
 
-  // three reference markers — dashed, full height; labels staggered in the top
-  // band (and clamped inside) so they never collide with a fading spike
-  const marker = (xv, color, lbl, lblY) => {
+  // reference markers — dashed, full height. The true Δ and observed Δ̂ share the
+  // top line but splay their labels to opposite sides (smaller→left, larger→right)
+  // so they never overprint each other; the null sits one line below, centred.
+  const marker = (xv, color, lbl, lblY, side) => {
     const x = Xp(xv);
+    const anchor = side < 0 ? "end" : side > 0 ? "start" : "middle";
+    const tx = side ? Math.min(Math.max(x + side * 5, ML + 12), ML + S - 12) : clampx(x);
     return `<line x1='${x.toFixed(1)}' x2='${x.toFixed(1)}' y1='${BASE}' y2='${lblY + 5}' ` +
            `stroke='${color}' stroke-width='1.4' stroke-dasharray='5 4'/>` +
-           `<text x='${clampx(x).toFixed(1)}' y='${lblY}' text-anchor='middle' font-size='13.5' ` +
+           `<text x='${tx.toFixed(1)}' y='${lblY}' text-anchor='${anchor}' font-size='13.5' ` +
            `font-weight='600' fill='${color}'>${lbl}</text>`;
   };
-  p.push(marker(delta, PAL.green, "Δ", TOP + 16));
-  p.push(marker(dObs, PAL.ink, "Δ̂", TOP + 33));
-  p.push(marker(0, PAL.muted, "0", TOP + 50));
+  const dLeft = delta <= dObs;            // which of Δ, Δ̂ is the left one
+  p.push(marker(delta, PAL.green, "Δ", TOP + 16, dLeft ? -1 : 1));
+  p.push(marker(dObs, PAL.ink, "Δ̂", TOP + 16, dLeft ? 1 : -1));
+  p.push(marker(0, PAL.muted, "0", TOP + 34, 0));
 
   // hover guide (hidden until hover)
   p.push(`<line id='hoverLine' x1='${X0}' x2='${X0}' y1='${BASE}' y2='${BASE}' ` +

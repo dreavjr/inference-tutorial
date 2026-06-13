@@ -28,7 +28,7 @@ body {
   text-rendering: optimizeLegibility;
 }
 
-main { max-width: 1200px; margin: 0 auto; padding: 56px 28px 72px; }
+main { max-width: 1200px; margin: 0 auto; padding: 56px clamp(24px, 5vw, 68px) 72px; }
 
 /* ---- header ---------------------------------------------------------- */
 
@@ -202,14 +202,19 @@ input[type=range]::-moz-range-thumb {
 }
 input[type=range]:focus-visible { outline: 2px solid var(--blue); outline-offset: 4px; border-radius: 4px; }
 
+.resample-row {
+  text-align: center;
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid var(--rule);
+}
 button.resample {
   font: 600 13px/1 var(--sans);
   color: var(--ink);
   background: transparent;
   border: 1.2px solid var(--ink);
   border-radius: 999px;
-  padding: 9px 20px;
-  margin-top: 14px;
+  padding: 10px 24px;
   cursor: pointer;
   transition: background .15s ease, color .15s ease;
 }
@@ -224,11 +229,12 @@ button.resample:hover { background: var(--ink); color: var(--bg); }
 
 figure { margin: 0; }
 .figcap {
-  font: 600 11px/1.5 var(--sans);
-  letter-spacing: .18em;
+  font: 600 13px/1.5 var(--sans);
+  font-style: normal;
+  letter-spacing: .1em;
   text-transform: uppercase;
-  color: var(--muted);
-  margin: 0 0 10px;
+  color: var(--soft);
+  margin: 0 0 12px;
 }
 .fig svg { display: block; width: 100%; height: auto; }
 .fig svg text { font-family: var(--sans); }

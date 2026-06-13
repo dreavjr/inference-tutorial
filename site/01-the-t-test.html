@@ -43,8 +43,8 @@
       estimation noise.</li>
       <li><em>If H₀ were true</em>, t would follow a known distribution:
       <strong>Student's&nbsp;t</strong> (the dark curve). Notice that this is a statement
-      about the <em>statistic</em>, not about the data — it is a different curve with its
-      own shape (compare it with the pale gaussian).</li>
+      about the <em>statistic</em>, not about the data — a curve with its own shape,
+      fatter in the tails than a normal when the sample is small.</li>
       <li>The <strong>p-value</strong> is the probability, <em>under H₀</em>, of a t at
       least as extreme as the one you got: the shaded two-sided <strong>tail
       area</strong>.</li>
@@ -59,7 +59,7 @@
       <tr><td>sample</td><td>the dots just above (blue) and below (orange) the line</td></tr>
       <tr><td>H₀</td><td>“blue and orange coincide” — drag Δ to 0 to <em>make it true</em></td></tr>
       <tr><td>test statistic</td><td>the marker labelled <em>t</em> on the second baseline</td></tr>
-      <tr><td>its null distribution</td><td>the dark Student-t curve — <em>not</em> the data's gaussian</td></tr>
+      <tr><td>its null distribution</td><td>the dark Student-t curve, shaded beneath</td></tr>
       <tr><td>p-value</td><td>the shaded tail area, also in numbers</td></tr>
       <tr><td>α</td><td>the bar p must clear; ticks mark the critical t</td></tr>
     </table>
@@ -69,7 +69,7 @@
     <div class="controls">
       <p class="hint">drag a slider — the truth changes; press the button — a new sample is drawn</p>
       <div id="sliders" class="sliders"></div>
-      <div style="text-align:right"><button class="resample" id="resample">↻&ensp;new sample</button></div>
+      <div class="resample-row"><button class="resample" id="resample">↻&ensp;new sample</button></div>
     </div>
 
     <div class="figrow">
@@ -100,10 +100,9 @@
       evidence, not importance.</li>
       <li><strong>Crank σ² up</strong> and watch significance melt away. The
       t statistic is a tug of war: signal (Δ) against noise (σ, tamed by √n).</li>
-      <li><strong>Drop n to 3 or 4</strong> and compare the dark curve with the pale
-      gaussian: fat tails. With so little data, large t happen easily by chance, so the
-      test demands a bigger t before it is surprised. By n ≈ 30 the two curves are
-      indistinguishable.</li>
+      <li><strong>Drop n to 3 or 4</strong> and watch the <em>±t</em> critical ticks
+      slide outward: with so little data the curve grows fat tails, so the test demands
+      a bigger t before it is surprised. By n ≈ 30 it is all but a normal again.</li>
     </ol>
 
     <h2>The moral</h2>
@@ -131,16 +130,17 @@
 <script src="assets/common.js"></script>
 <script>
 "use strict";
-/* Geometry: every panel is a square box on ONE scale — SC px per x-unit,
-   K px per density-unit — identical in step 3, so the panels compare directly. */
-const S = 460, HALF = 5.0, YMAX = 1.25;
-const SC = S / (2 * HALF), K = S / YMAX;
+/* Geometry: one shared scale — SC px per x-unit (width), K px per density-unit
+   (height) — identical in steps 3 and 4, so the panels compare directly. The box
+   is wider than tall (SH < width) to keep curves filling the frame. */
+const S = 460, SH = 300, HALF = 5.0, YMAX = 0.9;
+const SC = S / (2 * HALF), K = SH / YMAX;
 const ML = 16, MR = 16, BH = 30;
 const FW = ML + S + MR, X0 = ML + S / 2;
 const ALPHA = 0.05;
 
 const Xp = (x) => X0 + x * SC;
-const Yp = (base, dens, cap = S) => base - Math.min(dens * K, cap);
+const Yp = (base, dens, cap = SH) => base - Math.min(dens * K, cap);
 
 function filledCurve(xs, dens, base, stroke, fill, op, sw = 2) {
   const pts = xs.map((x, i) => [Xp(x), Yp(base, dens[i])]);
@@ -154,7 +154,7 @@ function filledCurve(xs, dens, base, stroke, fill, op, sw = 2) {
 
 function populationSvg(delta, varr, n, pool) {
   const sigma = Math.sqrt(varr);
-  const top = 14, base = top + S, height = base + BH;
+  const top = 14, base = top + SH, height = base + BH;
   const xs = linspace(-HALF, HALF, 201);
   const p = [];
 
@@ -180,10 +180,11 @@ function populationSvg(delta, varr, n, pool) {
 /* ---- panel 2: the statistic, its null distribution, and the p-value ----- */
 
 function tstatSvg(t, p, df) {
-  const top = 14, base = top + S, height = base + BH;
+  const top = 14, base = top + SH, height = base + BH;
   const xs = linspace(-HALF, HALF, 241);
   const tdens = xs.map(x => tPdf(x, df));
-  const parts = [filledCurve(xs, tdens, base, PAL.ink, PAL.ink, 0.05)];
+  // the null distribution, filled — the protagonist of this panel
+  const parts = [filledCurve(xs, tdens, base, PAL.ink, PAL.ink, 0.12)];
 
   // two-sided tail area = the p-value
   const tt = Math.min(Math.abs(t), HALF);
@@ -194,49 +195,53 @@ function tstatSvg(t, p, df) {
                `${Xp(sign * HALF).toFixed(1)},${base}' fill='${PAL.tail}' opacity='0.85'/>`);
   }
 
-  // pale gaussian — reference only, to show t ≠ normal
-  const ptsN = xs.map(x => `${Xp(x).toFixed(1)},${Yp(base, normPdf(x)).toFixed(1)}`).join(" ");
-  parts.push(`<polyline points='${ptsN}' fill='none' stroke='${PAL.pale}' stroke-width='1.6'/>`);
   // redraw the t stroke above the tail fill
   const ptsT = xs.map((x, i) => `${Xp(x).toFixed(1)},${Yp(base, tdens[i]).toFixed(1)}`).join(" ");
   parts.push(`<polyline points='${ptsT}' fill='none' stroke='${PAL.ink}' stroke-width='2'/>`);
 
   parts.push(`<line x1='${ML}' x2='${ML + S}' y1='${base}' y2='${base}' stroke='${PAL.rule}' stroke-width='1'/>`);
 
+  // H₀ sits at the centre, t = 0 — the null the whole curve is built around
+  parts.push(`<line x1='${X0}' x2='${X0}' y1='${base}' y2='${base + 5}' stroke='${PAL.muted}' stroke-width='1'/>`);
+  parts.push(`<text x='${X0}' y='${base + 18}' text-anchor='middle' font-size='11.5' fill='${PAL.muted}'>H₀ · t = 0</text>`);
+
   // critical values: the tail points where the tail area equals alpha
   const tc = tInv(1 - ALPHA / 2, df);
   if (tc < HALF) {
-    const ytop = Math.min(Yp(base, tPdf(tc, df)), base - 66);
+    const ytop = Math.min(Yp(base, tPdf(tc, df)), base - 44);
     for (const sign of [1, -1]) {
       const xc = Xp(sign * tc).toFixed(1);
       parts.push(`<line x1='${xc}' x2='${xc}' y1='${base}' y2='${ytop.toFixed(1)}' ` +
                  `stroke='${PAL.muted}' stroke-width='1.3' stroke-dasharray='2 3'/>`);
-      parts.push(`<text x='${xc}' y='${base + 19}' text-anchor='middle' font-size='11.5' ` +
-                 `fill='${PAL.muted}'>p = α</text>`);
+      parts.push(`<text x='${xc}' y='${base + 18}' text-anchor='middle' font-size='11.5' ` +
+                 `fill='${PAL.muted}'>±t</text>`);
     }
   }
 
-  // observed t — vertical marker with a label kept inside the box
+  // observed t — vertical marker; clamp to the frame and flag when it runs off-scale
+  const off = Math.abs(t) > HALF;
   const xm = Math.max(-HALF + 0.05, Math.min(HALF - 0.05, t));
-  const lblx = Math.min(Math.max(Xp(xm), ML + 44), ML + S - 44);
-  const lineTop = base - Math.round(S * 0.48);
-  parts.push(`<line x1='${Xp(xm).toFixed(1)}' x2='${Xp(xm).toFixed(1)}' y1='${base}' ` +
+  const mx = Xp(xm);
+  const lineTop = base - Math.round(SH * 0.5);
+  parts.push(`<line x1='${mx.toFixed(1)}' x2='${mx.toFixed(1)}' y1='${base}' ` +
              `y2='${lineTop}' stroke='${PAL.ink}' stroke-width='1.4'/>`);
-  const anchor = t < 0 ? "start" : "end", dx = t < 0 ? 7 : -7;
-  parts.push(`<text x='${(lblx + dx).toFixed(1)}' y='${lineTop - 6}' text-anchor='${anchor}' ` +
-             `font-size='13.5' font-weight='600' fill='${PAL.ink}'>t = ${t.toFixed(2)}</text>`);
+  // label anchored toward centre so it never spills past the frame edge
+  const leftHalf = mx < X0;
+  const anchor = leftHalf ? "start" : "end", dx = leftHalf ? 8 : -8;
+  const arrow = off ? (t > 0 ? " →" : "← ") : "";
+  const lbl = leftHalf ? `${arrow}t = ${t.toFixed(2)}` : `t = ${t.toFixed(2)}${arrow}`;
+  parts.push(`<text x='${(mx + dx).toFixed(1)}' y='${lineTop - 6}' text-anchor='${anchor}' ` +
+             `font-size='13.5' font-weight='600' fill='${PAL.ink}'>${lbl}</text>`);
 
   // p-value, top-left inside the box
   const ptxt = p >= 0.001 ? `p = ${p.toFixed(3)}` : "p &lt; 0.001";
-  parts.push(`<text x='${ML + 8}' y='${top + 26}' font-size='19' font-weight='700' fill='${PAL.tail}'>${ptxt}</text>`);
-  parts.push(`<text x='${ML + 8}' y='${top + 45}' font-size='11.5' fill='${PAL.muted}'>two-sided tail area</text>`);
+  parts.push(`<text x='${ML + 8}' y='${top + 24}' font-size='19' font-weight='700' fill='${PAL.tail}'>${ptxt}</text>`);
+  parts.push(`<text x='${ML + 8}' y='${top + 42}' font-size='11.5' fill='${PAL.muted}'>two-sided tail area</text>`);
 
-  // legend, top-right inside the box
-  const lx = ML + S - 208;
-  parts.push(`<line x1='${lx}' x2='${lx + 22}' y1='${top + 16}' y2='${top + 16}' stroke='${PAL.ink}' stroke-width='2'/>`);
-  parts.push(`<text x='${lx + 28}' y='${top + 20}' font-size='12' fill='${PAL.ink}'>t under H₀ (df = ${df})</text>`);
-  parts.push(`<line x1='${lx}' x2='${lx + 22}' y1='${top + 35}' y2='${top + 35}' stroke='${PAL.pale}' stroke-width='1.6'/>`);
-  parts.push(`<text x='${lx + 28}' y='${top + 39}' font-size='12' fill='${PAL.muted}'>gaussian, for comparison</text>`);
+  // legend, top-right inside the box — a single voice now
+  const lx = ML + S - 168;
+  parts.push(`<line x1='${lx}' x2='${lx + 22}' y1='${top + 14}' y2='${top + 14}' stroke='${PAL.ink}' stroke-width='2'/>`);
+  parts.push(`<text x='${lx + 28}' y='${top + 18}' font-size='12' fill='${PAL.ink}'>t under H₀ (df = ${df})</text>`);
 
   return `<svg viewBox='0 0 ${FW} ${height}' xmlns='http://www.w3.org/2000/svg'>${parts.join("")}</svg>`;
 }

@@ -41,7 +41,8 @@
       <tr><td><strong>m₀</strong></td><td>where you expect Δ to be, before data</td><td>a slider</td></tr>
       <tr><td><strong>κ₀</strong></td><td>how strongly — measured in <em>pseudo-observations</em>: your
           hunch enters the maths worth exactly κ₀ imaginary data points</td><td>a slider (try the extremes)</td></tr>
-      <tr><td><strong>a₀, b₀</strong></td><td>the same two roles, for the variance</td><td>held fixed and gentle</td></tr>
+      <tr><td><strong>a₀, b₀</strong></td><td>the same two roles, for the variance σ²</td>
+          <td>b₀ is a slider (where you expect σ²); a₀ held fixed and gentle</td></tr>
     </table>
 
     <p>The three square panels below are drawn the way Wikipedia draws this
@@ -67,7 +68,7 @@
         <div id="grpTruth"><p class="ctl-group-label">the truth &amp; the sample</p></div>
         <div id="grpPrior"><p class="ctl-group-label">the prior</p></div>
       </div>
-      <div style="text-align:right"><button class="resample" id="resample">↻&ensp;new sample</button></div>
+      <div class="resample-row"><button class="resample" id="resample">↻&ensp;new sample</button></div>
     </div>
 
     <div class="figrow three">
@@ -155,8 +156,9 @@
 const PRIOR_C = "#8E6FAE", LIK_C = "#C96A5E", POST_C = "#333333";
 const PRIOR_RGB = [142, 111, 174], LIK_RGB = [201, 106, 94], POST_RGB = [74, 74, 74];
 
-/* ---- fixed variance prior: gentle, centred on σ²_d ≈ 2 (i.e. σ² ≈ 1) ----- */
-const A0 = 2, B0 = 2;
+/* ---- variance prior: a₀ fixed and gentle; b₀ follows the σ²₀ slider so the
+   prior expects σ²_d ≈ 2σ²₀ (i.e. σ² ≈ σ²₀). E[σ²_d] = b₀/(a₀−1) = b₀. -------- */
+const A0 = 2;
 
 /* ---- geometry: contour squares ------------------------------------------- */
 const S2 = 320, ML2 = 16, MR2 = 16, BH2 = 30;
@@ -166,14 +168,14 @@ const VMAX = 5.0;                  // σ² axis (group units): 0..5
 const X2 = (d) => ML2 + (d + HALF2) / (2 * HALF2) * S2;
 const Y2 = (v) => BASE2 - v / VMAX * S2;
 
-/* ---- geometry: the 1-D squares (same scale as steps 1 & 3) --------------- */
-const S = 460, HALF = 5.0, YMAX = 1.25;
-const SC = S / (2 * HALF), K = S / YMAX;
+/* ---- geometry: the 1-D panels (same scale as steps 1 & 3) ---------------- */
+const S = 460, SH = 300, HALF = 5.0, YMAX = 0.9;
+const SC = S / (2 * HALF), K = SH / YMAX;
 const ML = 16, MR = 16, BH = 30;
 const FW = ML + S + MR, X0 = ML + S / 2;
-const TOP = 14, BASE = TOP + S, FH = BASE + BH;
+const TOP = 14, BASE = TOP + SH, FH = BASE + BH;
 const Xp = (x) => X0 + x * SC;
-const Yp = (base, dens, cap = S) => base - Math.min(dens * K, cap);
+const Yp = (base, dens, cap = SH) => base - Math.min(dens * K, cap);
 const clampx = (px, pad = 28) => Math.min(Math.max(px, ML + pad), ML + S - pad);
 
 /* ---- log-density fields over (Δ, σ²_d) ------------------------------------ */
@@ -292,39 +294,47 @@ function marginalSvg(prior, lik, post, delta) {
          `<stop offset='0' stop-color='#fff' stop-opacity='0'/>` +
          `<stop offset='0.22' stop-color='#fff' stop-opacity='1'/>` +
          `<stop offset='1' stop-color='#fff' stop-opacity='1'/></linearGradient>` +
-         `<mask id='fadeM'><rect x='0' y='${TOP}' width='${FW}' height='${S}' fill='url(#fadeG)'/></mask></defs>`);
+         `<mask id='fadeM'><rect x='0' y='${TOP}' width='${FW}' height='${SH}' fill='url(#fadeG)'/></mask></defs>`);
 
   const xs = linspace(-HALF, HALF, 321);
   const dPrior = xs.map(prior), dLik = xs.map(lik), dPost = xs.map(post);
 
-  const postLine = curvePath(xs, dPost, BASE);
+  // each curve gets a faint fill under it, then all three strokes on top
+  const filled = (dens, col, op) => {
+    const line = curvePath(xs, dens, BASE);
+    return `<polygon points='${Xp(-HALF).toFixed(1)},${BASE} ${line} ${Xp(HALF).toFixed(1)},${BASE}' fill='${col}' opacity='${op}'/>`;
+  };
   p.push(`<g mask='url(#fadeM)'>` +
-         `<polygon points='${Xp(-HALF).toFixed(1)},${BASE} ${postLine} ${Xp(HALF).toFixed(1)},${BASE}' fill='${POST_C}' opacity='0.06'/>` +
+         filled(dPrior, PRIOR_C, 0.10) +
+         filled(dLik, LIK_C, 0.10) +
+         filled(dPost, POST_C, 0.12) +
          `<polyline points='${curvePath(xs, dPrior, BASE)}' fill='none' stroke='${PRIOR_C}' stroke-width='2'/>` +
          `<polyline points='${curvePath(xs, dLik, BASE)}' fill='none' stroke='${LIK_C}' stroke-width='1.8'/>` +
-         `<polyline points='${postLine}' fill='none' stroke='${POST_C}' stroke-width='2.2'/>` +
+         `<polyline points='${curvePath(xs, dPost, BASE)}' fill='none' stroke='${POST_C}' stroke-width='2.2'/>` +
          `</g>`);
   p.push(`<line x1='${ML}' x2='${ML + S}' y1='${BASE}' y2='${BASE}' stroke='${PAL.rule}' stroke-width='1'/>`);
 
-  // reference markers, staggered in the top band like step 3
-  const marker = (xv, color, lbl, lblY) => {
+  // reference markers on the top line: Δ (right) and the null 0 (left), splayed apart
+  const marker = (xv, color, lbl, side) => {
     const x = Xp(xv);
-    return `<line x1='${x.toFixed(1)}' x2='${x.toFixed(1)}' y1='${BASE}' y2='${lblY + 5}' ` +
+    const anchor = side < 0 ? "end" : side > 0 ? "start" : "middle";
+    const tx = side ? Math.min(Math.max(x + side * 5, ML + 12), ML + S - 12) : clampx(x);
+    return `<line x1='${x.toFixed(1)}' x2='${x.toFixed(1)}' y1='${BASE}' y2='${TOP + 21}' ` +
            `stroke='${color}' stroke-width='1.4' stroke-dasharray='5 4'/>` +
-           `<text x='${clampx(x).toFixed(1)}' y='${lblY}' text-anchor='middle' font-size='13.5' ` +
+           `<text x='${tx.toFixed(1)}' y='${TOP + 16}' text-anchor='${anchor}' font-size='13.5' ` +
            `font-weight='600' fill='${color}'>${lbl}</text>`;
   };
-  p.push(marker(delta, PAL.green, "Δ", TOP + 16));
-  p.push(marker(0, PAL.muted, "0", TOP + 33));
+  p.push(marker(0, PAL.muted, "0", delta > 0.05 ? -1 : 0));
+  p.push(marker(delta, PAL.green, "Δ", 1));
 
   // legend, top-right inside the box
   const lx = ML + S - 168;
   const item = (y, col, txt, sw = 2) =>
     `<line x1='${lx}' x2='${lx + 22}' y1='${y}' y2='${y}' stroke='${col}' stroke-width='${sw}'/>` +
     `<text x='${lx + 28}' y='${y + 4}' font-size='12' fill='${PAL.ink}'>${txt}</text>`;
-  p.push(item(TOP + 16, PRIOR_C, "prior"));
-  p.push(item(TOP + 35, LIK_C, "likelihood (scaled)", 1.8));
-  p.push(item(TOP + 54, POST_C, "posterior", 2.2));
+  p.push(item(TOP + 34, PRIOR_C, "prior"));
+  p.push(item(TOP + 53, LIK_C, "likelihood (scaled)", 1.8));
+  p.push(item(TOP + 72, POST_C, "posterior", 2.2));
 
   return `<svg viewBox='0 0 ${FW} ${FH}' xmlns='http://www.w3.org/2000/svg'>${p.join("")}</svg>`;
 }
@@ -339,13 +349,15 @@ const deltaS = makeSlider(grpTruth, { label: "true difference · Δ", min: 0, ma
 const varS   = makeSlider(grpTruth, { label: "true variance · σ²", min: 0.25, max: 4, step: 0.05, value: 1.0, fmt: v => v.toFixed(2), onInput: render });
 const nS     = makeSlider(grpTruth, { label: "sample size · n per group", min: 3, max: 100, step: 1, value: 12, fmt: v => v.toFixed(0), onInput: render });
 
-const m0S    = makeSlider(grpPrior, { label: "prior centre · m₀", min: -2, max: 2, step: 0.05, value: 0, fmt: v => v.toFixed(2), onInput: render });
+const m0S    = makeSlider(grpPrior, { label: "prior centre for Δ · m₀", min: -2, max: 2, step: 0.05, value: 0, fmt: v => v.toFixed(2), onInput: render });
 const k0S    = makeSlider(grpPrior, { label: "prior weight · κ₀ (pseudo-obs.)", min: -1, max: 2, step: 0.05, value: 0,
                                       fmt: v => { const k = 10 ** v; return k < 10 ? k.toFixed(1) : k.toFixed(0); }, onInput: render });
+const s0S    = makeSlider(grpPrior, { label: "prior centre for σ² · σ²₀", min: 0.25, max: 4, step: 0.05, value: 1.0, fmt: v => v.toFixed(2), onInput: render });
 
 function render() {
   const delta = deltaS.value, varr = varS.value, n = nS.value;
   const m0 = m0S.value, k0 = 10 ** k0S.value;
+  const B0 = 2 * s0S.value;        // b₀ so the prior expects σ²_d ≈ 2σ²₀
   const sigma = Math.sqrt(varr);
 
   // the n per-pair differences: d_i ~ Normal(Δ, 2σ²)
