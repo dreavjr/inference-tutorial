@@ -1,0 +1,422 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>5 · The Bayesian decision: from a posterior to an act</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<main>
+  <header class="page">
+    <p class="kicker"><a href="index.html">From p-values to posteriors</a><span class="sep">·</span>Step 5 of 5</p>
+    <h1>The Bayesian decision: from a posterior to an act</h1>
+  </header>
+
+  <section class="prose">
+    <p><a href="04-the-prior.html">Step 4</a> handed us a posterior — a whole
+    distribution over the effect Δ. But a distribution is not yet a decision. Sooner or
+    later you must <em>act</em>: ship the drug, set the dose, choose B over A. A belief is
+    only worth something once it touches a choice.</p>
+
+    <p>Bayesian decision theory closes that last gap with one rule:
+    <strong>act to maximise expected utility under your posterior.</strong> It needs two
+    ingredients — the posterior you already have, and a <strong>reward model</strong> that
+    says how good each outcome is. We use a simple one-parameter family:</p>
+
+    <p class="formula" style="font-style:normal">U(x)&ensp;=&ensp;c&thinsp;·&thinsp;(1&thinsp;−&thinsp;|Δ&thinsp;−&thinsp;x|<sup>p</sup>)<span style="font-size:14px;color:#6D675D">&emsp;(floored at −c)</span></p>
+
+    <p>Read it plainly: if the truth is <strong>Δ</strong> and you commit to the value
+    <strong>x</strong>, you earn the most — a full <em>c</em> — when you land exactly on
+    the truth; the reward falls to <em>zero</em> when you miss by exactly one unit, goes
+    negative beyond that, and bottoms out at a flat penalty <strong>−c</strong> once
+    you're badly wrong. So the reward carves a fixed <strong>tolerance window</strong>,
+    Δ ± 1, that you want your belief to fall inside.</p>
+
+    <table class="concept">
+      <tr><th>knob</th><th>what it does</th><th>here</th></tr>
+      <tr><td><strong>p</strong></td><td>the <em>degree</em> — the shape of tolerance: a
+          forgiving tent at p = 1, a sharp all-or-nothing plateau as p climbs</td><td>a slider (1…10)</td></tr>
+      <tr><td><strong>c</strong></td><td>the <em>steepness</em> — the stakes: it scales
+          the whole reward, peak and penalty alike</td><td>a slider (1…10)</td></tr>
+      <tr><td><strong>Δ</strong></td><td>where the reward is centred — the truth itself;
+          we can draw it here only because we simulate</td><td>the green line</td></tr>
+    </table>
+
+    <p>The expected reward of any <em>belief</em> B is then the overlap of where you place
+    your credence with where the reward lives —</p>
+
+    <p class="formula" style="font-style:normal">E[U]&ensp;=&ensp;∫&thinsp;B(x)&thinsp;·&thinsp;U(x)&thinsp;dx</p>
+
+    <p>— the integral of the product of the two curves. The bottom row scores two beliefs
+    against the same reward. On the <strong>left</strong>, your honest
+    <strong style="color:#333">posterior</strong>. On the <strong>right</strong>, the
+    naïve reading of a classical result: take the <strong style="color:#3D6FB0">(1 − α)
+    confidence interval</strong> and treat it as a <em>uniform block</em> of probability —
+    “every value inside is equally plausible, everything outside impossible” — the same
+    flat box that step 1 drew, its area renormalised to 1. Each belief is painted
+    <strong style="color:#2E7D5B">green</strong> where it earns and
+    <strong style="color:#C0392B">red</strong> where it pays, and the pill reports its
+    expected reward.</p>
+  </section>
+
+  <section class="demo">
+    <div class="controls">
+      <p class="hint">drag a slider — the truth, the data, your prior, or the reward
+      change; press the button — a new sample is drawn</p>
+      <div id="sliders" class="sliders" style="align-items:start">
+        <div id="grpTruth"><p class="ctl-group-label">the truth &amp; the sample</p></div>
+        <div id="grpPrior"><p class="ctl-group-label">the prior</p></div>
+        <div id="grpDecision"><p class="ctl-group-label">the decision</p></div>
+      </div>
+      <div class="resample-row"><button class="resample" id="resample">↻&ensp;new sample</button></div>
+    </div>
+
+    <div class="figrow">
+      <figure>
+        <figcaption class="figcap">1 · two populations, one sample</figcaption>
+        <div class="fig" id="figPop"></div>
+      </figure>
+      <figure>
+        <figcaption class="figcap">2 · the marginal over Δ — prior · likelihood · posterior</figcaption>
+        <div class="fig" id="figMarg"></div>
+      </figure>
+    </div>
+
+    <div class="figrow">
+      <figure>
+        <figcaption class="figcap">3 · the Bayesian decision — posterior × reward</figcaption>
+        <div class="fig" id="figRewPost"></div>
+      </figure>
+      <figure>
+        <figcaption class="figcap">4 · the confidence-interval reading — CI-as-uniform × reward</figcaption>
+        <div class="fig" id="figRewCI"></div>
+      </figure>
+    </div>
+  </section>
+
+  <section class="prose">
+    <h2>Try this</h2>
+    <ol>
+      <li><strong>Defaults.</strong> The posterior earns more than the CI-box. Both share
+      the same centre — the observed Δ̂ — but the posterior piles its credence near that
+      estimate, while the uniform box bleeds it evenly out to the interval's edges, some
+      of it spilling past the ±1 window into the red. The flat reading throws away the
+      very shape the posterior worked to find.</li>
+      <li><strong>Crank n to 100.</strong> Both beliefs sharpen and the gap narrows: once
+      the interval shrinks safely inside the window, even the crude uniform reading does
+      fine. With enough data the shape stops mattering — the same washing-out you saw with
+      priors in step 4.</li>
+      <li><strong>Drop n to 3 or 4.</strong> The confidence interval balloons and the box
+      smears credence far into the red wings; the posterior, anchored by its prior, keeps
+      more mass in the green. The Bayesian advantage is largest exactly when data are
+      scarce — and exactly when the uniform reading is most tempting.</li>
+      <li><strong>Push p toward 10.</strong> The reward turns all-or-nothing: a flat
+      plateau out to ±1, a cliff beyond. Now only one thing matters — how much of your
+      belief sits <em>inside</em> the window — and a tall, narrow posterior and a fat box
+      can score closer than you'd think. Then raise <strong>c</strong>: the stakes scale,
+      and so does the gap between the two decisions.</li>
+      <li><strong>Tighten the prior</strong> (κ₀ ↑) or shift <strong>m₀</strong>. The
+      posterior's expected reward responds to beliefs the confidence interval cannot even
+      express — it has no prior to set, so it must treat scarce data as if every value in
+      a wide interval were equally real.</li>
+    </ol>
+
+    <h2>The moral</h2>
+    <div class="moral">
+      <ul>
+        <li>A posterior is an <em>input</em> to a decision, not the decision itself. Pair
+        it with a reward model and act on expected utility — that is the whole of Bayesian
+        decision theory.</li>
+        <li>A confidence interval is <strong>not</strong> a probability distribution. The
+        common habit of reading it as “uniform over the plausible values” is a specific,
+        and usually worse, belief — and a decision made on it earns less.</li>
+        <li>The shape the posterior carries — mass piled near the estimate, thinning into
+        the tails — is precisely what a uniform block discards, and precisely what a reward
+        centred on the truth pays you to keep.</li>
+        <li>Same data, same interval width — yet a different decision, because of how
+        honestly the uncertainty <em>inside</em> the interval is shaped.</li>
+      </ul>
+    </div>
+  </section>
+
+  <nav class="pager">
+    <a href="04-the-prior.html"><span class="lbl">Previous</span><span class="title">←&ensp;The role of the prior</span></a>
+    <a class="next" href="index.html"><span class="lbl">Series</span><span class="title">From p-values to posteriors</span></a>
+  </nav>
+</main>
+
+<script src="assets/common.js"></script>
+<script>
+"use strict";
+/* ---- colours of the voices ---------------------------------------------- */
+const PRIOR_C = "#8E6FAE", LIK_C = "#C96A5E", POST_C = "#333333";
+const REWARD_C = "#A77B2E";                 // the reward landscape
+const GRN_F = "#2E7D5B", RED_F = "#C0392B"; // belief painted by reward sign
+const A0 = 2;                               // variance prior: a₀ fixed and gentle
+
+/* ---- geometry: the 1-D panels (same scale as steps 1, 3 & 4) ------------- */
+const S = 460, SH = 300, HALF = 5.0, YMAX = 0.9;
+const SC = S / (2 * HALF), K = SH / YMAX;
+const ML = 16, MR = 16, BH = 30;
+const FW = ML + S + MR, X0 = ML + S / 2;
+const TOP = 14, BASE = TOP + SH, FH = BASE + BH;
+const Xp = (x) => X0 + x * SC;
+const Yp = (base, dens, cap = SH) => base - Math.min(dens * K, cap);
+const clampx = (px, pad = 28) => Math.min(Math.max(px, ML + pad), ML + S - pad);
+
+/* reward panels: a signed vertical axis. Reward 0 rides a mid-line; +c climbs
+   to the top, −c sinks to the baseline. Beliefs (always ≥ 0) rise from the
+   mid-line too, so painting their fill by the sign of the reward beneath each x
+   shows the product directly: green earns, red pays. */
+const RMID = TOP + 0.52 * SH, RUP = RMID - (TOP + 8), RDN = BASE - RMID;
+
+function curvePath(xs, dens, base, cap = S) {
+  return xs.map((x, i) => `${Xp(x).toFixed(1)},${Yp(base, dens[i], cap).toFixed(1)}`).join(" ");
+}
+
+/* ---- panel 1: the two populations and the sample in hand ----------------- */
+
+function populationSvg(delta, varr, n, pool) {
+  const sigma = Math.sqrt(varr);
+  const xs = linspace(-HALF, HALF, 201);
+  const p = [];
+  for (const [mu, col] of [[-delta / 2, PAL.blue], [delta / 2, PAL.orange]]) {
+    const pdf = xs.map(x => Math.exp(-0.5 * ((x - mu) / sigma) ** 2) / (sigma * Math.sqrt(2 * Math.PI)));
+    const line = curvePath(xs, pdf, BASE);
+    p.push(`<polygon points='${Xp(-HALF).toFixed(1)},${BASE} ${line} ${Xp(HALF).toFixed(1)},${BASE}' fill='${col}' opacity='0.10'/>`);
+    p.push(`<polyline points='${line}' fill='none' stroke='${col}' stroke-width='2'/>`);
+  }
+  p.push(`<line x1='${ML}' x2='${ML + S}' y1='${BASE}' y2='${BASE}' stroke='${PAL.rule}' stroke-width='1'/>`);
+  for (const [z, j, mu, col, side] of [[pool.z1, pool.j1, -delta / 2, PAL.blue, -1],
+                                       [pool.z2, pool.j2, delta / 2, PAL.orange, 1]]) {
+    for (let i = 0; i < n; i++) {
+      const x = Math.max(-HALF, Math.min(HALF, mu + sigma * z[i]));
+      const y = BASE + side * (11 + j[i] * 8);
+      p.push(`<circle cx='${Xp(x).toFixed(1)}' cy='${y.toFixed(1)}' r='3' fill='${col}' opacity='0.75'/>`);
+    }
+  }
+  return `<svg viewBox='0 0 ${FW} ${FH}' xmlns='http://www.w3.org/2000/svg'>${p.join("")}</svg>`;
+}
+
+/* ---- panel 2: the marginal over Δ — prior · likelihood · posterior -------- */
+
+function marginalSvg(prior, lik, post, delta) {
+  const p = [];
+  p.push(`<defs><linearGradient id='fadeG' gradientUnits='userSpaceOnUse' x1='0' y1='${TOP}' x2='0' y2='${BASE}'>` +
+         `<stop offset='0' stop-color='#fff' stop-opacity='0'/>` +
+         `<stop offset='0.22' stop-color='#fff' stop-opacity='1'/>` +
+         `<stop offset='1' stop-color='#fff' stop-opacity='1'/></linearGradient>` +
+         `<mask id='fadeM'><rect x='0' y='${TOP}' width='${FW}' height='${SH}' fill='url(#fadeG)'/></mask></defs>`);
+
+  const xs = linspace(-HALF, HALF, 321);
+  const dPrior = xs.map(prior), dPost = xs.map(post);
+  const REF = 0.72, refDens = REF * YMAX, refY = Yp(BASE, refDens);
+  const dLik = xs.map(x => lik(x) * refDens);
+
+  const filled = (dens, col, op) => {
+    const line = curvePath(xs, dens, BASE);
+    return `<polygon points='${Xp(-HALF).toFixed(1)},${BASE} ${line} ${Xp(HALF).toFixed(1)},${BASE}' fill='${col}' opacity='${op}'/>`;
+  };
+  p.push(`<g mask='url(#fadeM)'>` +
+         filled(dPrior, PRIOR_C, 0.10) +
+         filled(dPost, POST_C, 0.12) +
+         `<polyline points='${curvePath(xs, dPrior, BASE)}' fill='none' stroke='${PRIOR_C}' stroke-width='2'/>` +
+         `<polyline points='${curvePath(xs, dPost, BASE)}' fill='none' stroke='${POST_C}' stroke-width='2.2'/>` +
+         `<polyline points='${curvePath(xs, dLik, BASE)}' fill='none' stroke='${LIK_C}' stroke-width='1.8' stroke-dasharray='6 3'/>` +
+         `</g>`);
+  p.push(`<line x1='${ML}' x2='${ML + S}' y1='${BASE}' y2='${BASE}' stroke='${PAL.rule}' stroke-width='1'/>`);
+
+  p.push(`<line x1='${ML}' x2='${ML + S}' y1='${refY.toFixed(1)}' y2='${refY.toFixed(1)}' ` +
+         `stroke='${LIK_C}' stroke-width='1' stroke-dasharray='2 4' opacity='0.65'/>`);
+  p.push(`<text x='${ML + 6}' y='${(refY - 5).toFixed(1)}' font-size='10.5' font-style='italic' ` +
+         `fill='${LIK_C}'>likelihood: support = 1 at peak</text>`);
+
+  const marker = (xv, color, lbl, side) => {
+    const x = Xp(xv);
+    const anchor = side < 0 ? "end" : side > 0 ? "start" : "middle";
+    const tx = side ? Math.min(Math.max(x + side * 5, ML + 12), ML + S - 12) : clampx(x);
+    return `<line x1='${x.toFixed(1)}' x2='${x.toFixed(1)}' y1='${BASE}' y2='${TOP + 21}' ` +
+           `stroke='${color}' stroke-width='1.4' stroke-dasharray='5 4'/>` +
+           `<text x='${tx.toFixed(1)}' y='${TOP + 16}' text-anchor='${anchor}' font-size='13.5' ` +
+           `font-weight='600' fill='${color}'>${lbl}</text>`;
+  };
+  p.push(marker(0, PAL.muted, "0", delta > 0.05 ? -1 : 0));
+  p.push(marker(delta, PAL.green, "Δ", 1));
+
+  const lineX2 = ML + S, lineX1 = lineX2 - 24, labelX = lineX1 - 9;
+  const item = (y, col, txt, sw = 2, dash = "") =>
+    `<line x1='${lineX1}' x2='${lineX2}' y1='${y}' y2='${y}' stroke='${col}' stroke-width='${sw}'` +
+    `${dash ? ` stroke-dasharray='${dash}'` : ""}/>` +
+    `<text x='${labelX}' y='${y + 4}' text-anchor='end' font-size='12' fill='${PAL.ink}'>${txt}</text>`;
+  p.push(item(TOP + 34, PRIOR_C, "prior"));
+  p.push(item(TOP + 53, LIK_C, "likelihood (relative)", 1.8, "6 3"));
+  p.push(item(TOP + 72, POST_C, "posterior", 2.2));
+
+  return `<svg viewBox='0 0 ${FW} ${FH}' xmlns='http://www.w3.org/2000/svg'>${p.join("")}</svg>`;
+}
+
+/* ---- panels 3 & 4: a belief scored against the reward model --------------
+   The reward U(x) = c·max(1 − |x−Δ|^p, −1) is drawn as a landscape line about
+   the mid-line (peak +c at top, floor −c at the base, zero at the mid-line).
+   The belief — the posterior, or the confidence interval read as a uniform box
+   — rises from the same mid-line, and its fill is split at the reward's zero
+   crossings x = Δ ± 1: green inside (it earns), red outside (it pays). The pill
+   carries the exact expected reward, ∫ belief·U. */
+
+function rewardSvg({ dens, isBox, lo, hi, delta, p, c, BK, expR, better, accent, caption }) {
+  const tag = isBox ? "b" : "a";
+  const reward = (x) => c * Math.max(1 - Math.pow(Math.abs(x - delta), p), -1);
+  const yR = (r) => r >= 0 ? RMID - (r / c) * RUP : RMID - (r / c) * RDN;
+  const yB = (d) => RMID - Math.min(d * BK, RUP * 0.96);
+  const out = [];
+
+  out.push(`<defs><linearGradient id='fadeR${tag}' gradientUnits='userSpaceOnUse' x1='0' y1='${TOP}' x2='0' y2='${RMID}'>` +
+           `<stop offset='0' stop-color='#fff' stop-opacity='0'/><stop offset='0.18' stop-color='#fff' stop-opacity='1'/>` +
+           `<stop offset='1' stop-color='#fff' stop-opacity='1'/></linearGradient>` +
+           `<mask id='fadeRm${tag}'><rect x='0' y='${TOP}' width='${FW}' height='${SH}' fill='url(#fadeR${tag})'/></mask></defs>`);
+
+  // belief fill, split green (|x−Δ|<1) / red (outside) — the product's sign made visible
+  const gL = delta - 1, gR = delta + 1;
+  const drawLo = isBox ? lo : -HALF, drawHi = isBox ? hi : HALF;
+  const cl = (v) => Math.min(Math.max(v, drawLo), drawHi);
+  const fillSeg = (a, b, col) => {
+    if (b - a < 1e-3) return "";
+    const xs = linspace(a, b, Math.max(6, Math.round((b - a) * 48)));
+    const top = xs.map(x => `${Xp(x).toFixed(1)},${yB(dens(x)).toFixed(1)}`).join(" ");
+    return `<polygon points='${Xp(a).toFixed(1)},${RMID.toFixed(1)} ${top} ${Xp(b).toFixed(1)},${RMID.toFixed(1)}' fill='${col}' opacity='0.16'/>`;
+  };
+  let belief = fillSeg(drawLo, cl(gL), RED_F) + fillSeg(cl(gL), cl(gR), GRN_F) + fillSeg(cl(gR), drawHi, RED_F);
+  if (isBox) {
+    const hY = yB(dens((lo + hi) / 2));
+    belief += `<polyline points='${Xp(lo).toFixed(1)},${RMID.toFixed(1)} ${Xp(lo).toFixed(1)},${hY.toFixed(1)} ` +
+              `${Xp(hi).toFixed(1)},${hY.toFixed(1)} ${Xp(hi).toFixed(1)},${RMID.toFixed(1)}' fill='none' stroke='${accent}' stroke-width='2'/>`;
+  } else {
+    const pts = linspace(drawLo, drawHi, 321).map(x => `${Xp(x).toFixed(1)},${yB(dens(x)).toFixed(1)}`).join(" ");
+    belief += `<polyline points='${pts}' fill='none' stroke='${accent}' stroke-width='2'/>`;
+  }
+  out.push(`<g mask='url(#fadeRm${tag})'>${belief}</g>`);
+
+  // the reward landscape and its zero-line
+  out.push(`<line x1='${ML}' x2='${ML + S}' y1='${RMID.toFixed(1)}' y2='${RMID.toFixed(1)}' stroke='${PAL.rule}' stroke-width='1'/>`);
+  const rpts = linspace(-HALF, HALF, 421).map(x => `${Xp(x).toFixed(1)},${Math.max(TOP + 3, Math.min(BASE, yR(reward(x)))).toFixed(1)}`).join(" ");
+  out.push(`<polyline points='${rpts}' fill='none' stroke='${REWARD_C}' stroke-width='1.8'/>`);
+  out.push(`<text x='${ML + S - 4}' y='${(TOP + 13).toFixed(1)}' text-anchor='end' font-size='10.5' fill='${REWARD_C}'>reward = +c</text>`);
+  out.push(`<text x='${ML + S - 4}' y='${(RMID - 4).toFixed(1)}' text-anchor='end' font-size='10' fill='${PAL.muted}'>0</text>`);
+  out.push(`<text x='${ML + S - 4}' y='${(BASE - 5).toFixed(1)}' text-anchor='end' font-size='10' fill='${REWARD_C}'>−c</text>`);
+
+  // the truth Δ — the reward's peak — and the tolerance window Δ ± 1
+  const dx = Xp(Math.max(-HALF, Math.min(HALF, delta)));
+  out.push(`<line x1='${dx.toFixed(1)}' x2='${dx.toFixed(1)}' y1='${BASE}' y2='${TOP + 22}' stroke='${PAL.green}' stroke-width='1.4' stroke-dasharray='5 4'/>`);
+  out.push(`<text x='${dx.toFixed(1)}' y='${TOP + 18}' text-anchor='middle' font-size='13' font-weight='600' fill='${PAL.green}'>Δ</text>`);
+  for (const xe of [gL, gR]) if (xe > -HALF && xe < HALF)
+    out.push(`<line x1='${Xp(xe).toFixed(1)}' x2='${Xp(xe).toFixed(1)}' y1='${RMID.toFixed(1)}' y2='${(RMID + 6).toFixed(1)}' stroke='${PAL.muted}' stroke-width='1'/>`);
+
+  out.push(`<line x1='${ML}' x2='${ML + S}' y1='${BASE}' y2='${BASE}' stroke='${PAL.rule}' stroke-width='1'/>`);
+
+  // the pill: expected reward, ∫ belief · reward
+  const txt = `E[reward] = ${expR.toFixed(2)}`;
+  const pw = txt.length * 7.1 + 24, py = TOP + 6;
+  out.push(`<rect x='${ML + 8}' y='${py}' width='${pw.toFixed(0)}' height='24' rx='12' fill='${better ? "#2E7D5B" : "#9AA0A6"}'/>`);
+  out.push(`<text x='${(ML + 8 + pw / 2).toFixed(1)}' y='${py + 16}' text-anchor='middle' font-size='13' font-weight='700' fill='#fff'>${txt}</text>`);
+  out.push(`<text x='${ML + 8}' y='${py + 40}' font-size='10.5' fill='${PAL.muted}'>${caption}</text>`);
+  if (better) out.push(`<text x='${ML + 8}' y='${py + 55}' font-size='10.5' font-weight='600' fill='#2E7D5B'>✓ higher expected reward</text>`);
+
+  return `<svg viewBox='0 0 ${FW} ${FH}' xmlns='http://www.w3.org/2000/svg'>${out.join("")}</svg>`;
+}
+
+/* ---- wiring -------------------------------------------------------------- */
+
+const grpTruth = document.getElementById("grpTruth");
+const grpPrior = document.getElementById("grpPrior");
+const grpDecision = document.getElementById("grpDecision");
+let pool = makePool(15); // one fixed draw — dots don't jitter as you drag
+
+const deltaS = makeSlider(grpTruth, { label: "true difference · Δ", min: 0, max: 3, step: 0.05, value: 0.8, fmt: v => v.toFixed(2), onInput: render });
+const varS   = makeSlider(grpTruth, { label: "true variance · σ²", min: 0.25, max: 4, step: 0.05, value: 1.0, fmt: v => v.toFixed(2), onInput: render });
+const nS     = makeSlider(grpTruth, { label: "sample size · n per group", min: 3, max: 100, step: 1, value: 12, fmt: v => v.toFixed(0), onInput: render });
+
+const m0S    = makeSlider(grpPrior, { label: "prior centre for Δ · m₀", min: -2, max: 2, step: 0.05, value: 0, fmt: v => v.toFixed(2), onInput: render });
+const k0S    = makeSlider(grpPrior, { label: "prior weight · κ₀ (pseudo-obs.)", min: -1, max: 2, step: 0.05, value: 0,
+                                      fmt: v => { const k = 10 ** v; return k < 10 ? k.toFixed(1) : k.toFixed(0); }, onInput: render });
+const s0S    = makeSlider(grpPrior, { label: "prior centre for σ² · σ²₀", min: 0.25, max: 4, step: 0.05, value: 1.0, fmt: v => v.toFixed(2), onInput: render });
+
+const alphaS = makeSlider(grpDecision, { label: "false-positive rate · α (t-test)", min: 0.005, max: 0.2, step: 0.005, value: 0.05, fmt: v => v.toFixed(3), onInput: render });
+const pS     = makeSlider(grpDecision, { label: "reward model degree · p", min: 1, max: 10, step: 0.1, value: 2, fmt: v => v.toFixed(1), onInput: render });
+const cS     = makeSlider(grpDecision, { label: "reward model steepness · c", min: 1, max: 10, step: 0.1, value: 1, fmt: v => v.toFixed(1), onInput: render });
+
+// ∫ belief(x)·reward(x) dx — bounded because the reward is floored at −c
+function expectedReward(dens, delta, p, c) {
+  const A = -12, B = 12, M = 4000, h = (B - A) / M;
+  let s = 0;
+  for (let i = 0; i <= M; i++) {
+    const x = A + h * i, w = (i === 0 || i === M) ? 0.5 : 1;
+    s += w * dens(x) * c * Math.max(1 - Math.pow(Math.abs(x - delta), p), -1);
+  }
+  return s * h;
+}
+
+function render() {
+  const delta = deltaS.value, varr = varS.value, n = nS.value;
+  const m0 = m0S.value, k0 = 10 ** k0S.value, B0 = 2 * s0S.value;
+  const alpha = alphaS.value, p = pS.value, c = cS.value;
+  const sigma = Math.sqrt(varr);
+
+  // the per-group samples (so the classical CI is built exactly as in step 1) …
+  const xa = pool.z1.slice(0, n).map(z => -delta / 2 + sigma * z);
+  const xb = pool.z2.slice(0, n).map(z =>  delta / 2 + sigma * z);
+  // … and the n per-pair differences d_i ~ Normal(Δ, 2σ²) the model is fed
+  const d = xb.map((v, i) => v - xa[i]);
+  const dbar = mean(d);
+  const ssd = d.reduce((s, v) => s + (v - dbar) ** 2, 0);
+
+  // conjugate Normal-inverse-gamma update (as in step 4)
+  const kn = k0 + n;
+  const mn = (k0 * m0 + n * dbar) / kn;
+  const an = A0 + n / 2;
+  const bn = B0 + ssd / 2 + k0 * n * (dbar - m0) ** 2 / (2 * kn);
+
+  // marginals over Δ
+  const sc0 = Math.sqrt(B0 / (A0 * k0));          // prior:      t(2a₀), loc m₀
+  const scn = Math.sqrt(bn / (an * kn));          // posterior:  t(2aₙ), loc mₙ
+  const sdLik = Math.sqrt(ssd / (n - 1) / n);     // likelihood profile: Normal(d̄, s²_d/n)
+  const post = (x) => tPdf((x - mn) / scn, 2 * an) / scn;
+
+  // classical (1−α) CI for the difference, read as a uniform box of unit area
+  const sp = Math.sqrt((svar(xa) + svar(xb)) / 2);
+  const se = sp * Math.sqrt(2 / n), dfC = 2 * n - 2;
+  const hw = tInv(1 - alpha / 2, dfC) * se;
+  const ciLo = dbar - hw, ciHi = dbar + hw, boxH = 1 / (2 * hw);
+  const box = (x) => (x >= ciLo && x <= ciHi) ? boxH : 0;
+
+  // expected reward of each belief, and a shared height scale for the panels
+  const erPost = expectedReward(post, delta, p, c);
+  const erBox  = expectedReward(box,  delta, p, c);
+  const BK = 0.9 * RUP / Math.max(tPdf(0, 2 * an) / scn, boxH, 0.2);
+
+  document.getElementById("figPop").innerHTML = populationSvg(delta, varr, n, pool);
+  document.getElementById("figMarg").innerHTML = marginalSvg(
+    (x) => tPdf((x - m0) / sc0, 2 * A0) / sc0,
+    (x) => Math.exp(-0.5 * ((x - dbar) / sdLik) ** 2),
+    post, delta);
+
+  document.getElementById("figRewPost").innerHTML = rewardSvg({
+    dens: post, isBox: false, delta, p, c, BK, expR: erPost, better: erPost >= erBox,
+    accent: POST_C, caption: "expected reward of the posterior" });
+  document.getElementById("figRewCI").innerHTML = rewardSvg({
+    dens: box, isBox: true, lo: ciLo, hi: ciHi, delta, p, c, BK, expR: erBox, better: erBox > erPost,
+    accent: PAL.blue, caption: "expected reward of the CI read as uniform" });
+}
+
+document.getElementById("resample").addEventListener("click", () => {
+  pool = makePool(); // only the button re-randomizes
+  render();
+});
+
+render();
+</script>
+</body>
+</html>

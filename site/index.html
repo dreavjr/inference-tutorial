@@ -13,11 +13,12 @@
 <main>
   <header class="page">
     <p class="kicker">From p-values to posteriors</p>
-    <h1>Four ways to look at the same experiment</h1>
-    <p class="lede">An interactive primer in four short steps. You set the hidden truth,
+    <h1>Five ways to look at the same experiment</h1>
+    <p class="lede">An interactive primer in five short steps. You set the hidden truth,
     draw samples, and watch the statistical machinery respond — first the classical
     t&#8209;test, then what its guarantees do and don't promise, then the same
-    mathematics read the Bayesian way round, and finally the prior made explicit.</p>
+    mathematics read the Bayesian way round, then the prior made explicit, and finally
+    the posterior turned into a decision.</p>
   </header>
 
   <nav class="cards">
@@ -100,6 +101,25 @@
       </svg>
       <p>Prior × likelihood ∝ posterior, drawn over the whole (Δ, σ²) plane — and why
       a very lax prior is well-intentioned but rarely wise.</p>
+    </a>
+
+    <a class="card" href="05-the-decision.html">
+      <span class="num">STEP 5</span>
+      <h3>The Bayesian decision</h3>
+      <svg viewBox="0 0 260 84" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <path d="M30 70 C 70 70, 84 30, 96 30 S 116 70, 150 70" fill="#333333" opacity="0.06"/>
+        <path d="M14 70 C 60 70, 60 70, 96 30 C 132 70, 132 70, 178 70" fill="none" stroke="#A77B2E" stroke-width="1.8"/>
+        <path d="M30 70 C 70 70, 84 30, 96 30 S 116 70, 150 70" fill="none" stroke="#333333" stroke-width="2"/>
+        <path d="M30 70 C 70 70, 84 30, 96 30 S 116 70, 132 70 Z" fill="#2E7D5B" opacity="0.20"/>
+        <path d="M132 70 C 142 70, 146 56, 150 70 Z" fill="#C0392B" opacity="0.20"/>
+        <line x1="96" y1="70" x2="96" y2="22" stroke="#2E7D5B" stroke-width="1.4" stroke-dasharray="5 4"/>
+        <text x="96" y="18" text-anchor="middle" font-size="10" fill="#2E7D5B" font-family="system-ui,sans-serif">Δ</text>
+        <rect x="190" y="34" width="56" height="20" rx="10" fill="#2E7D5B"/>
+        <text x="218" y="48" text-anchor="middle" font-size="11" fill="#fff" font-family="system-ui,sans-serif">E[U]</text>
+        <line x1="10" y1="70" x2="250" y2="70" stroke="#DDDDDD"/>
+      </svg>
+      <p>A posterior is not yet a choice. Add a reward, act on expected utility — and see
+      why reading a confidence interval as “uniform over plausible values” decides worse.</p>
     </a>
   </nav>
 
