@@ -159,6 +159,7 @@
 /* ---- colours of the three voices ---------------------------------------- */
 const PRIOR_C = "#8E6FAE", LIK_C = "#C96A5E", POST_C = "#333333";
 const PRIOR_RGB = [142, 111, 174], LIK_RGB = [201, 106, 94], POST_RGB = [74, 74, 74];
+const BG = "#FBFAF7";   // page background — used as a halo to break lines under labels
 
 /* ---- variance prior: a₀ fixed and gentle; b₀ follows the σ²₀ slider so the
    prior expects σ²_d ≈ 2σ²₀ (i.e. σ² ≈ σ²₀). E[σ²_d] = b₀/(a₀−1) = b₀. -------- */
@@ -272,11 +273,8 @@ function fieldURI(vals, rgb) {
   return cv.toDataURL("image/png");
 }
 
-function contourSvg(uri, rgb, mode, truth) {
-  const p = [];
-  p.push(`<image href='${uri}' x='${ML2}' y='${TOP2}' width='${S2W}' height='${S2H}' preserveAspectRatio='none'/>`);
-
-  // frame: baseline + left rule, light ticks
+// shared chrome for every (Δ, σ) panel: frame, ticks, axis letters, mode dot, cross
+function panelFrame(p, rgb, mode, truth) {
   p.push(`<line x1='${ML2}' x2='${ML2 + S2W}' y1='${BASE2}' y2='${BASE2}' stroke='${PAL.rule}' stroke-width='1'/>`);
   p.push(`<line x1='${ML2}' x2='${ML2}' y1='${TOP2}' y2='${BASE2}' stroke='${PAL.rule}' stroke-width='1'/>`);
   for (let s = 1; s <= 3; s++) {
@@ -304,7 +302,86 @@ function contourSvg(uri, rgb, mode, truth) {
     p.push(`<path d='M${(cx - 5).toFixed(1)},${cy.toFixed(1)} h10 M${cx.toFixed(1)},${(cy - 5).toFixed(1)} v10' ` +
            `stroke='${PAL.green}' stroke-width='1.8' opacity='0.95'/>`);
   }
+}
 
+// prior & posterior: filled equal-volume heatmap behind the shared chrome
+function contourSvg(uri, rgb, mode, truth) {
+  const p = [];
+  p.push(`<image href='${uri}' x='${ML2}' y='${TOP2}' width='${S2W}' height='${S2H}' preserveAspectRatio='none'/>`);
+  panelFrame(p, rgb, mode, truth);
+  return `<svg viewBox='0 0 ${FW2} ${FH2}' xmlns='http://www.w3.org/2000/svg'>${p.join("")}</svg>`;
+}
+
+/* ---- the likelihood panel: NOT a distribution, so no filled mass and no
+   normalisation. We draw relative-likelihood line contours R = L/L_max — no
+   integration, no Jacobian, reparametrisation-invariant — each labelled with its
+   support fraction, the way a topographic map labels elevation. The peak is 1
+   ("best-supported"); a 0.5 ring means "half as well supported as the best." */
+
+const LIK_LEVELS = [0.8, 0.5, 0.3, 0.15, 0.05];
+
+const gridPx = (i, j) =>
+  [X2(-HALF2 + 2 * HALF2 * (i + 0.5) / GRID_W), Y2(SY * (1 - (j + 0.5) / GRID_H))];
+
+// marching squares: line segments where the log-field crosses threshold T.
+// Each cell contributes 0, 1 (2 edge crossings), or 2 (saddle) segments.
+function contourSegments(vals, T) {
+  const segs = [];
+  const cross = (i1, j1, i2, j2, v1, v2) => {
+    const t = (T - v1) / (v2 - v1), a = gridPx(i1, j1), b = gridPx(i2, j2);
+    return [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t];
+  };
+  for (let j = 0; j < GRID_H - 1; j++) {
+    for (let i = 0; i < GRID_W - 1; i++) {
+      const va = vals[j * GRID_W + i],         vb = vals[j * GRID_W + i + 1];
+      const vc = vals[(j + 1) * GRID_W + i + 1], vd = vals[(j + 1) * GRID_W + i];
+      const pts = [];
+      if ((va >= T) !== (vb >= T)) pts.push(cross(i, j, i + 1, j, va, vb));
+      if ((vb >= T) !== (vc >= T)) pts.push(cross(i + 1, j, i + 1, j + 1, vb, vc));
+      if ((vc >= T) !== (vd >= T)) pts.push(cross(i + 1, j + 1, i, j + 1, vc, vd));
+      if ((vd >= T) !== (va >= T)) pts.push(cross(i, j + 1, i, j, vd, va));
+      if (pts.length === 2) segs.push([pts[0], pts[1]]);
+      else if (pts.length === 4) { segs.push([pts[0], pts[1]]); segs.push([pts[2], pts[3]]); }
+    }
+  }
+  return segs;
+}
+
+function likelihoodContourSvg(vals, rgb, mode, truth) {
+  const p = [], labels = [];
+  const col = `rgb(${rgb.join(",")})`;
+  let mx = -Infinity;
+  for (let i = 0; i < vals.length; i++) if (vals[i] > mx) mx = vals[i];
+  const mdx = mode ? X2(mode[0]) : ML2 + S2W / 2;
+  const mdy = mode ? Y2(mode[1]) : (TOP2 + BASE2) / 2;
+
+  LIK_LEVELS.forEach((R, k) => {
+    const segs = contourSegments(vals, mx + Math.log(R));   // R = L/L_max ⇔ logL = logL_max + ln R
+    if (!segs.length) return;
+    const d = segs.map(s => `M${s[0][0].toFixed(1)},${s[0][1].toFixed(1)}L${s[1][0].toFixed(1)},${s[1][1].toFixed(1)}`).join("");
+    p.push(`<path d='${d}' fill='none' stroke='${col}' stroke-width='1.3' opacity='${(0.45 + 0.5 * R).toFixed(2)}'/>`);
+
+    // place the label on the segment whose bearing from the mode best matches a
+    // per-level angle, spread 60° apart so the numbers fan around the whole ring
+    const ang = (-90 + 72 * k) * Math.PI / 180, dx = Math.cos(ang), dy = Math.sin(ang);
+    let best = null, bestDot = -Infinity;
+    for (const s of segs) {
+      const cx = (s[0][0] + s[1][0]) / 2, cy = (s[0][1] + s[1][1]) / 2;
+      const vx = cx - mdx, vy = cy - mdy, len = Math.hypot(vx, vy) || 1;
+      const dot = (vx * dx + vy * dy) / len;
+      if (dot > bestDot) { bestDot = dot; best = s; }
+    }
+    const lx = (best[0][0] + best[1][0]) / 2, ly = (best[0][1] + best[1][1]) / 2;
+    let rot = Math.atan2(best[1][1] - best[0][1], best[1][0] - best[0][0]) * 180 / Math.PI;
+    if (rot > 90) rot -= 180; else if (rot < -90) rot += 180;   // keep numerals upright
+    labels.push(`<text x='${lx.toFixed(1)}' y='${ly.toFixed(1)}' ` +
+      `transform='rotate(${rot.toFixed(1)} ${lx.toFixed(1)} ${ly.toFixed(1)})' text-anchor='middle' ` +
+      `dominant-baseline='central' font-size='9' fill='${col}' stroke='${BG}' stroke-width='3' ` +
+      `paint-order='stroke'>${R}</text>`);
+  });
+
+  p.push(...labels);              // labels (with bg halo) over the lines
+  panelFrame(p, rgb, mode, truth); // axes, mode dot, cross on top
   return `<svg viewBox='0 0 ${FW2} ${FH2}' xmlns='http://www.w3.org/2000/svg'>${p.join("")}</svg>`;
 }
 
@@ -345,22 +422,32 @@ function marginalSvg(prior, lik, post, delta) {
          `<mask id='fadeM'><rect x='0' y='${TOP}' width='${FW}' height='${SH}' fill='url(#fadeG)'/></mask></defs>`);
 
   const xs = linspace(-HALF, HALF, 321);
-  const dPrior = xs.map(prior), dLik = xs.map(lik), dPost = xs.map(post);
+  const dPrior = xs.map(prior), dPost = xs.map(post);
 
-  // each curve gets a faint fill under it, then all three strokes on top
+  // prior & posterior are genuine densities (area = 1) → filled. The likelihood is
+  // a relative-support weighting (peak = 1): its height is conventional, so it is
+  // pinned to REF of the panel and drawn UNFILLED and dashed — no area to read.
+  const REF = 0.72, refDens = REF * YMAX, refY = Yp(BASE, refDens);
+  const dLik = xs.map(x => lik(x) * refDens);
+
   const filled = (dens, col, op) => {
     const line = curvePath(xs, dens, BASE);
     return `<polygon points='${Xp(-HALF).toFixed(1)},${BASE} ${line} ${Xp(HALF).toFixed(1)},${BASE}' fill='${col}' opacity='${op}'/>`;
   };
   p.push(`<g mask='url(#fadeM)'>` +
          filled(dPrior, PRIOR_C, 0.10) +
-         filled(dLik, LIK_C, 0.10) +
          filled(dPost, POST_C, 0.12) +
          `<polyline points='${curvePath(xs, dPrior, BASE)}' fill='none' stroke='${PRIOR_C}' stroke-width='2'/>` +
-         `<polyline points='${curvePath(xs, dLik, BASE)}' fill='none' stroke='${LIK_C}' stroke-width='1.8'/>` +
          `<polyline points='${curvePath(xs, dPost, BASE)}' fill='none' stroke='${POST_C}' stroke-width='2.2'/>` +
+         `<polyline points='${curvePath(xs, dLik, BASE)}' fill='none' stroke='${LIK_C}' stroke-width='1.8' stroke-dasharray='6 3'/>` +
          `</g>`);
   p.push(`<line x1='${ML}' x2='${ML + S}' y1='${BASE}' y2='${BASE}' stroke='${PAL.rule}' stroke-width='1'/>`);
+
+  // the likelihood's "support = 1" reference line — its peak rides this, by convention
+  p.push(`<line x1='${ML}' x2='${ML + S}' y1='${refY.toFixed(1)}' y2='${refY.toFixed(1)}' ` +
+         `stroke='${LIK_C}' stroke-width='1' stroke-dasharray='2 4' opacity='0.65'/>`);
+  p.push(`<text x='${ML + 6}' y='${(refY - 5).toFixed(1)}' font-size='10.5' font-style='italic' ` +
+         `fill='${LIK_C}'>likelihood: support = 1 at peak</text>`);
 
   // reference markers on the top line: Δ (right) and the null 0 (left), splayed apart
   const marker = (xv, color, lbl, side) => {
@@ -377,11 +464,12 @@ function marginalSvg(prior, lik, post, delta) {
 
   // legend, flush to the right edge — labels right-aligned to the LEFT of each swatch
   const lineX2 = ML + S, lineX1 = lineX2 - 24, labelX = lineX1 - 9;
-  const item = (y, col, txt, sw = 2) =>
-    `<line x1='${lineX1}' x2='${lineX2}' y1='${y}' y2='${y}' stroke='${col}' stroke-width='${sw}'/>` +
+  const item = (y, col, txt, sw = 2, dash = "") =>
+    `<line x1='${lineX1}' x2='${lineX2}' y1='${y}' y2='${y}' stroke='${col}' stroke-width='${sw}'` +
+    `${dash ? ` stroke-dasharray='${dash}'` : ""}/>` +
     `<text x='${labelX}' y='${y + 4}' text-anchor='end' font-size='12' fill='${PAL.ink}'>${txt}</text>`;
   p.push(item(TOP + 34, PRIOR_C, "prior"));
-  p.push(item(TOP + 53, LIK_C, "likelihood", 1.8));
+  p.push(item(TOP + 53, LIK_C, "likelihood (relative)", 1.8, "6 3"));
   p.push(item(TOP + 72, POST_C, "posterior", 2.2));
 
   return `<svg viewBox='0 0 ${FW} ${FH}' xmlns='http://www.w3.org/2000/svg'>${p.join("")}</svg>`;
@@ -437,7 +525,7 @@ function render() {
   document.getElementById("figPrior").innerHTML =
     contourSvg(fieldURI(fPrior, PRIOR_RGB), PRIOR_RGB, [m0, sgPrior], truth);
   document.getElementById("figLik").innerHTML =
-    contourSvg(fieldURI(fLik, LIK_RGB), LIK_RGB, [dbar, sgLik], truth);
+    likelihoodContourSvg(fLik, LIK_RGB, [dbar, sgLik], truth);
   document.getElementById("figPost2d").innerHTML =
     contourSvg(fieldURI(fPost, POST_RGB), POST_RGB, [mn, sgPost], truth);
 
@@ -449,7 +537,7 @@ function render() {
   const sdLik = Math.sqrt(ssd / (n - 1) / n);     // likelihood profile: Normal(d̄, s²_d/n)
   document.getElementById("figMarg").innerHTML = marginalSvg(
     (x) => tPdf((x - m0) / sc0, 2 * A0) / sc0,
-    (x) => normPdf((x - dbar) / sdLik) / sdLik,
+    (x) => Math.exp(-0.5 * ((x - dbar) / sdLik) ** 2),   // relative likelihood, peak = 1
     (x) => tPdf((x - mn) / scn, 2 * an) / scn,
     delta);
 }
