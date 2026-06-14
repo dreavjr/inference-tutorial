@@ -378,6 +378,7 @@ function refresh() {
 
 const SIMW = 960, SIMH = 165, SML = 46, SMR = 24, SMT = 16, SMB = 16;
 const N_SIM = 40, SIM_WAIT = 300;
+const MAROON = "#8C2F39";   // significant intervals (excludes 0)
 const simMidY = SIMH / 2, simSpacing = (SIMW - SML - SMR) / N_SIM;
 const NS = "http://www.w3.org/2000/svg";
 
@@ -427,29 +428,48 @@ async function runSimulation() {
     draws.push({ pool: p, dObs, lo: dObs - half, hi: dObs + half });
   }
 
-  // robust scale: 92nd-percentile interval endpoint, never tighter than Δ itself
-  const mags = draws.flatMap(d => [Math.abs(d.lo), Math.abs(d.hi)]).sort((a, b) => a - b);
-  const ymax = Math.max(mags[Math.floor(mags.length * 0.92)] * 1.06, Math.abs(delta) + 0.5, 0.5);
+  // robust scale: 92nd-percentile spread of the intervals around Δ — but always
+  // wide enough to keep the 0-line (|Δ| away from the centred truth) in frame.
+  const devs = draws.flatMap(d => [Math.abs(d.lo - delta), Math.abs(d.hi - delta)]).sort((a, b) => a - b);
+  const spread = devs[Math.floor(devs.length * 0.92)] * 1.06;
+  const ymax = Math.max(spread, Math.abs(delta) + 0.5, 0.5);
   const yScale = (simMidY - SMT) / ymax;
-  const clampY = (d) => simMidY - Math.max(-(simMidY - SMT), Math.min(simMidY - SMT, d * yScale));
+  const clampY = (d) => simMidY - Math.max(-(simMidY - SMT), Math.min(simMidY - SMT, (d - delta) * yScale));
 
-  // shell: caption, true-Δ guide, the central 0-line, a legend, empty line group
   const cap = `${((1 - alpha) * 100).toFixed(0)}% confidence interval per repeated sample`;
-  const trueY = clampY(delta).toFixed(1);
+  const hasEffect = delta > 0;                  // is there really a difference?
+  const trueY = clampY(delta).toFixed(1);       // centred
+  const zeroY = clampY(0).toFixed(1);
   const x0 = SML, x1 = SIMW - SMR;
   const shell = [];
+
+  // intervals go down first → guides, labels and legend paint ON TOP of them
+  shell.push(`<g id='simLines'></g>`);
+  shell.push(`<line id='simMarker' x1='0' x2='0' y1='${SMT}' y2='${SIMH - SMB}' stroke='${PAL.ink}' ` +
+             `stroke-width='1' stroke-dasharray='3 3' opacity='0'/>`);
+
+  // true-Δ guide (green) — centred — and 0 guide (black): same thickness/style,
+  // matching right-anchored labels (true Δ above its line, 0 below, so the two
+  // never collide when Δ = 0 and the lines coincide).
   shell.push(`<line x1='${x0}' x2='${x1}' y1='${trueY}' y2='${trueY}' stroke='${PAL.green}' ` +
+             `stroke-width='1.2' stroke-dasharray='4 4' opacity='0.7'/>`);
+  shell.push(`<line x1='${x0}' x2='${x1}' y1='${zeroY}' y2='${zeroY}' stroke='${PAL.ink}' ` +
              `stroke-width='1.2' stroke-dasharray='4 4' opacity='0.7'/>`);
   shell.push(`<text x='${x1}' y='${(+trueY - 5).toFixed(1)}' text-anchor='end' font-size='11' ` +
              `fill='${PAL.green}'>true Δ</text>`);
-  shell.push(`<line x1='${x0}' x2='${x1}' y1='${simMidY}' y2='${simMidY}' stroke='${PAL.ink}' stroke-width='1.2'/>`);
-  shell.push(`<text x='${x0 - 8}' y='${simMidY + 4}' text-anchor='end' font-size='12' font-weight='600' fill='${PAL.ink}'>0</text>`);
-  shell.push(`<line id='simMarker' x1='0' x2='0' y1='${SMT}' y2='${SIMH - SMB}' stroke='${PAL.ink}' ` +
-             `stroke-width='1' stroke-dasharray='3 3' opacity='0'/>`);
-  // legend, top-right
-  shell.push(`<line x1='${x1 - 188}' x2='${x1 - 176}' y1='${SMT - 2}' y2='${SMT - 2}' stroke='${PAL.tail}' stroke-width='3' stroke-linecap='round'/>`);
-  shell.push(`<text x='${x1 - 170}' y='${SMT + 2}' font-size='10.5' fill='${PAL.muted}'>excludes 0 (significant)</text>`);
-  shell.push(`<g id='simLines'></g>`);
+  shell.push(`<text x='${x1}' y='${(+zeroY + 12).toFixed(1)}' text-anchor='end' font-size='11' ` +
+             `fill='${PAL.ink}'>0</text>`);
+
+  // legend, bottommost row (also on top): colour = significance, style = correctness
+  const lgY = SIMH - 6;
+  let lx = x0;
+  for (const [col, dash, label] of [[MAROON, false, "significant"], [PAL.pale, false, "not significant"],
+                                    [PAL.ink, false, "true +/−"], [PAL.ink, true, "false +/−"]]) {
+    shell.push(`<line x1='${lx}' x2='${lx + 16}' y1='${lgY - 3}' y2='${lgY - 3}' stroke='${col}' ` +
+               `stroke-width='3' stroke-linecap='round'${dash ? " stroke-dasharray='4 3'" : ""}/>`);
+    shell.push(`<text x='${lx + 22}' y='${lgY}' font-size='10.5' fill='${PAL.muted}'>${label}</text>`);
+    lx += 22 + label.length * 5.8 + 26;
+  }
 
   simArea.hidden = false;
   simArea.innerHTML =
@@ -468,12 +488,14 @@ async function runSimulation() {
 
     // (2) lay down its confidence interval as a thick vertical line
     const x = SML + (i + 0.5) * simSpacing;
-    const crosses = d.lo <= 0 && d.hi >= 0;
+    const significant = !(d.lo <= 0 && d.hi >= 0);   // interval clears 0 → reject H₀
+    const correct = significant === hasEffect;       // verdict matches the truth
     const line = document.createElementNS(NS, "line");
     line.setAttribute("x1", x.toFixed(1)); line.setAttribute("x2", x.toFixed(1));
     line.setAttribute("y1", clampY(d.lo).toFixed(1)); line.setAttribute("y2", clampY(d.hi).toFixed(1));
-    line.setAttribute("stroke", crosses ? PAL.pale : PAL.tail);
+    line.setAttribute("stroke", significant ? MAROON : PAL.pale);   // colour = significance
     line.setAttribute("stroke-width", "3"); line.setAttribute("stroke-linecap", "round");
+    if (!correct) line.setAttribute("stroke-dasharray", "4 4");     // dashed = false +/−
     line.setAttribute("data-idx", i);
     gLines.appendChild(line);
     const dot = document.createElementNS(NS, "circle");
