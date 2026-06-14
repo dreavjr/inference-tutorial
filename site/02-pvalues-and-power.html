@@ -289,10 +289,11 @@ function ribbonSvg(prev, sens, spec, total) {
 const sliders = document.getElementById("sliders");
 const TOTALS = [1000, 10000, 100000, 1000000];
 
+// row-major fill → col 1: base rate, total cases   col 2: sensitivity, specificity
 const prevS = makeSlider(sliders, { label: "base rate · P/(P+N)", min: 0.01, max: 0.99, step: 0.01, value: 0.50, fmt: v => (v * 100).toFixed(0) + " %", onInput: refresh });
-const sensS = makeSlider(sliders, { label: "sensitivity · power", min: 0.05, max: 1.00, step: 0.01, value: 0.80, fmt: v => (v * 100).toFixed(0) + " %", onInput: refresh });
-const specS = makeSlider(sliders, { label: "specificity · 1−α", min: 0.50, max: 1.00, step: 0.005, value: 0.95, fmt: v => (v * 100).toFixed(1) + " %", onInput: refresh });
+const sensS = makeSlider(sliders, { label: "sensitivity · power · tpr · (1−β)", min: 0.05, max: 1.00, step: 0.01, value: 0.80, fmt: v => (v * 100).toFixed(0) + " %", onInput: refresh });
 const totS  = makeSlider(sliders, { label: "total cases · P+N", min: 0, max: 3, step: 1, value: 0, fmt: v => fmtN(TOTALS[v]), onInput: refresh });
+const specS = makeSlider(sliders, { label: "specificity · significance · tnr · (1−α)", min: 0.50, max: 1.00, step: 0.005, value: 0.95, fmt: v => (v * 100).toFixed(1) + " %", onInput: refresh });
 
 function refresh() {
   const args = [prevS.value, sensS.value, specS.value, TOTALS[totS.value]];

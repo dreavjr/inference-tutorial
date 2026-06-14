@@ -48,9 +48,10 @@
     <p>The three panels below are drawn the way Wikipedia draws this distribution:
     filled contours over the <strong>(Δ, σ)</strong> plane — a teardrop of belief — with
     σ the <em>standard deviation</em>, so both axes carry the same units at the same
-    scale and a circular blob really is circular. All three share one density scale and
-    the same contour levels, so a lax prior reads faint and broad next to a vivid,
-    concentrated posterior. On the left, the <strong style="color:#8E6FAE">prior</strong>;
+    scale and a circular blob really is circular. All three use the same equal-volume
+    contours — each band encloses a further seventh of that panel's belief, out to
+    98% — so a lax prior spreads into a broad, shallow teardrop next to the tight,
+    compact posterior. On the left, the <strong style="color:#8E6FAE">prior</strong>;
     on the right, the <strong>posterior</strong>; and between them, where it belongs in
     the multiplication, the <strong style="color:#C96A5E">Gaussian likelihood</strong> of
     the observed sample. The small green cross is the simulation's true (Δ, σ) — in real
@@ -199,53 +200,73 @@ function logLik(d, s2, n, dbar, ssd) {
 }
 
 /* ---- a contour panel: banded heatmap (canvas) inside an SVG frame ---------
-   The three panels are rendered against ONE shared density scale (the global
-   maximum over all three fields), with the SAME band levels — so a colour value
-   means the same density everywhere, and a lax low prior reads as faint and
-   broad next to a concentrated, vivid posterior. */
+   Each panel draws equal-VOLUME contours (highest-density regions): the bands
+   carve that panel's own probability into equal slices, so a ring always means
+   "another seventh of the belief lives inside here," whatever the panel's scale.
+   A lax prior therefore spreads into a broad, shallow teardrop; a sharp
+   posterior pulls into a tight, compact one — the contrast is now in SIZE, not
+   in colour value (each panel self-normalises, so both reach full opacity at
+   their own peak). */
 
 const GRID_W = 220, GRID_H = 110;
-// contour levels as a fraction of the global-max density — common to all panels
-const LEVELS = [0.035, 0.09, 0.18, 0.30, 0.45, 0.62, 0.80];
+const NBANDS = 7, MASS_OUTER = 0.98;
+// the k-th contour (innermost → outermost) encloses this fraction of the volume
+const MASS_LEVELS = Array.from({ length: NBANDS }, (_, k) => MASS_OUTER * (k + 1) / NBANDS);
 
 function computeField(logf) {
   const vals = new Float64Array(GRID_W * GRID_H);
-  const sig = new Float64Array(GRID_H);
-  let mx = -Infinity;
   for (let j = 0; j < GRID_H; j++) {
-    sig[j] = SY * (1 - (j + 0.5) / GRID_H);        // σ (group std), top → bottom
-    const s2 = 2 * sig[j] * sig[j];                 // σ²_d = 2σ²
+    const sigma = SY * (1 - (j + 0.5) / GRID_H);     // σ (group std), top → bottom
+    const s2 = 2 * sigma * sigma;                     // σ²_d = 2σ²
     for (let i = 0; i < GRID_W; i++) {
       const d = -HALF2 + 2 * HALF2 * (i + 0.5) / GRID_W;
-      const lv = logf(d, s2);
-      vals[j * GRID_W + i] = lv;
-      if (lv > mx) mx = lv;
+      vals[j * GRID_W + i] = logf(d, s2);             // raw log-density on the grid
     }
   }
-  // turn each field into a proper density over the shown (Δ, σ²_d) region by
-  // numeric integration (Jacobian dσ²_d/dσ = 4σ; the common dΔ·dσ cancels across
-  // panels). The likelihood is NOT a density on its own — this is what makes the
-  // three colour scales commensurable.
-  let Z = 0;
-  for (let j = 0; j < GRID_H; j++) {
-    const w = 4 * sig[j];
-    for (let i = 0; i < GRID_W; i++) Z += Math.exp(vals[j * GRID_W + i] - mx) * w;
-  }
-  const logNorm = Math.log(Z) + mx;                 // log ∫ field  (the normaliser)
-  return { vals, logNorm, peak: mx - logNorm };      // peak normalised log-density
+  return vals;
 }
 
-function fieldURI(vals, rgb, logNorm, gpeak) {
+function fieldURI(vals, rgb) {
+  const N = GRID_W * GRID_H;
+
+  // displayed density ∝ p(Δ,σ) = p(Δ,σ²_d)·(dσ²_d/dσ) = p·4σ. On a uniform (Δ,σ)
+  // grid the per-cell probability mass is ∝ this same quantity, so ordering pixels
+  // by it and accumulating gives the enclosed-volume fraction directly.
+  let mx = -Infinity;
+  for (let i = 0; i < N; i++) if (vals[i] > mx) mx = vals[i];
+  const pd = new Float64Array(N);
+  let total = 0;
+  for (let j = 0; j < GRID_H; j++) {
+    const J = 4 * SY * (1 - (j + 0.5) / GRID_H);     // Jacobian 4σ
+    for (let i = 0; i < GRID_W; i++) {
+      const v = Math.exp(vals[j * GRID_W + i] - mx) * J;
+      pd[j * GRID_W + i] = v; total += v;
+    }
+  }
+
+  // density threshold for each enclosed-mass level (highest-density region):
+  // sort the densities descending and walk down, marking the level where the
+  // running mass first reaches each MASS_LEVELS target. thr ends up descending.
+  const desc = Float64Array.from(pd).sort().reverse();
+  const thr = new Float64Array(NBANDS);
+  let acc = 0, li = 0;
+  for (let s = 0; s < desc.length && li < NBANDS; s++) {
+    acc += desc[s];
+    while (li < NBANDS && acc >= MASS_LEVELS[li] * total) thr[li++] = desc[s];
+  }
+  while (li < NBANDS) thr[li++] = 0;
+
   const cv = document.createElement("canvas");
   cv.width = GRID_W; cv.height = GRID_H;
   const ctx = cv.getContext("2d");
   const img = ctx.createImageData(GRID_W, GRID_H);
-  for (let idx = 0; idx < GRID_W * GRID_H; idx++) {
-    const r = Math.exp(vals[idx] - logNorm - gpeak); // normalised density / GLOBAL peak
-    let k = 0; for (const L of LEVELS) if (r >= L) k++;
+  for (let idx = 0; idx < N; idx++) {
+    // ring 0 = innermost (densest, smallest enclosed mass) … NBANDS−1 = outer edge;
+    // ≥ NBANDS means past the 0.98 contour → transparent
+    let r = 0; while (r < NBANDS && pd[idx] < thr[r]) r++;
     const o = idx * 4;
     img.data[o] = rgb[0]; img.data[o + 1] = rgb[1]; img.data[o + 2] = rgb[2];
-    img.data[o + 3] = k <= 0 ? 0 : Math.round(Math.pow(k / LEVELS.length, 1.05) * 0.6 * 255);
+    img.data[o + 3] = r >= NBANDS ? 0 : Math.round(((NBANDS - r) / NBANDS) * 0.62 * 255);
   }
   ctx.putImageData(img, 0, 0);
   return cv.toDataURL("image/png");
@@ -403,12 +424,10 @@ function render() {
   const truth = [delta, sigma];
   const toSig = (s2group) => Math.sqrt(Math.max(s2group, 0));   // σ²_group → σ
 
-  // 2-D panels: compute all three fields first, then paint them against one
-  // shared global-max density so colours and levels are commensurable
+  // 2-D panels: each one draws its own equal-volume contours (no shared scale)
   const fPrior = computeField((dd, s2) => logNIG(dd, s2, m0, k0, A0, B0));
   const fLik   = computeField((dd, s2) => logLik(dd, s2, n, dbar, ssd));
   const fPost  = computeField((dd, s2) => logNIG(dd, s2, mn, kn, an, bn));
-  const gpeak = Math.max(fPrior.peak, fLik.peak, fPost.peak);
 
   // modes, converted from the σ²_d mode to the group std dev σ = √(σ²_d / 2)
   const sgPrior = toSig(B0 / (A0 + 1.5) / 2);
@@ -416,11 +435,11 @@ function render() {
   const sgPost  = toSig(bn / (an + 1.5) / 2);
 
   document.getElementById("figPrior").innerHTML =
-    contourSvg(fieldURI(fPrior.vals, PRIOR_RGB, fPrior.logNorm, gpeak), PRIOR_RGB, [m0, sgPrior], truth);
+    contourSvg(fieldURI(fPrior, PRIOR_RGB), PRIOR_RGB, [m0, sgPrior], truth);
   document.getElementById("figLik").innerHTML =
-    contourSvg(fieldURI(fLik.vals, LIK_RGB, fLik.logNorm, gpeak), LIK_RGB, [dbar, sgLik], truth);
+    contourSvg(fieldURI(fLik, LIK_RGB), LIK_RGB, [dbar, sgLik], truth);
   document.getElementById("figPost2d").innerHTML =
-    contourSvg(fieldURI(fPost.vals, POST_RGB, fPost.logNorm, gpeak), POST_RGB, [mn, sgPost], truth);
+    contourSvg(fieldURI(fPost, POST_RGB), POST_RGB, [mn, sgPost], truth);
 
   // 1-D row
   document.getElementById("figPop").innerHTML = populationSvg(delta, varr, n, pool);

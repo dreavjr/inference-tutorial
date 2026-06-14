@@ -183,7 +183,7 @@ function populationSvg(delta, varr, n, pool) {
 
 /* ---- right panel: posterior density over Δ, fading out past the box top -- */
 
-function posteriorSvg(delta, dObs, se, df) {
+function posteriorSvg(delta, dObs, se, df, alpha) {
   const p = [];
 
   // a luminance mask that dissolves the curve over the top fifth of the box
@@ -196,7 +196,20 @@ function posteriorSvg(delta, dObs, se, df) {
 
   const ds = linspace(-HALF, HALF, 321);
   const dens = ds.map(d => tPdf((d - dObs) / se, df) / se);
-  p.push(`<g mask='url(#fadeM)'>` + filledCurve(ds, dens, BASE, PAL.ink, PAL.ink, 0.06) + `</g>`);
+
+  // the (1−α) highest-density interval. The posterior is a symmetric, unimodal
+  // shifted-and-scaled t, so its HDI is exactly the equal-tailed band Δ̂ ± t·se.
+  const tc = tInv(1 - alpha / 2, df);
+  const hdiLo = Math.max(dObs - tc * se, -HALF), hdiHi = Math.min(dObs + tc * se, HALF);
+
+  // outline the whole curve, but shade only the mass inside the HDI
+  const outline = ds.map((d, i) => `${Xp(d).toFixed(1)},${Yp(BASE, dens[i]).toFixed(1)}`).join(" ");
+  const hx = linspace(hdiLo, hdiHi, 161);
+  const hpts = hx.map(d => `${Xp(d).toFixed(1)},${Yp(BASE, tPdf((d - dObs) / se, df) / se).toFixed(1)}`).join(" ");
+  p.push(`<g mask='url(#fadeM)'>` +
+         `<polygon points='${Xp(hdiLo).toFixed(1)},${BASE} ${hpts} ${Xp(hdiHi).toFixed(1)},${BASE}' ` +
+         `fill='${PAL.ink}' opacity='0.14'/>` +
+         `<polyline points='${outline}' fill='none' stroke='${PAL.ink}' stroke-width='2'/></g>`);
   p.push(`<line x1='${ML}' x2='${ML + S}' y1='${BASE}' y2='${BASE}' stroke='${PAL.rule}' stroke-width='1'/>`);
 
   // reference markers — dashed, full height. The true Δ and observed Δ̂ share the
@@ -215,6 +228,17 @@ function posteriorSvg(delta, dObs, se, df) {
   p.push(marker(delta, PAL.green, "Δ", TOP + 16, dLeft ? -1 : 1));
   p.push(marker(dObs, PAL.ink, "Δ̂", TOP + 16, dLeft ? 1 : -1));
   p.push(marker(0, PAL.muted, "0", TOP + 34, 0));
+
+  // verdict pill (same format as step 1): does the (1−α) HDI exclude the null?
+  // HDI clear of 0 ⇒ the effect's sign is settled — "tolerable risk"; HDI still
+  // straddling 0 ⇒ we can't even rule out no effect — "intolerable risk".
+  const containsZero = hdiLo <= 0 && hdiHi >= 0;
+  const vtxt = containsZero ? "intolerable risk" : "tolerable risk";
+  const vw = vtxt.length * 6.7 + 24, vy = TOP + 44;
+  p.push(`<rect x='${ML + 8}' y='${vy}' width='${vw.toFixed(0)}' height='23' rx='11.5' ` +
+         `fill='${containsZero ? "#9AA0A6" : "#C0392B"}'/>`);
+  p.push(`<text x='${(ML + 8 + vw / 2).toFixed(1)}' y='${vy + 16}' text-anchor='middle' ` +
+         `font-size='12.5' font-weight='600' fill='#fff'>${vtxt}</text>`);
 
   // hover guide (hidden until hover)
   p.push(`<line id='hoverLine' x1='${X0}' x2='${X0}' y1='${BASE}' y2='${BASE}' ` +
@@ -269,12 +293,14 @@ function wireHover(state) {
 const sliders = document.getElementById("sliders");
 let pool = makePool(15); // one fixed draw — dots don't jitter as you drag
 
+// row-major fill of the 2-column grid → col 1: Δ, σ²   col 2: N, α
 const deltaS = makeSlider(sliders, { label: "true difference · Δ", min: 0, max: 3, step: 0.05, value: 0.8, fmt: v => v.toFixed(2), onInput: render });
+const nS     = makeSlider(sliders, { label: "sample size · N per group", min: 3, max: 100, step: 1, value: 12, fmt: v => v.toFixed(0), onInput: render });
 const varS   = makeSlider(sliders, { label: "true variance · σ²", min: 0.25, max: 4, step: 0.05, value: 1.0, fmt: v => v.toFixed(2), onInput: render });
-const nS     = makeSlider(sliders, { label: "sample size · n per group", min: 3, max: 100, step: 1, value: 12, fmt: v => v.toFixed(0), onInput: render });
+const alphaS = makeSlider(sliders, { label: "false-positive rate · α", min: 0.005, max: 0.2, step: 0.005, value: 0.05, fmt: v => v.toFixed(3), onInput: render });
 
 function render() {
-  const delta = deltaS.value, varr = varS.value, n = nS.value;
+  const delta = deltaS.value, varr = varS.value, n = nS.value, alpha = alphaS.value;
   const sigma = Math.sqrt(varr);
   const xa = pool.z1.slice(0, n).map(z => -delta / 2 + sigma * z);
   const xb = pool.z2.slice(0, n).map(z =>  delta / 2 + sigma * z);
@@ -284,7 +310,7 @@ function render() {
   const df = 2 * n - 2;
 
   document.getElementById("figPop").innerHTML = populationSvg(delta, varr, n, pool);
-  document.getElementById("figPost").innerHTML = posteriorSvg(delta, dObs, se, df);
+  document.getElementById("figPost").innerHTML = posteriorSvg(delta, dObs, se, df, alpha);
   wireHover({ dObs, se, df });
 }
 

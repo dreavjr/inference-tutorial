@@ -117,6 +117,18 @@ function tInv(p, df) { // quantile, by bisection
 
 const normPdf = (x) => Math.exp(-0.5 * x * x) / Math.sqrt(2 * Math.PI);
 
+/* standard normal CDF via erf (Abramowitz & Stegun 7.1.26, |err| < 1.5e-7) —
+   enough to display a teaching-grade power/β computed from the noncentral t. */
+function erf(x) {
+  const sign = x < 0 ? -1 : 1;
+  x = Math.abs(x);
+  const t = 1 / (1 + 0.3275911 * x);
+  const y = 1 - (((((1.061405429 * t - 1.453152027) * t) + 1.421413741) * t
+                  - 0.284496736) * t + 0.254829592) * t * Math.exp(-x * x);
+  return sign * y;
+}
+const normCdf = (x) => 0.5 * (1 + erf(x / Math.SQRT2));
+
 /* two-sample t-test, pooled variance (same as scipy.stats.ttest_ind) */
 function tTest(xa, xb) {
   const n = xa.length, m = xb.length;
