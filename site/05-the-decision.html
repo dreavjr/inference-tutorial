@@ -314,7 +314,8 @@ function rewardClamped(x, ctr, p, c) {
 
 function rewardSvg({ dens, isBox, lo, hi, mode, delta, p, c, BK, estR, estLo, estHi, actR, bet, accent, showEstimatedCurve = true, egg = null }) {
   const tag = isBox ? "b" : "a";
-  const rewE = (x) => rewardClamped(x, mode, p, c);  // centred on the decision
+  const estMode = egg ? egg.center : mode;
+  const rewE = (x) => rewardClamped(x, estMode, p, c);  // centred on the decision
   const rewA = (x) => rewardClamped(x, delta, p, c); // centred on the truth
   const yR = (r) => r >= 0 ? RMID - r * RUP : RMID - r * RDN;   // fixed scale: reward +1 → top, −1 → base
   const yRc = (r) => Math.max(TOP + 3, Math.min(BASE, yR(r))); // clamped to the plot area
@@ -351,14 +352,17 @@ function rewardSvg({ dens, isBox, lo, hi, mode, delta, p, c, BK, estR, estLo, es
     for (let i = 0; i < fillXs.length - 1; i++) {
       const xL = fillXs[i], xR = fillXs[i + 1], xM = 0.5 * (xL + xR);
       const y = yB(dens(xM));
+      const val = dens(xM) * rewE(xM);
+      const mag = egg && egg.maxAbs > 0 ? Math.abs(val) / egg.maxAbs : 0;
       belief += `<rect x='${xp(xL).toFixed(1)}' y='${y.toFixed(1)}' width='${Math.max(0.8, xp(xR) - xp(xL)).toFixed(1)}' ` +
-                `height='${Math.max(0.8, RMID - y).toFixed(1)}' fill='${rewE(xM) >= 0 ? GRN_F : RED_F}' opacity='0.12'/>`;
+                `height='${Math.max(0.8, RMID - y).toFixed(1)}' fill='${rewE(xM) >= 0 ? GRN_F : RED_F}' ` +
+                `opacity='${egg ? (0.08 + 0.84 * Math.sqrt(Math.min(1, mag))).toFixed(3) : "0.12"}'/>`;
     }
     const top = linspace(drawLo, drawHi, 321).map(x => `${xp(x).toFixed(1)},${yB(dens(x)).toFixed(1)}`).join(" ");
     belief += `<polyline points='${top}' fill='none' stroke='${accent}' stroke-width='2'/>`;
     // expected-reward lens: overlap of belief and the gold (estimated) reward
-    const oLo = Math.max(drawLo, mode - 1), oHi = Math.min(drawHi, mode + 1);
-    if (oHi > oLo) {
+    const oLo = Math.max(drawLo, estMode - 1), oHi = Math.min(drawHi, estMode + 1);
+    if (!egg && oHi > oLo) {
       const xs = linspace(oLo, oHi, Math.max(8, Math.round((oHi - oLo) * 60)));
       const lt = xs.map(x => { const h = Math.max(0, Math.min(beliefH(x), RMID - yR(rewE(x)))); return `${xp(x).toFixed(1)},${(RMID - h).toFixed(1)}`; }).join(" ");
       lens = `<polygon points='${xp(oLo).toFixed(1)},${RMID.toFixed(1)} ${lt} ${xp(oHi).toFixed(1)},${RMID.toFixed(1)}' fill='${REWARD_C}' opacity='0.20'/>`;
@@ -376,26 +380,6 @@ function rewardSvg({ dens, isBox, lo, hi, mode, delta, p, c, BK, estR, estLo, es
     `fill='none' stroke='${col}' stroke-width='1.8'${dash ? ` stroke-dasharray='${dash}'` : ""}/>`;
   if (showEstimatedCurve || egg) out.push(curve(rewE, egg ? MAROON : REWARD_C)); // estimated — centred on the decision
   out.push(curve(rewA, PAL.green, "6 4")); // true — centred on the truth (dashed)
-
-  if (egg) {
-    const fillLo = Math.max(loX, egg.loX), fillHi = Math.min(hiX, egg.scanX);
-    if (fillHi > fillLo) {
-      const fillXs = linspace(fillLo, fillHi, egg.steps);
-      for (let i = 0; i < fillXs.length - 1; i++) {
-        const xL = fillXs[i], xR = fillXs[i + 1], xM = 0.5 * (xL + xR);
-        const reward = rewE(xM);
-        const y = yRc(reward);
-        const val = dens(xM) * reward;
-        const mag = egg.maxAbs > 0 ? Math.abs(val) / egg.maxAbs : 0;
-        if (mag < 0.01 || Math.abs(y - RMID) < 0.5) continue;
-        out.push(`<rect x='${xp(xL).toFixed(1)}' y='${Math.min(y, RMID).toFixed(1)}' width='${Math.max(0.8, xp(xR) - xp(xL)).toFixed(1)}' ` +
-                 `height='${Math.max(0.8, Math.abs(RMID - y)).toFixed(1)}' fill='${val >= 0 ? GRN_F : RED_F}' ` +
-                 `fill-opacity='${(0.08 + 0.84 * Math.sqrt(Math.min(1, mag))).toFixed(3)}'/>`);
-      }
-    }
-    const sx = Math.max(loX, Math.min(hiX, egg.scanX));
-    out.push(`<line x1='${xp(sx).toFixed(1)}' x2='${xp(sx).toFixed(1)}' y1='${TOP + 3}' y2='${BASE}' stroke='${MAROON}' stroke-width='1.2' opacity='0.9'/>`);
-  }
 
   // float 4: dotted links from the CI bar (reward 0.5) to the estimated-reward
   // curve at the MLE and at each interval extreme — the reward you'd score there
@@ -439,7 +423,7 @@ function rewardSvg({ dens, isBox, lo, hi, mode, delta, p, c, BK, estR, estLo, es
   };
   // estimated reward: a single expected value (posterior), or the min…max across the
   // interval (CI) — the centre earns 1, the extremes share the same endpoint value
-  const estValue = egg ? egg.partialEst : estR;
+  const estValue = egg ? egg.estR : estR;
   const estDisp = isBox ? `${fmtRewardPill(estLo)}...${fmtRewardPill(estHi)}` : fmtRewardPill(estValue);
   out.push(pill(TOP + 6, "estimated", estDisp, (egg ? estValue > 0 : bet) ? GRN_F : GREY));
   out.push(pill(TOP + 32, "actual", fmtRewardPill(actR), actR > 0 ? GRN_F : actR < 0 ? RED_F : GREY));
@@ -497,31 +481,30 @@ function integrate(f) {
 
 function buildRewardEggData(state) {
   const A = -12, B = 12, M = 2400, h = (B - A) / M;
-  const xs = new Array(M + 1);
-  const vals = new Array(M + 1);
-  const cum = new Array(M + 1);
+  const centerPad = 0.9;
+  const centerLo = state.delta - HALF - centerPad;
+  const centerHi = state.delta + HALF + centerPad;
   let maxAbs = 0;
   for (let i = 0; i <= M; i++) {
     const x = A + h * i;
-    const v = state.post(x) * state.rew(x, state.modePost);
-    xs[i] = x;
-    vals[i] = v;
-    if (i === 0) cum[i] = 0;
-    else cum[i] = cum[i - 1] + 0.5 * (vals[i - 1] + v) * h;
-    if (x >= state.delta - HALF && x <= state.delta + HALF) maxAbs = Math.max(maxAbs, Math.abs(v));
+    if (x < state.delta - HALF || x > state.delta + HALF) continue;
+    for (let j = 0; j <= 72; j++) {
+      const center = centerLo + (centerHi - centerLo) * j / 72;
+      const v = state.post(x) * state.rew(x, center);
+      maxAbs = Math.max(maxAbs, Math.abs(v));
+    }
   }
-  return { A, B, h, xs, vals, cum, maxAbs, loX: state.delta - HALF, hiX: state.delta + HALF };
+  return { A, B, M, h, maxAbs, centerLo, centerHi };
 }
 
-function rewardEggPartial(data, x) {
-  if (x <= data.A) return 0;
-  if (x >= data.B) return data.cum[data.cum.length - 1];
-  const idx = Math.max(1, Math.min(data.xs.length - 1, Math.floor((x - data.A) / data.h) + 1));
-  const x0 = data.xs[idx - 1], x1 = data.xs[idx];
-  const v0 = data.vals[idx - 1], v1 = data.vals[idx];
-  const frac = (x - x0) / (x1 - x0);
-  const vx = v0 + frac * (v1 - v0);
-  return data.cum[idx - 1] + 0.5 * (v0 + vx) * (x - x0);
+function rewardEggEstimate(data, state, center) {
+  let s = 0;
+  for (let i = 0; i <= data.M; i++) {
+    const x = data.A + data.h * i;
+    const v = state.post(x) * state.rew(x, center);
+    s += ((i === 0 || i === data.M) ? 0.5 : 1) * v;
+  }
+  return s * data.h;
 }
 
 function stopRewardEgg(restore = true) {
@@ -678,24 +661,21 @@ function startRewardEgg() {
   const state = currentState;
   const eggData = buildRewardEggData(state);
   const duration = 1800;
-  const steps = 120;
   const start = performance.now();
 
-  const drawFrame = (scanX) => {
+  const drawFrame = (center) => {
     renderRewardPost(state, {
-      loX: eggData.loX,
-      scanX,
-      steps,
+      center,
       maxAbs: eggData.maxAbs,
-      partialEst: rewardEggPartial(eggData, scanX),
+      estR: rewardEggEstimate(eggData, state, center),
     });
   };
 
   const tick = (now) => {
     if (token !== rewardEggToken) return;
     const t = Math.min(1, (now - start) / duration);
-    const scanX = eggData.loX + (eggData.hiX - eggData.loX) * t;
-    drawFrame(scanX);
+    const center = eggData.centerLo + (eggData.centerHi - eggData.centerLo) * t;
+    drawFrame(center);
     if (t < 1) rewardEggFrame = requestAnimationFrame(tick);
     else {
       rewardEggFrame = 0;
@@ -703,7 +683,7 @@ function startRewardEgg() {
     }
   };
 
-  drawFrame(eggData.loX);
+  drawFrame(eggData.centerLo);
   rewardEggFrame = requestAnimationFrame(tick);
 }
 
