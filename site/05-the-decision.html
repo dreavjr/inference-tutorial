@@ -419,9 +419,9 @@ function rewardSvg({ dens, isBox, lo, hi, mode, delta, p, c, BK, estR, estLo, es
   };
   // estimated reward: a single expected value (posterior), or the min…max across the
   // interval (CI) — the centre earns 1, the extremes share the same endpoint value
-  const estDisp = isBox ? `${estLo.toFixed(2)}…${estHi.toFixed(2)}` : estR.toFixed(2);
+  const estDisp = isBox ? `${fmtRewardPill(estLo)}...${fmtRewardPill(estHi)}` : fmtRewardPill(estR);
   out.push(pill(TOP + 6, "estimated", estDisp, bet ? GRN_F : GREY));
-  out.push(pill(TOP + 32, "actual", actR.toFixed(2), actR > 0 ? GRN_F : actR < 0 ? RED_F : GREY));
+  out.push(pill(TOP + 32, "actual", fmtRewardPill(actR), actR > 0 ? GRN_F : actR < 0 ? RED_F : GREY));
 
   return `<svg viewBox='0 0 ${FW} ${FH}' xmlns='http://www.w3.org/2000/svg'>${out.join("")}</svg>`;
 }
@@ -483,6 +483,10 @@ function fmtReward(v) {
 
 function fmtRewardLabel(v) {
   return `${Math.round(Math.abs(v) * 100)}`;
+}
+
+function fmtRewardPill(v) {
+  return `${Math.round(v * 100)}`;
 }
 
 function fmtRewardSum(v) {
@@ -776,10 +780,11 @@ function overbarTspan(label) {
   return `<tspan style='text-decoration:overline'>${label}</tspan>`;
 }
 
-function setSimSummary(svg, id, leftLabel, leftMean, rightMean, maxMean) {
+function setSimSummary(svg, id, leftLabel, leftMean, actMean, rightMean, maxMean) {
   const text = svg.querySelector(id);
   text.innerHTML =
     `${overbarTspan(leftLabel)} ${fmtRewardSum(leftMean)} · ` +
+    `${overbarTspan("act")} ${fmtRewardSum(actMean)} · ` +
     `${overbarTspan("got")} ${fmtRewardSum(rightMean)} · ` +
     `${overbarTspan("max")} ${fmtRewardSum(maxMean)}`;
   text.setAttribute("opacity", "1");
@@ -888,7 +893,7 @@ async function runSimulation() {
   const bayesCols = bayesSvg.querySelector("#simBayesCols");
   const ciCols = ciSvg.querySelector("#simCICols");
 
-  let sumExp = 0, sumGotPost = 0, sumPred = 0, sumGotCI = 0;
+  let sumExp = 0, sumActPost = 0, sumGotPost = 0, sumPred = 0, sumActCI = 0, sumGotCI = 0;
   for (let i = 0; i < draws.length; i++) {
     const state = draws[i];
     pool = state.pool;
@@ -898,8 +903,10 @@ async function runSimulation() {
     ciCols.appendChild(ciSampleGroup(state, i, ciSpan));
 
     sumExp += state.erPost;
+    sumActPost += state.actPostRaw;
     sumGotPost += state.actPost;
     sumPred += state.erCIlo;
+    sumActCI += state.actCIRaw;
     sumGotCI += state.actCI;
 
     await sleep(SIM_WAIT);
@@ -907,8 +914,8 @@ async function runSimulation() {
 
   const nDraws = draws.length;
   const maxMean = 1;
-  setSimSummary(bayesSvg, "#simBayesSum", "est", sumExp / nDraws, sumGotPost / nDraws, maxMean);
-  setSimSummary(ciSvg, "#simCISum", "est", sumPred / nDraws, sumGotCI / nDraws, maxMean);
+  setSimSummary(bayesSvg, "#simBayesSum", "est", sumExp / nDraws, sumActPost / nDraws, sumGotPost / nDraws, maxMean);
+  setSimSummary(ciSvg, "#simCISum", "est", sumPred / nDraws, sumActCI / nDraws, sumGotCI / nDraws, maxMean);
 
   simRunning = false;
   setControlsDisabled(false);
