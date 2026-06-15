@@ -178,6 +178,7 @@ const PRIOR_C = "#8E6FAE", LIK_C = "#C96A5E", POST_C = "#333333";
 const REWARD_C = "#A77B2E";                 // the reward landscape
 const GRN_F = "#2E7D5B", RED_F = "#C0392B"; // belief painted by reward sign
 const A0 = 2;                               // variance prior: a₀ fixed and gentle
+const CMAX = 10;                            // reward axis is absolute: ±CMAX (the c slider's max)
 
 /* ---- geometry: the 1-D panels (same scale as steps 1, 3 & 4) ------------- */
 const S = 460, SH = 300, HALF = 5.0, YMAX = 0.9;
@@ -281,26 +282,31 @@ function marginalSvg(prior, lik, post, delta) {
 }
 
 /* ---- panels 3 & 4: a belief scored against the reward model, twice --------
-   Each panel draws TWO reward landscapes on the signed reward axis (peak +c at
-   top, floor −c at the base, zero at the mid-line):
+   Every panel is centred horizontally on the true difference Δ, and shares ONE
+   horizontal scale (xp) and ONE absolute vertical reward scale (yR, spanning
+   ±CMAX) across all three curves — true reward, estimated reward, and belief —
+   so a change in c grows the reward against a fixed-height belief.
 
      • the ESTIMATED reward (gold) — a reward centred on your own decision Δ̂
-       (the posterior's mode, or the interval's midpoint). Integrated against
-       your belief, it is what you EXPECT to earn; the shaded lens is the overlap
-       of belief and reward that the integral measures.
-     • the ACTUAL reward (green) — a reward centred on the hidden truth Δ. Your
-       decision Δ̂ is read straight off it as a single dot (no integral): what you
-       REALLY earn. The dashed line drops from your decision to that dot.
-
-   The pill carries both numbers. Their gap is the cost of not knowing Δ. */
+       (the posterior's mode, or the interval's midpoint). The shaded lens is the
+       overlap of belief and reward the expected-reward integral measures.
+     • the TRUE reward (green) — a reward centred on the hidden truth Δ. The dot
+       sits ON this curve at your decision Δ̂ — the reward you really collect — and
+       a dashed line joins it to the middle of your belief. */
 
 function rewardSvg({ dens, isBox, lo, hi, mode, delta, p, c, BK, estR, actR, bet, accent }) {
   const tag = isBox ? "b" : "a";
   const rewE = (x) => c * Math.max(1 - Math.pow(Math.abs(x - mode), p), -1);   // centred on the decision
   const rewA = (x) => c * Math.max(1 - Math.pow(Math.abs(x - delta), p), -1);  // centred on the truth
-  const yR = (r) => r >= 0 ? RMID - (r / c) * RUP : RMID - (r / c) * RDN;
+  const yR = (r) => r >= 0 ? RMID - (r / CMAX) * RUP : RMID - (r / CMAX) * RDN; // absolute: ±CMAX fills the axis
   const yB = (d) => RMID - Math.min(d * BK, RUP * 0.96);
   const beliefH = (x) => RMID - yB(dens(x));          // belief height above the zero-line (px)
+  const cy = Math.max(TOP + 3, Math.min(BASE, yR(c))), ny = Math.max(TOP + 3, Math.min(BASE, yR(-c)));
+
+  // the panel is centred on the truth Δ; one shared horizontal mapping for all curves
+  const cx = delta, xp = (x) => X0 + (x - cx) * SC;
+  const loX = cx - HALF, hiX = cx + HALF;             // visible window in data units
+  const clampPX = (px) => Math.min(Math.max(px, ML), ML + S);
   const out = [];
 
   out.push(`<defs><linearGradient id='fadeR${tag}' gradientUnits='userSpaceOnUse' x1='0' y1='${TOP}' x2='0' y2='${RMID}'>` +
@@ -308,19 +314,19 @@ function rewardSvg({ dens, isBox, lo, hi, mode, delta, p, c, BK, estR, actR, bet
            `<stop offset='1' stop-color='#fff' stop-opacity='1'/></linearGradient>` +
            `<mask id='fadeRm${tag}'><rect x='0' y='${TOP}' width='${FW}' height='${SH}' fill='url(#fadeR${tag})'/></mask></defs>`);
 
-  const drawLo = isBox ? lo : -HALF, drawHi = isBox ? hi : HALF;
+  const drawLo = isBox ? Math.max(lo, loX) : loX, drawHi = isBox ? Math.min(hi, hiX) : hiX;
 
   // the belief, rising from the zero-line: a faint fill behind a crisp outline
   let belief = "";
   if (isBox) {
     const hY = yB(dens((lo + hi) / 2));
-    const rect = `${Xp(lo).toFixed(1)},${RMID.toFixed(1)} ${Xp(lo).toFixed(1)},${hY.toFixed(1)} ` +
-                 `${Xp(hi).toFixed(1)},${hY.toFixed(1)} ${Xp(hi).toFixed(1)},${RMID.toFixed(1)}`;
+    const xlo = clampPX(xp(lo)).toFixed(1), xhi = clampPX(xp(hi)).toFixed(1);
+    const rect = `${xlo},${RMID.toFixed(1)} ${xlo},${hY.toFixed(1)} ${xhi},${hY.toFixed(1)} ${xhi},${RMID.toFixed(1)}`;
     belief += `<polygon points='${rect}' fill='${accent}' opacity='0.07'/>`;
     belief += `<polyline points='${rect}' fill='none' stroke='${accent}' stroke-width='2'/>`;
   } else {
-    const top = linspace(drawLo, drawHi, 321).map(x => `${Xp(x).toFixed(1)},${yB(dens(x)).toFixed(1)}`).join(" ");
-    belief += `<polygon points='${Xp(drawLo).toFixed(1)},${RMID.toFixed(1)} ${top} ${Xp(drawHi).toFixed(1)},${RMID.toFixed(1)}' fill='${accent}' opacity='0.07'/>`;
+    const top = linspace(drawLo, drawHi, 321).map(x => `${xp(x).toFixed(1)},${yB(dens(x)).toFixed(1)}`).join(" ");
+    belief += `<polygon points='${xp(drawLo).toFixed(1)},${RMID.toFixed(1)} ${top} ${xp(drawHi).toFixed(1)},${RMID.toFixed(1)}' fill='${accent}' opacity='0.07'/>`;
     belief += `<polyline points='${top}' fill='none' stroke='${accent}' stroke-width='2'/>`;
   }
 
@@ -332,37 +338,40 @@ function rewardSvg({ dens, isBox, lo, hi, mode, delta, p, c, BK, estR, actR, bet
     const xs = linspace(oLo, oHi, Math.max(8, Math.round((oHi - oLo) * 60)));
     const top = xs.map(x => {
       const h = Math.max(0, Math.min(beliefH(x), RMID - yR(rewE(x))));
-      return `${Xp(x).toFixed(1)},${(RMID - h).toFixed(1)}`;
+      return `${xp(x).toFixed(1)},${(RMID - h).toFixed(1)}`;
     }).join(" ");
-    lens = `<polygon points='${Xp(oLo).toFixed(1)},${RMID.toFixed(1)} ${top} ${Xp(oHi).toFixed(1)},${RMID.toFixed(1)}' fill='${REWARD_C}' opacity='0.20'/>`;
+    lens = `<polygon points='${xp(oLo).toFixed(1)},${RMID.toFixed(1)} ${top} ${xp(oHi).toFixed(1)},${RMID.toFixed(1)}' fill='${REWARD_C}' opacity='0.20'/>`;
   }
   out.push(`<g mask='url(#fadeRm${tag})'>${belief}${lens}</g>`);
 
   // the zero-line of the reward axis
   out.push(`<line x1='${ML}' x2='${ML + S}' y1='${RMID.toFixed(1)}' y2='${RMID.toFixed(1)}' stroke='${PAL.rule}' stroke-width='1'/>`);
 
-  // the two reward landscapes
+  // the two reward landscapes, on the same horizontal scale as the belief
   const curve = (f, col) =>
-    `<polyline points='${linspace(-HALF, HALF, 421).map(x => `${Xp(x).toFixed(1)},${Math.max(TOP + 3, Math.min(BASE, yR(f(x)))).toFixed(1)}`).join(" ")}' ` +
+    `<polyline points='${linspace(loX, hiX, 421).map(x => `${xp(x).toFixed(1)},${Math.max(TOP + 3, Math.min(BASE, yR(f(x)))).toFixed(1)}`).join(" ")}' ` +
     `fill='none' stroke='${col}' stroke-width='1.8'/>`;
   out.push(curve(rewE, REWARD_C));   // estimated — centred on the decision
-  out.push(curve(rewA, PAL.green));  // actual — centred on the truth
+  out.push(curve(rewA, PAL.green));  // true — centred on the truth
 
-  out.push(`<text x='${ML + S - 4}' y='${(TOP + 13).toFixed(1)}' text-anchor='end' font-size='10' fill='${PAL.muted}'>reward +c</text>`);
+  // reward magnitude labels, riding at the actual peak +c and floor −c (they move with c)
+  out.push(`<text x='${ML + S - 4}' y='${(cy - 4).toFixed(1)}' text-anchor='end' font-size='10' fill='${PAL.muted}'>+c</text>`);
   out.push(`<text x='${ML + S - 4}' y='${(RMID - 4).toFixed(1)}' text-anchor='end' font-size='10' fill='${PAL.muted}'>0</text>`);
-  out.push(`<text x='${ML + S - 4}' y='${(BASE - 5).toFixed(1)}' text-anchor='end' font-size='10' fill='${PAL.muted}'>−c</text>`);
+  out.push(`<text x='${ML + S - 4}' y='${(ny - 4).toFixed(1)}' text-anchor='end' font-size='10' fill='${PAL.muted}'>−c</text>`);
 
-  // the decision Δ̂: a dashed drop from the estimated peak to the actual-reward dot
-  const mx = Xp(Math.max(-HALF, Math.min(HALF, mode)));
-  const dotY = Math.max(TOP + 3, Math.min(BASE, yR(actR)));
-  out.push(`<line x1='${mx.toFixed(1)}' x2='${mx.toFixed(1)}' y1='${(TOP + 21).toFixed(1)}' y2='${dotY.toFixed(1)}' stroke='${PAL.ink}' stroke-width='1.1' stroke-dasharray='4 3'/>`);
+  // the decision Δ̂ and the reward it really earns: a dot ON the true-reward (green)
+  // curve at Δ̂, joined by a dashed line to the middle of the belief
+  const dvalX = Math.max(loX, Math.min(hiX, mode));
+  const mx = xp(dvalX);
+  const dotY = Math.max(TOP + 3, Math.min(BASE, yR(rewA(dvalX))));
+  const beliefTopY = isBox ? yB(dens((lo + hi) / 2)) : yB(dens(dvalX));
+  out.push(`<line x1='${mx.toFixed(1)}' x2='${mx.toFixed(1)}' y1='${beliefTopY.toFixed(1)}' y2='${dotY.toFixed(1)}' stroke='${PAL.ink}' stroke-width='1.1' stroke-dasharray='4 3'/>`);
   out.push(`<circle cx='${mx.toFixed(1)}' cy='${dotY.toFixed(1)}' r='4.2' fill='${PAL.ink}'/>`);
 
-  // peak labels: Δ̂ (decision) and Δ (truth), splayed apart so they never collide
+  // peak labels: Δ̂ (decision) and Δ (truth, the panel centre), splayed so they never collide
   const left = mode <= delta;
   out.push(`<text x='${(mx + (left ? -4 : 4)).toFixed(1)}' y='${(TOP + 16).toFixed(1)}' text-anchor='${left ? "end" : "start"}' font-size='12.5' font-weight='600' fill='${PAL.ink}'>Δ̂</text>`);
-  const dlx = Xp(Math.max(-HALF, Math.min(HALF, delta)));
-  out.push(`<text x='${(dlx + (left ? 4 : -4)).toFixed(1)}' y='${(TOP + 16).toFixed(1)}' text-anchor='${left ? "start" : "end"}' font-size='12.5' font-weight='600' fill='${PAL.green}'>Δ</text>`);
+  out.push(`<text x='${(X0 + (left ? 4 : -4)).toFixed(1)}' y='${(TOP + 16).toFixed(1)}' text-anchor='${left ? "start" : "end"}' font-size='12.5' font-weight='600' fill='${PAL.green}'>Δ</text>`);
 
   out.push(`<line x1='${ML}' x2='${ML + S}' y1='${BASE}' y2='${BASE}' stroke='${PAL.rule}' stroke-width='1'/>`);
 
