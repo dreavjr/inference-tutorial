@@ -32,10 +32,11 @@
     <p>Read it plainly: if the truth is <strong>Δ</strong> and you commit to the value
     <strong>x</strong>, you earn the most — a full <em>1</em> — when you land exactly on the
     truth. Miss, and two penalties bite: a <em>polynomial</em> one, |Δ − x|<sup>p</sup>, and
-    a <em>linear</em> one, c · |Δ − x|. The reward falls through <em>zero</em> at a
-    break-even error <strong>ε</strong> — the largest miss you can still profit from — and
-    keeps dropping past it. Raising <em>c</em> pulls ε inward; raising <em>p</em>, oddly,
-    pushes it outward — for misses under one unit a higher power bites less, so a little more
+    a <em>linear</em> one, c · |Δ − x|. For positive <em>c</em> the reward falls through
+    <em>zero</em> at a break-even error <strong>ε</strong> — the largest miss you can still
+    profit from — and keeps dropping past it. Negative <em>c</em> pushes that crossing
+    outward and can even remove it from view. Raising <em>p</em>, oddly, often pushes ε
+    outward too — for misses under one unit a higher power bites less, so a little more
     error is forgiven. (With c = 0, only the polynomial remains and ε sits at exactly 1.)</p>
 
     <table class="concept">
@@ -43,7 +44,7 @@
       <tr><td><strong>p</strong></td><td>the <em>polynomial degree</em> — how the penalty
           curves: a gentle bowl at p = 1, a flat top with steep walls as p climbs</td><td>a slider (1…10)</td></tr>
       <tr><td><strong>c</strong></td><td>the <em>linear penalty</em> — a flat charge per unit
-          of error; raising it tilts the whole reward down and pulls the break-even ε inward</td><td>a slider (0…10)</td></tr>
+          of error; raising it tilts the whole reward down, lowering the payoff away from truth</td><td>a slider (−10…10)</td></tr>
       <tr><td><strong>Δ</strong></td><td>where the reward is centred — the truth itself;
           we can draw it here only because we simulate</td><td>the green line</td></tr>
     </table>
@@ -281,6 +282,15 @@ function marginalSvg(prior, lik, post, delta) {
   return `<svg viewBox='0 0 ${FW} ${FH}' xmlns='http://www.w3.org/2000/svg'>${p.join("")}</svg>`;
 }
 
+function rewardRaw(x, ctr, p, c) {
+  const e = Math.abs(x - ctr);
+  return 1 - Math.pow(e, p) - c * e;
+}
+
+function rewardClamped(x, ctr, p, c) {
+  return Math.max(-1, rewardRaw(x, ctr, p, c));
+}
+
 /* ---- panels 3 & 4: a belief scored against the reward model, twice --------
    Every panel is centred horizontally on the true difference Δ, and all three
    curves — true reward, estimated reward, and belief — share ONE horizontal
@@ -292,23 +302,24 @@ function marginalSvg(prior, lik, post, delta) {
        posterior panel the shaded lens is the overlap the expected-reward integral
        measures; on the CI panel, dotted links drop from the interval's midpoint
        (the MLE) and its two extremes to this curve — the reward you'd score there.
-     • the TRUE reward (green, dashed) — centred on the hidden truth Δ. The dot
+     • the TRUE reward (green, dashed) — centred on the hidden truth Δ. A dashed
+       guide marks Δ at the panel centre. The dot
        sits ON it at your decision Δ̂ — the reward you really collect — joined by a
        dashed line to the middle of your belief (the posterior peak, or the CI bar). */
 
-function rewardSvg({ dens, isBox, lo, hi, mode, delta, p, c, BK, estR, actR, bet, accent }) {
+function rewardSvg({ dens, isBox, lo, hi, mode, delta, p, c, BK, estR, estLo, estHi, actR, bet, accent, showEstimatedCurve = true }) {
   const tag = isBox ? "b" : "a";
-  const rewE = (x) => { const e = Math.abs(x - mode);  return 1 - Math.pow(e, p) - c * e; }; // centred on the decision
-  const rewA = (x) => { const e = Math.abs(x - delta); return 1 - Math.pow(e, p) - c * e; }; // centred on the truth
+  const rewE = (x) => rewardClamped(x, mode, p, c);  // centred on the decision
+  const rewA = (x) => rewardClamped(x, delta, p, c); // centred on the truth
   const yR = (r) => r >= 0 ? RMID - r * RUP : RMID - r * RDN;   // fixed scale: reward +1 → top, −1 → base
   const yRc = (r) => Math.max(TOP + 3, Math.min(BASE, yR(r))); // clamped to the plot area
   const yB = (d) => RMID - Math.min(d * BK, RUP * 0.96);
   const beliefH = (x) => RMID - yB(dens(x));          // belief height above the zero-line (px)
 
-  // floats 3 & 4 reuse the exact horizontal mapping of floats 1 & 2 — x ∈ [−HALF, HALF]
-  // centred on 0, via Xp — so all four panels line up column-for-column
-  const xp = Xp;
-  const loX = -HALF, hiX = HALF;                      // visible window in data units
+  // floats 3 & 4 keep the same horizontal scale, but the visible window is recentered
+  // on the hidden truth Δ so the true-reward peak always sits in the middle.
+  const loX = delta - HALF, hiX = delta + HALF;       // visible window in data units
+  const xp = (x) => X0 + (x - delta) * SC;
   const clampPX = (px) => Math.min(Math.max(px, ML), ML + S);
   const out = [];
 
@@ -346,12 +357,13 @@ function rewardSvg({ dens, isBox, lo, hi, mode, delta, p, c, BK, estR, actR, bet
 
   // the zero-line of the reward axis
   out.push(`<line x1='${ML}' x2='${ML + S}' y1='${RMID.toFixed(1)}' y2='${RMID.toFixed(1)}' stroke='${PAL.rule}' stroke-width='1'/>`);
+  out.push(`<line x1='${X0.toFixed(1)}' x2='${X0.toFixed(1)}' y1='${BASE}' y2='${TOP + 18}' stroke='${PAL.green}' stroke-width='1.4' stroke-dasharray='5 4'/>`);
 
   // the two reward landscapes — estimated (gold, solid), true (green, dashed)
   const curve = (f, col, dash) =>
     `<polyline points='${linspace(loX, hiX, 421).map(x => `${xp(x).toFixed(1)},${yRc(f(x)).toFixed(1)}`).join(" ")}' ` +
     `fill='none' stroke='${col}' stroke-width='1.8'${dash ? ` stroke-dasharray='${dash}'` : ""}/>`;
-  out.push(curve(rewE, REWARD_C));         // estimated — centred on the decision
+  if (showEstimatedCurve) out.push(curve(rewE, REWARD_C)); // estimated — centred on the decision
   out.push(curve(rewA, PAL.green, "6 4")); // true — centred on the truth (dashed)
 
   // float 4: dotted links from the CI bar (reward 0.5) to the estimated-reward
@@ -395,8 +407,8 @@ function rewardSvg({ dens, isBox, lo, hi, mode, delta, p, c, BK, estR, actR, bet
            `<text x='${(ML + 8 + w / 2).toFixed(1)}' y='${y + 15}' text-anchor='middle' font-size='12' font-weight='700' fill='#fff'>${txt}</text>`;
   };
   // estimated reward: a single expected value (posterior), or the min…max across the
-  // interval (CI) — max at the MLE (always 1), min equally at the two extremes
-  const estDisp = isBox ? `${rewE(lo).toFixed(2)}…${rewE(mode).toFixed(2)}` : estR.toFixed(2);
+  // interval (CI) — the centre earns 1, the extremes share the same endpoint value
+  const estDisp = isBox ? `${estLo.toFixed(2)}…${estHi.toFixed(2)}` : estR.toFixed(2);
   out.push(pill(TOP + 6, "estimated", estDisp, bet ? GRN_F : GREY));
   out.push(pill(TOP + 32, "actual", actR.toFixed(2), actR > 0 ? GRN_F : actR < 0 ? RED_F : GREY));
 
@@ -421,11 +433,10 @@ const s0S    = makeSlider(grpPrior, { label: "prior centre for σ² · σ²₀",
 
 const alphaS = makeSlider(grpDecision, { label: "false-positive rate · α (t-test)", min: 0.005, max: 0.2, step: 0.005, value: 0.05, fmt: v => v.toFixed(3), onInput: render });
 const pS     = makeSlider(grpDecision, { label: "reward model degree · p", min: 1, max: 10, step: 0.1, value: 2, fmt: v => v.toFixed(1), onInput: render });
-const cS     = makeSlider(grpDecision, { label: "reward linear penalty · c", min: 0, max: 10, step: 0.1, value: 0, fmt: v => v.toFixed(1), onInput: render });
+const cS     = makeSlider(grpDecision, { label: "reward linear penalty · c", min: -10, max: 10, step: 0.1, value: 0, fmt: v => v.toFixed(1), onInput: render });
 
-// ∫ f(x) dx over a wide range by the trapezoid rule. The reward is unbounded below,
-// but the posterior / box decays fast enough that the product converges, and the wide
-// finite range captures essentially all of the mass.
+// ∫ f(x) dx over a wide range by the trapezoid rule. The reward floor is clamped at −1,
+// and the wide finite range captures essentially all of the posterior / CI mass.
 function integrate(f) {
   const A = -12, B = 12, M = 4000, h = (B - A) / M;
   let s = 0;
@@ -468,21 +479,20 @@ function render() {
 
   // the two values you could bet on: the posterior's peak, the CI's midpoint
   const modePost = mn, modeCI = dbar;
-  const rew = (x, ctr) => { const e = Math.abs(x - ctr); return 1 - Math.pow(e, p) - c * e; };
+  const rew = (x, ctr) => rewardClamped(x, ctr, p, c);
 
   // BAYESIAN — act on expected utility: average the reward (centred on your bet)
   // against the whole posterior, and place the bet iff that expectation is positive
   const erPost  = integrate(x => post(x) * rew(x, modePost));
   const betPost = erPost > 0;
 
-  // CLASSICAL — the reward falls through zero at the break-even error ε, where
-  // 1 − ε^p − c·ε = 0 (a function of both p and c). Bet iff the margin of error E —
-  // the CI half-width — stays within ε; report the worst-case reward 1 − E^p − c·E.
-  // U(0)=1>0 and U(1)=−c<0, so ε lies in (0,1): find it by bisection.
-  let elo = 0, ehi = 1;
-  for (let i = 0; i < 60; i++) { const em = (elo + ehi) / 2; if (1 - Math.pow(em, p) - c * em > 0) elo = em; else ehi = em; }
-  const EPS = (elo + ehi) / 2;
-  const erCI = 1 - Math.pow(hw, p) - c * hw, betCI = hw <= EPS;
+  // CLASSICAL — read the CI as a flat block and take its worst-case reward over the
+  // interval: the centre earns 1, the edges earn the symmetric endpoint value.
+  const ciEdgeR = rew(ciLo, modeCI);
+  const erCIlo = Math.min(1, ciEdgeR);
+  const erCIhi = Math.max(1, ciEdgeR);
+  const erCI = erCIlo;
+  const betCI = erCI > 0;
 
   // ACTUAL reward — the true reward at the value we committed to, earned only if we
   // actually placed the bet; a refused bet earns nothing
@@ -499,10 +509,10 @@ function render() {
 
   document.getElementById("figRewPost").innerHTML = rewardSvg({
     dens: post, isBox: false, mode: modePost, delta, p, c, BK,
-    estR: erPost, actR: actPost, bet: betPost, accent: POST_C });
+    estR: erPost, actR: actPost, bet: betPost, accent: POST_C, showEstimatedCurve: false });
   document.getElementById("figRewCI").innerHTML = rewardSvg({
     dens: box, isBox: true, lo: ciLo, hi: ciHi, mode: modeCI, delta, p, c, BK,
-    estR: erCI, actR: actCI, bet: betCI, accent: PAL.blue });
+    estR: erCI, estLo: erCIlo, estHi: erCIhi, actR: actCI, bet: betCI, accent: PAL.blue });
 }
 
 document.getElementById("resample").addEventListener("click", () => {
