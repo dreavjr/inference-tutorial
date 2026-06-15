@@ -153,11 +153,16 @@
   </nav>
 </main>
 
-<script src="assets/common.js"></script>
+<script src="assets/math.js"></script>
+<script src="assets/stats.js"></script>
+<script src="assets/plots.js"></script>
+<script src="assets/ui.js"></script>
 <script>
 "use strict";
-/* ---- colours of the three voices ---------------------------------------- */
-const PRIOR_C = "#8E6FAE", LIK_C = "#C96A5E", POST_C = "#333333";
+/* PRIOR_C/LIK_C/POST_C (the three voices), the shared 1-D geometry, the curve
+   helpers, the populations panel and the marginal panel all come from plots.js;
+   the Normal-inverse-gamma densities come from stats.js. This page adds only the
+   2-D contour panels and their RGB fills. */
 const PRIOR_RGB = [142, 111, 174], LIK_RGB = [201, 106, 94], POST_RGB = [74, 74, 74];
 const BG = "#FBFAF7";   // page background — used as a halo to break lines under labels
 
@@ -177,28 +182,7 @@ const SY = 3.0;                    // σ axis (group std dev): 0..3
 const X2 = (d) => ML2 + (d + HALF2) / (2 * HALF2) * S2W;
 const Y2 = (s) => BASE2 - s / SY * S2H;
 
-/* ---- geometry: the 1-D panels (same scale as steps 1 & 3) ---------------- */
-const S = 460, SH = 300, HALF = 5.0, YMAX = 0.9;
-const SC = S / (2 * HALF), K = SH / YMAX;
-const ML = 16, MR = 16, BH = 30;
-const FW = ML + S + MR, X0 = ML + S / 2;
-const TOP = 14, BASE = TOP + SH, FH = BASE + BH;
-const Xp = (x) => X0 + x * SC;
-const Yp = (base, dens, cap = SH) => base - Math.min(dens * K, cap);
-const clampx = (px, pad = 28) => Math.min(Math.max(px, ML + pad), ML + S - pad);
-
-/* ---- log-density fields over (Δ, σ²_d) ------------------------------------ */
-
-// Normal-inverse-gamma joint log density
-function logNIG(d, s2, m, k, a, b) {
-  return 0.5 * Math.log(k / (2 * Math.PI * s2)) - k * (d - m) ** 2 / (2 * s2)
-       + a * Math.log(b) - logGamma(a) - (a + 1) * Math.log(s2) - b / s2;
-}
-
-// Gaussian likelihood of the n differences, as a function of (Δ, σ²_d)
-function logLik(d, s2, n, dbar, ssd) {
-  return -(n / 2) * Math.log(2 * Math.PI * s2) - (ssd + n * (dbar - d) ** 2) / (2 * s2);
-}
+/* The log-density fields over (Δ, σ²_d) — logNIG and logLik — live in stats.js. */
 
 /* ---- a contour panel: banded heatmap (canvas) inside an SVG frame ---------
    Each panel draws equal-VOLUME contours (highest-density regions): the bands
@@ -385,95 +369,7 @@ function likelihoodContourSvg(vals, rgb, mode, truth) {
   return `<svg viewBox='0 0 ${FW2} ${FH2}' xmlns='http://www.w3.org/2000/svg'>${p.join("")}</svg>`;
 }
 
-/* ---- the 1-D panels -------------------------------------------------------- */
-
-function curvePath(xs, dens, base, cap = S) {
-  return xs.map((x, i) => `${Xp(x).toFixed(1)},${Yp(base, dens[i], cap).toFixed(1)}`).join(" ");
-}
-
-function populationSvg(delta, varr, n, pool) {
-  const sigma = Math.sqrt(varr);
-  const xs = linspace(-HALF, HALF, 201);
-  const p = [];
-  for (const [mu, col] of [[-delta / 2, PAL.blue], [delta / 2, PAL.orange]]) {
-    const pdf = xs.map(x => Math.exp(-0.5 * ((x - mu) / sigma) ** 2) / (sigma * Math.sqrt(2 * Math.PI)));
-    const line = curvePath(xs, pdf, BASE);
-    p.push(`<polygon points='${Xp(-HALF).toFixed(1)},${BASE} ${line} ${Xp(HALF).toFixed(1)},${BASE}' fill='${col}' opacity='0.10'/>`);
-    p.push(`<polyline points='${line}' fill='none' stroke='${col}' stroke-width='2'/>`);
-  }
-  p.push(`<line x1='${ML}' x2='${ML + S}' y1='${BASE}' y2='${BASE}' stroke='${PAL.rule}' stroke-width='1'/>`);
-  for (const [z, j, mu, col, side] of [[pool.z1, pool.j1, -delta / 2, PAL.blue, -1],
-                                       [pool.z2, pool.j2, delta / 2, PAL.orange, 1]]) {
-    for (let i = 0; i < n; i++) {
-      const x = Math.max(-HALF, Math.min(HALF, mu + sigma * z[i]));
-      const y = BASE + side * (11 + j[i] * 8);
-      p.push(`<circle cx='${Xp(x).toFixed(1)}' cy='${y.toFixed(1)}' r='3' fill='${col}' opacity='0.75'/>`);
-    }
-  }
-  return `<svg viewBox='0 0 ${FW} ${FH}' xmlns='http://www.w3.org/2000/svg'>${p.join("")}</svg>`;
-}
-
-function marginalSvg(prior, lik, post, delta) {
-  const p = [];
-  p.push(`<defs><linearGradient id='fadeG' gradientUnits='userSpaceOnUse' x1='0' y1='${TOP}' x2='0' y2='${BASE}'>` +
-         `<stop offset='0' stop-color='#fff' stop-opacity='0'/>` +
-         `<stop offset='0.22' stop-color='#fff' stop-opacity='1'/>` +
-         `<stop offset='1' stop-color='#fff' stop-opacity='1'/></linearGradient>` +
-         `<mask id='fadeM'><rect x='0' y='${TOP}' width='${FW}' height='${SH}' fill='url(#fadeG)'/></mask></defs>`);
-
-  const xs = linspace(-HALF, HALF, 321);
-  const dPrior = xs.map(prior), dPost = xs.map(post);
-
-  // prior & posterior are genuine densities (area = 1) → filled. The likelihood is
-  // a relative-support weighting (peak = 1): its height is conventional, so it is
-  // pinned to REF of the panel and drawn UNFILLED and dashed — no area to read.
-  const REF = 0.72, refDens = REF * YMAX, refY = Yp(BASE, refDens);
-  const dLik = xs.map(x => lik(x) * refDens);
-
-  const filled = (dens, col, op) => {
-    const line = curvePath(xs, dens, BASE);
-    return `<polygon points='${Xp(-HALF).toFixed(1)},${BASE} ${line} ${Xp(HALF).toFixed(1)},${BASE}' fill='${col}' opacity='${op}'/>`;
-  };
-  p.push(`<g mask='url(#fadeM)'>` +
-         filled(dPrior, PRIOR_C, 0.10) +
-         filled(dPost, POST_C, 0.12) +
-         `<polyline points='${curvePath(xs, dPrior, BASE)}' fill='none' stroke='${PRIOR_C}' stroke-width='2'/>` +
-         `<polyline points='${curvePath(xs, dPost, BASE)}' fill='none' stroke='${POST_C}' stroke-width='2.2'/>` +
-         `<polyline points='${curvePath(xs, dLik, BASE)}' fill='none' stroke='${LIK_C}' stroke-width='1.8' stroke-dasharray='6 3'/>` +
-         `</g>`);
-  p.push(`<line x1='${ML}' x2='${ML + S}' y1='${BASE}' y2='${BASE}' stroke='${PAL.rule}' stroke-width='1'/>`);
-
-  // the likelihood's "support = 1" reference line — its peak rides this, by convention
-  p.push(`<line x1='${ML}' x2='${ML + S}' y1='${refY.toFixed(1)}' y2='${refY.toFixed(1)}' ` +
-         `stroke='${LIK_C}' stroke-width='1' stroke-dasharray='2 4' opacity='0.65'/>`);
-  p.push(`<text x='${ML + 6}' y='${(refY - 5).toFixed(1)}' font-size='10.5' font-style='italic' ` +
-         `fill='${LIK_C}'>likelihood: support = 1 at peak</text>`);
-
-  // reference markers on the top line: Δ (right) and the null 0 (left), splayed apart
-  const marker = (xv, color, lbl, side) => {
-    const x = Xp(xv);
-    const anchor = side < 0 ? "end" : side > 0 ? "start" : "middle";
-    const tx = side ? Math.min(Math.max(x + side * 5, ML + 12), ML + S - 12) : clampx(x);
-    return `<line x1='${x.toFixed(1)}' x2='${x.toFixed(1)}' y1='${BASE}' y2='${TOP + 21}' ` +
-           `stroke='${color}' stroke-width='1.4' stroke-dasharray='5 4'/>` +
-           `<text x='${tx.toFixed(1)}' y='${TOP + 16}' text-anchor='${anchor}' font-size='13.5' ` +
-           `font-weight='600' fill='${color}'>${lbl}</text>`;
-  };
-  p.push(marker(0, PAL.muted, "0", delta > 0.05 ? -1 : 0));
-  p.push(marker(delta, PAL.green, "Δ", 1));
-
-  // legend, flush to the right edge — labels right-aligned to the LEFT of each swatch
-  const lineX2 = ML + S, lineX1 = lineX2 - 24, labelX = lineX1 - 9;
-  const item = (y, col, txt, sw = 2, dash = "") =>
-    `<line x1='${lineX1}' x2='${lineX2}' y1='${y}' y2='${y}' stroke='${col}' stroke-width='${sw}'` +
-    `${dash ? ` stroke-dasharray='${dash}'` : ""}/>` +
-    `<text x='${labelX}' y='${y + 4}' text-anchor='end' font-size='12' fill='${PAL.ink}'>${txt}</text>`;
-  p.push(item(TOP + 34, PRIOR_C, "prior"));
-  p.push(item(TOP + 53, LIK_C, "likelihood (relative)", 1.8, "6 3"));
-  p.push(item(TOP + 72, POST_C, "posterior", 2.2));
-
-  return `<svg viewBox='0 0 ${FW} ${FH}' xmlns='http://www.w3.org/2000/svg'>${p.join("")}</svg>`;
-}
+/* The 1-D panels — populationSvg and marginalSvg — come from plots.js. */
 
 /* ---- wiring -------------------------------------------------------------- */
 
@@ -502,11 +398,8 @@ function render() {
   const dbar = mean(d);
   const ssd = d.reduce((s, v) => s + (v - dbar) ** 2, 0);
 
-  // conjugate update
-  const kn = k0 + n;
-  const mn = (k0 * m0 + n * dbar) / kn;
-  const an = A0 + n / 2;
-  const bn = B0 + ssd / 2 + k0 * n * (dbar - m0) ** 2 / (2 * kn);
+  // conjugate update (Normal-inverse-gamma)
+  const { kn, mn, an, bn } = nigUpdate(m0, k0, A0, B0, n, dbar, ssd);
 
   // truth in (Δ, σ) — σ is the group standard deviation, the y axis of the panels
   const truth = [delta, sigma];
