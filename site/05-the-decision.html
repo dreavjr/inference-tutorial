@@ -52,15 +52,23 @@
     <p class="formula" style="font-style:normal">E[U]&ensp;=&ensp;∫&thinsp;B(x)&thinsp;·&thinsp;U(x)&thinsp;dx</p>
 
     <p>— the integral of the product of the two curves. The bottom row scores two beliefs
-    against the same reward. On the <strong>left</strong>, your honest
+    against the same reward family. On the <strong>left</strong>, your honest
     <strong style="color:#333">posterior</strong>. On the <strong>right</strong>, the
     naïve reading of a classical result: take the <strong style="color:#3D6FB0">(1 − α)
     confidence interval</strong> and treat it as a <em>uniform block</em> of probability —
     “every value inside is equally plausible, everything outside impossible” — the same
-    flat box that step 1 drew, its area renormalised to 1. Each belief is painted
-    <strong style="color:#2E7D5B">green</strong> where it earns and
-    <strong style="color:#C0392B">red</strong> where it pays, and the pill reports its
-    expected reward.</p>
+    flat box that step 1 drew, its area renormalised to 1.</p>
+
+    <p>Each panel reads the reward <strong>twice</strong>. The
+    <strong style="color:#A77B2E">estimated reward</strong> (gold) is what you
+    <em>expect</em> to earn: a reward centred on your own decision — the posterior's mode,
+    or the interval's midpoint <strong>Δ̂</strong> — integrated against your belief about
+    where the truth lies. That integral is the shaded lens where belief and reward overlap.
+    The <strong style="color:#2E7D5B">actual reward</strong> (green) is what you
+    <em>really</em> earn: a second reward, centred on the <em>hidden truth</em> Δ, read off
+    at the one point you committed to — the dot, dropped from Δ̂, with no integral at all.
+    The pill carries both numbers, and the gap between them is the price of not knowing
+    the truth.</p>
   </section>
 
   <section class="demo">
@@ -101,11 +109,11 @@
   <section class="prose">
     <h2>Try this</h2>
     <ol>
-      <li><strong>Defaults.</strong> The posterior earns more than the CI-box. Both share
-      the same centre — the observed Δ̂ — but the posterior piles its credence near that
-      estimate, while the uniform box bleeds it evenly out to the interval's edges, some
-      of it spilling past the ±1 window into the red. The flat reading throws away the
-      very shape the posterior worked to find.</li>
+      <li><strong>Defaults.</strong> The posterior's <em>estimated</em> reward beats the
+      CI-box's: it piles credence near the decision, where the reward is richest, while the
+      uniform box spreads it evenly toward the interval's edges and so scores itself lower.
+      Their <em>actual</em> rewards sit close — both commit to nearly the same Δ̂ — so here
+      the posterior mostly wins by knowing its own worth.</li>
       <li><strong>Crank n to 100.</strong> Both beliefs sharpen and the gap narrows: once
       the interval shrinks safely inside the window, even the crude uniform reading does
       fine. With enough data the shape stops mattering — the same washing-out you saw with
@@ -119,10 +127,10 @@
       belief sits <em>inside</em> the window — and a tall, narrow posterior and a fat box
       can score closer than you'd think. Then raise <strong>c</strong>: the stakes scale,
       and so does the gap between the two decisions.</li>
-      <li><strong>Tighten the prior</strong> (κ₀ ↑) or shift <strong>m₀</strong>. The
-      posterior's expected reward responds to beliefs the confidence interval cannot even
-      express — it has no prior to set, so it must treat scarce data as if every value in
-      a wide interval were equally real.</li>
+      <li><strong>Tighten the prior</strong> (κ₀ ↑) and shift <strong>m₀</strong> off the
+      truth. The posterior's decision — its mode — now pulls away from the interval's
+      midpoint, and you can watch a confident-but-wrong prior <em>lower the actual reward</em>
+      even while it raises the estimated one: overconfidence, made quantitative.</li>
     </ol>
 
     <h2>The moral</h2>
@@ -139,6 +147,9 @@
         centred on the truth pays you to keep.</li>
         <li>Same data, same interval width — yet a different decision, because of how
         honestly the uncertainty <em>inside</em> the interval is shaped.</li>
+        <li>Two numbers, never one: what a method <em>thinks</em> it will earn and what it
+        <em>actually</em> earns. A trustworthy rule keeps the pair close; a tight wrong
+        prior, or a mis-shaped interval, pries them apart.</li>
       </ul>
     </div>
   </section>
@@ -259,19 +270,27 @@ function marginalSvg(prior, lik, post, delta) {
   return `<svg viewBox='0 0 ${FW} ${FH}' xmlns='http://www.w3.org/2000/svg'>${p.join("")}</svg>`;
 }
 
-/* ---- panels 3 & 4: a belief scored against the reward model --------------
-   The reward U(x) = c·max(1 − |x−Δ|^p, −1) is drawn as a landscape line about
-   the mid-line (peak +c at top, floor −c at the base, zero at the mid-line).
-   The belief — the posterior, or the confidence interval read as a uniform box
-   — rises from the same mid-line, and its fill is split at the reward's zero
-   crossings x = Δ ± 1: green inside (it earns), red outside (it pays). The pill
-   carries the exact expected reward, ∫ belief·U. */
+/* ---- panels 3 & 4: a belief scored against the reward model, twice --------
+   Each panel draws TWO reward landscapes on the signed reward axis (peak +c at
+   top, floor −c at the base, zero at the mid-line):
 
-function rewardSvg({ dens, isBox, lo, hi, delta, p, c, BK, expR, better, accent, caption }) {
+     • the ESTIMATED reward (gold) — a reward centred on your own decision Δ̂
+       (the posterior's mode, or the interval's midpoint). Integrated against
+       your belief, it is what you EXPECT to earn; the shaded lens is the overlap
+       of belief and reward that the integral measures.
+     • the ACTUAL reward (green) — a reward centred on the hidden truth Δ. Your
+       decision Δ̂ is read straight off it as a single dot (no integral): what you
+       REALLY earn. The dashed line drops from your decision to that dot.
+
+   The pill carries both numbers. Their gap is the cost of not knowing Δ. */
+
+function rewardSvg({ dens, isBox, lo, hi, mode, delta, p, c, BK, estR, actR, accent, betterActual }) {
   const tag = isBox ? "b" : "a";
-  const reward = (x) => c * Math.max(1 - Math.pow(Math.abs(x - delta), p), -1);
+  const rewE = (x) => c * Math.max(1 - Math.pow(Math.abs(x - mode), p), -1);   // centred on the decision
+  const rewA = (x) => c * Math.max(1 - Math.pow(Math.abs(x - delta), p), -1);  // centred on the truth
   const yR = (r) => r >= 0 ? RMID - (r / c) * RUP : RMID - (r / c) * RDN;
   const yB = (d) => RMID - Math.min(d * BK, RUP * 0.96);
+  const beliefH = (x) => RMID - yB(dens(x));          // belief height above the zero-line (px)
   const out = [];
 
   out.push(`<defs><linearGradient id='fadeR${tag}' gradientUnits='userSpaceOnUse' x1='0' y1='${TOP}' x2='0' y2='${RMID}'>` +
@@ -279,51 +298,73 @@ function rewardSvg({ dens, isBox, lo, hi, delta, p, c, BK, expR, better, accent,
            `<stop offset='1' stop-color='#fff' stop-opacity='1'/></linearGradient>` +
            `<mask id='fadeRm${tag}'><rect x='0' y='${TOP}' width='${FW}' height='${SH}' fill='url(#fadeR${tag})'/></mask></defs>`);
 
-  // belief fill, split green (|x−Δ|<1) / red (outside) — the product's sign made visible
-  const gL = delta - 1, gR = delta + 1;
   const drawLo = isBox ? lo : -HALF, drawHi = isBox ? hi : HALF;
-  const cl = (v) => Math.min(Math.max(v, drawLo), drawHi);
-  const fillSeg = (a, b, col) => {
-    if (b - a < 1e-3) return "";
-    const xs = linspace(a, b, Math.max(6, Math.round((b - a) * 48)));
-    const top = xs.map(x => `${Xp(x).toFixed(1)},${yB(dens(x)).toFixed(1)}`).join(" ");
-    return `<polygon points='${Xp(a).toFixed(1)},${RMID.toFixed(1)} ${top} ${Xp(b).toFixed(1)},${RMID.toFixed(1)}' fill='${col}' opacity='0.16'/>`;
-  };
-  let belief = fillSeg(drawLo, cl(gL), RED_F) + fillSeg(cl(gL), cl(gR), GRN_F) + fillSeg(cl(gR), drawHi, RED_F);
+
+  // the belief, rising from the zero-line: a faint fill behind a crisp outline
+  let belief = "";
   if (isBox) {
     const hY = yB(dens((lo + hi) / 2));
-    belief += `<polyline points='${Xp(lo).toFixed(1)},${RMID.toFixed(1)} ${Xp(lo).toFixed(1)},${hY.toFixed(1)} ` +
-              `${Xp(hi).toFixed(1)},${hY.toFixed(1)} ${Xp(hi).toFixed(1)},${RMID.toFixed(1)}' fill='none' stroke='${accent}' stroke-width='2'/>`;
+    const rect = `${Xp(lo).toFixed(1)},${RMID.toFixed(1)} ${Xp(lo).toFixed(1)},${hY.toFixed(1)} ` +
+                 `${Xp(hi).toFixed(1)},${hY.toFixed(1)} ${Xp(hi).toFixed(1)},${RMID.toFixed(1)}`;
+    belief += `<polygon points='${rect}' fill='${accent}' opacity='0.07'/>`;
+    belief += `<polyline points='${rect}' fill='none' stroke='${accent}' stroke-width='2'/>`;
   } else {
-    const pts = linspace(drawLo, drawHi, 321).map(x => `${Xp(x).toFixed(1)},${yB(dens(x)).toFixed(1)}`).join(" ");
-    belief += `<polyline points='${pts}' fill='none' stroke='${accent}' stroke-width='2'/>`;
+    const top = linspace(drawLo, drawHi, 321).map(x => `${Xp(x).toFixed(1)},${yB(dens(x)).toFixed(1)}`).join(" ");
+    belief += `<polygon points='${Xp(drawLo).toFixed(1)},${RMID.toFixed(1)} ${top} ${Xp(drawHi).toFixed(1)},${RMID.toFixed(1)}' fill='${accent}' opacity='0.07'/>`;
+    belief += `<polyline points='${top}' fill='none' stroke='${accent}' stroke-width='2'/>`;
   }
-  out.push(`<g mask='url(#fadeRm${tag})'>${belief}</g>`);
 
-  // the reward landscape and its zero-line
+  // the estimated reward, made visible: shade the lens under BOTH belief and the
+  // gold curve (the overlap the expected-reward integral measures)
+  const oLo = Math.max(drawLo, mode - 1), oHi = Math.min(drawHi, mode + 1);
+  let lens = "";
+  if (oHi > oLo) {
+    const xs = linspace(oLo, oHi, Math.max(8, Math.round((oHi - oLo) * 60)));
+    const top = xs.map(x => {
+      const h = Math.max(0, Math.min(beliefH(x), RMID - yR(rewE(x))));
+      return `${Xp(x).toFixed(1)},${(RMID - h).toFixed(1)}`;
+    }).join(" ");
+    lens = `<polygon points='${Xp(oLo).toFixed(1)},${RMID.toFixed(1)} ${top} ${Xp(oHi).toFixed(1)},${RMID.toFixed(1)}' fill='${REWARD_C}' opacity='0.20'/>`;
+  }
+  out.push(`<g mask='url(#fadeRm${tag})'>${belief}${lens}</g>`);
+
+  // the zero-line of the reward axis
   out.push(`<line x1='${ML}' x2='${ML + S}' y1='${RMID.toFixed(1)}' y2='${RMID.toFixed(1)}' stroke='${PAL.rule}' stroke-width='1'/>`);
-  const rpts = linspace(-HALF, HALF, 421).map(x => `${Xp(x).toFixed(1)},${Math.max(TOP + 3, Math.min(BASE, yR(reward(x)))).toFixed(1)}`).join(" ");
-  out.push(`<polyline points='${rpts}' fill='none' stroke='${REWARD_C}' stroke-width='1.8'/>`);
-  out.push(`<text x='${ML + S - 4}' y='${(TOP + 13).toFixed(1)}' text-anchor='end' font-size='10.5' fill='${REWARD_C}'>reward = +c</text>`);
-  out.push(`<text x='${ML + S - 4}' y='${(RMID - 4).toFixed(1)}' text-anchor='end' font-size='10' fill='${PAL.muted}'>0</text>`);
-  out.push(`<text x='${ML + S - 4}' y='${(BASE - 5).toFixed(1)}' text-anchor='end' font-size='10' fill='${REWARD_C}'>−c</text>`);
 
-  // the truth Δ — the reward's peak — and the tolerance window Δ ± 1
-  const dx = Xp(Math.max(-HALF, Math.min(HALF, delta)));
-  out.push(`<line x1='${dx.toFixed(1)}' x2='${dx.toFixed(1)}' y1='${BASE}' y2='${TOP + 22}' stroke='${PAL.green}' stroke-width='1.4' stroke-dasharray='5 4'/>`);
-  out.push(`<text x='${dx.toFixed(1)}' y='${TOP + 18}' text-anchor='middle' font-size='13' font-weight='600' fill='${PAL.green}'>Δ</text>`);
-  for (const xe of [gL, gR]) if (xe > -HALF && xe < HALF)
-    out.push(`<line x1='${Xp(xe).toFixed(1)}' x2='${Xp(xe).toFixed(1)}' y1='${RMID.toFixed(1)}' y2='${(RMID + 6).toFixed(1)}' stroke='${PAL.muted}' stroke-width='1'/>`);
+  // the two reward landscapes
+  const curve = (f, col) =>
+    `<polyline points='${linspace(-HALF, HALF, 421).map(x => `${Xp(x).toFixed(1)},${Math.max(TOP + 3, Math.min(BASE, yR(f(x)))).toFixed(1)}`).join(" ")}' ` +
+    `fill='none' stroke='${col}' stroke-width='1.8'/>`;
+  out.push(curve(rewE, REWARD_C));   // estimated — centred on the decision
+  out.push(curve(rewA, PAL.green));  // actual — centred on the truth
+
+  out.push(`<text x='${ML + S - 4}' y='${(TOP + 13).toFixed(1)}' text-anchor='end' font-size='10' fill='${PAL.muted}'>reward +c</text>`);
+  out.push(`<text x='${ML + S - 4}' y='${(RMID - 4).toFixed(1)}' text-anchor='end' font-size='10' fill='${PAL.muted}'>0</text>`);
+  out.push(`<text x='${ML + S - 4}' y='${(BASE - 5).toFixed(1)}' text-anchor='end' font-size='10' fill='${PAL.muted}'>−c</text>`);
+
+  // the decision Δ̂: a dashed drop from the estimated peak to the actual-reward dot
+  const mx = Xp(Math.max(-HALF, Math.min(HALF, mode)));
+  const dotY = Math.max(TOP + 3, Math.min(BASE, yR(actR)));
+  out.push(`<line x1='${mx.toFixed(1)}' x2='${mx.toFixed(1)}' y1='${(TOP + 21).toFixed(1)}' y2='${dotY.toFixed(1)}' stroke='${PAL.ink}' stroke-width='1.1' stroke-dasharray='4 3'/>`);
+  out.push(`<circle cx='${mx.toFixed(1)}' cy='${dotY.toFixed(1)}' r='4.2' fill='${PAL.ink}'/>`);
+
+  // peak labels: Δ̂ (decision) and Δ (truth), splayed apart so they never collide
+  const left = mode <= delta;
+  out.push(`<text x='${(mx + (left ? -4 : 4)).toFixed(1)}' y='${(TOP + 16).toFixed(1)}' text-anchor='${left ? "end" : "start"}' font-size='12.5' font-weight='600' fill='${PAL.ink}'>Δ̂</text>`);
+  const dlx = Xp(Math.max(-HALF, Math.min(HALF, delta)));
+  out.push(`<text x='${(dlx + (left ? 4 : -4)).toFixed(1)}' y='${(TOP + 16).toFixed(1)}' text-anchor='${left ? "start" : "end"}' font-size='12.5' font-weight='600' fill='${PAL.green}'>Δ</text>`);
 
   out.push(`<line x1='${ML}' x2='${ML + S}' y1='${BASE}' y2='${BASE}' stroke='${PAL.rule}' stroke-width='1'/>`);
 
-  // the pill: expected reward, ∫ belief · reward
-  const txt = `E[reward] = ${expR.toFixed(2)}`;
-  const pw = txt.length * 7.1 + 24, py = TOP + 6;
-  out.push(`<rect x='${ML + 8}' y='${py}' width='${pw.toFixed(0)}' height='24' rx='12' fill='${better ? "#2E7D5B" : "#9AA0A6"}'/>`);
-  out.push(`<text x='${(ML + 8 + pw / 2).toFixed(1)}' y='${py + 16}' text-anchor='middle' font-size='13' font-weight='700' fill='#fff'>${txt}</text>`);
-  out.push(`<text x='${ML + 8}' y='${py + 40}' font-size='10.5' fill='${PAL.muted}'>${caption}</text>`);
-  if (better) out.push(`<text x='${ML + 8}' y='${py + 55}' font-size='10.5' font-weight='600' fill='#2E7D5B'>✓ higher expected reward</text>`);
+  // pills: estimated (the integral) and actual (the single point)
+  const pill = (y, label, val, bg, check) => {
+    const txt = `${label} ${val.toFixed(2)}`, w = txt.length * 6.6 + 22 + (check ? 15 : 0);
+    return `<rect x='${ML + 8}' y='${y}' width='${w.toFixed(0)}' height='22' rx='11' fill='${bg}'/>` +
+           `<text x='${(ML + 8 + (w - (check ? 15 : 0)) / 2).toFixed(1)}' y='${y + 15}' text-anchor='middle' font-size='12' font-weight='700' fill='#fff'>${txt}</text>` +
+           (check ? `<text x='${(ML + 8 + w - 11).toFixed(1)}' y='${y + 15}' text-anchor='middle' font-size='12' fill='#fff'>✓</text>` : "");
+  };
+  out.push(pill(TOP + 6, "estimated", estR, REWARD_C, false));
+  out.push(pill(TOP + 32, "actual", actR, actR >= 0 ? "#2E7D5B" : "#C0392B", betterActual));
 
   return `<svg viewBox='0 0 ${FW} ${FH}' xmlns='http://www.w3.org/2000/svg'>${out.join("")}</svg>`;
 }
@@ -348,14 +389,12 @@ const alphaS = makeSlider(grpDecision, { label: "false-positive rate · α (t-te
 const pS     = makeSlider(grpDecision, { label: "reward model degree · p", min: 1, max: 10, step: 0.1, value: 2, fmt: v => v.toFixed(1), onInput: render });
 const cS     = makeSlider(grpDecision, { label: "reward model steepness · c", min: 1, max: 10, step: 0.1, value: 1, fmt: v => v.toFixed(1), onInput: render });
 
-// ∫ belief(x)·reward(x) dx — bounded because the reward is floored at −c
-function expectedReward(dens, delta, p, c) {
+// ∫ f(x) dx over a wide range by the trapezoid rule (the reward is floored at
+// −c, so the expected-reward integrand is bounded and this always converges)
+function integrate(f) {
   const A = -12, B = 12, M = 4000, h = (B - A) / M;
   let s = 0;
-  for (let i = 0; i <= M; i++) {
-    const x = A + h * i, w = (i === 0 || i === M) ? 0.5 : 1;
-    s += w * dens(x) * c * Math.max(1 - Math.pow(Math.abs(x - delta), p), -1);
-  }
+  for (let i = 0; i <= M; i++) s += ((i === 0 || i === M) ? 0.5 : 1) * f(A + h * i);
   return s * h;
 }
 
@@ -392,9 +431,18 @@ function render() {
   const ciLo = dbar - hw, ciHi = dbar + hw, boxH = 1 / (2 * hw);
   const box = (x) => (x >= ciLo && x <= ciHi) ? boxH : 0;
 
-  // expected reward of each belief, and a shared height scale for the panels
-  const erPost = expectedReward(post, delta, p, c);
-  const erBox  = expectedReward(box,  delta, p, c);
+  // the two decisions you could commit to: the posterior's mode, the CI's midpoint
+  const modePost = mn, modeCI = dbar;
+  const rew = (x, ctr) => c * Math.max(1 - Math.pow(Math.abs(x - ctr), p), -1);
+
+  // ESTIMATED reward — expected, integrating your belief against a reward centred
+  // on your own decision; ACTUAL reward — that decision read off a reward centred
+  // on the hidden truth (a single point, no integral)
+  const estPost = integrate(x => post(x) * rew(x, modePost));
+  const estCI   = integrate(x => box(x)  * rew(x, modeCI));
+  const actPost = rew(modePost, delta);
+  const actCI   = rew(modeCI, delta);
+
   const BK = 0.9 * RUP / Math.max(tPdf(0, 2 * an) / scn, boxH, 0.2);
 
   document.getElementById("figPop").innerHTML = populationSvg(delta, varr, n, pool);
@@ -404,11 +452,11 @@ function render() {
     post, delta);
 
   document.getElementById("figRewPost").innerHTML = rewardSvg({
-    dens: post, isBox: false, delta, p, c, BK, expR: erPost, better: erPost >= erBox,
-    accent: POST_C, caption: "expected reward of the posterior" });
+    dens: post, isBox: false, mode: modePost, delta, p, c, BK,
+    estR: estPost, actR: actPost, betterActual: actPost >= actCI, accent: POST_C });
   document.getElementById("figRewCI").innerHTML = rewardSvg({
-    dens: box, isBox: true, lo: ciLo, hi: ciHi, delta, p, c, BK, expR: erBox, better: erBox > erPost,
-    accent: PAL.blue, caption: "expected reward of the CI read as uniform" });
+    dens: box, isBox: true, lo: ciLo, hi: ciHi, mode: modeCI, delta, p, c, BK,
+    estR: estCI, actR: actCI, betterActual: actCI > actPost, accent: PAL.blue });
 }
 
 document.getElementById("resample").addEventListener("click", () => {
