@@ -46,29 +46,40 @@
           we can draw it here only because we simulate</td><td>the green line</td></tr>
     </table>
 
-    <p>The expected reward of any <em>belief</em> B is then the overlap of where you place
-    your credence with where the reward lives —</p>
+    <p>A belief is not yet a decision. To force the issue we ask a sharper question:
+    <strong>given what I believe, should I place the bet at all — and if so, on what
+    value?</strong> The bottom row answers it two ways, both committing to the same kind of
+    bet (the peak of the belief, <strong>Δ̂</strong>) but deciding <em>whether to bet</em>
+    by different rules.</p>
 
-    <p class="formula" style="font-style:normal">E[U]&ensp;=&ensp;∫&thinsp;B(x)&thinsp;·&thinsp;U(x)&thinsp;dx</p>
+    <p>On the <strong>left</strong>, your honest <strong style="color:#333">posterior</strong>.
+    The Bayesian rule is to <strong>act on expected utility</strong>: average the reward —
+    centred on your bet Δ̂ — against the whole posterior,</p>
 
-    <p>— the integral of the product of the two curves. The bottom row scores two beliefs
-    against the same reward family. On the <strong>left</strong>, your honest
-    <strong style="color:#333">posterior</strong>. On the <strong>right</strong>, the
-    naïve reading of a classical result: take the <strong style="color:#3D6FB0">(1 − α)
-    confidence interval</strong> and treat it as a <em>uniform block</em> of probability —
-    “every value inside is equally plausible, everything outside impossible” — the same
-    flat box that step 1 drew, its area renormalised to 1.</p>
+    <p class="formula" style="font-style:normal">E[U]&ensp;=&ensp;∫&thinsp;reward(Δ&thinsp;−&thinsp;Δ̂)&thinsp;·&thinsp;P(Δ)&thinsp;dΔ</p>
 
-    <p>Each panel reads the reward <strong>twice</strong>. The
-    <strong style="color:#A77B2E">estimated reward</strong> (gold) is what you
-    <em>expect</em> to earn: a reward centred on your own decision — the posterior's mode,
-    or the interval's midpoint <strong>Δ̂</strong> — integrated against your belief about
-    where the truth lies. That integral is the shaded lens where belief and reward overlap.
-    The <strong style="color:#2E7D5B">actual reward</strong> (green) is what you
-    <em>really</em> earn: a second reward, centred on the <em>hidden truth</em> Δ, read off
-    at the one point you committed to — the dot, dropped from Δ̂, with no integral at all.
-    The pill carries both numbers, and the gap between them is the price of not knowing
-    the truth.</p>
+    <p>and <strong>place the bet only when that expectation is positive</strong>. The shaded
+    gold lens is the overlap the integral measures.</p>
+
+    <p>On the <strong>right</strong>, the naïve reading of a classical result: take the
+    <strong style="color:#3D6FB0">(1 − α) confidence interval</strong> and treat it as a
+    <em>uniform block</em> — “every value inside equally plausible, everything outside
+    impossible” — the same flat box step 1 drew. You can't take an expectation against a
+    non-distribution, so the rule turns <strong>worst-case</strong>. The reward hits zero at
+    a break-even error <strong>ε</strong> (solve reward(ε) = 0 — here the ±1 tolerance
+    window). Compare it to your <strong>margin of error E</strong>, the interval's
+    half-width: <strong>bet iff E ≤ ε</strong>, so that even the interval's worst boundary
+    still pays. The number reported is that worst-case reward, c·(1 − E<sup>p</sup>).</p>
+
+    <p>Then each panel shows what the decision <em>really</em> earns. The
+    <strong style="color:#A77B2E">estimated</strong> pill is the rule's verdict — its number,
+    turning <strong style="color:#2E7D5B">green</strong> when the rule says place the bet and
+    <strong style="color:#9AA0A6">grey</strong> when it says fold. The
+    <strong style="color:#2E7D5B">actual</strong> pill is the payoff once the hidden truth Δ
+    is revealed: the true reward (the green curve, centred on Δ) read at the point you
+    committed to — the dot, dropped from Δ̂ — or <strong>zero if you refused the bet</strong>.
+    It turns green for a win, <strong style="color:#C0392B">red</strong> for a loss, grey for
+    a no-play. The gap between the two pills is the price of not knowing the truth.</p>
   </section>
 
   <section class="demo">
@@ -109,28 +120,27 @@
   <section class="prose">
     <h2>Try this</h2>
     <ol>
-      <li><strong>Defaults.</strong> The posterior's <em>estimated</em> reward beats the
-      CI-box's: it piles credence near the decision, where the reward is richest, while the
-      uniform box spreads it evenly toward the interval's edges and so scores itself lower.
-      Their <em>actual</em> rewards sit close — both commit to nearly the same Δ̂ — so here
-      the posterior mostly wins by knowing its own worth.</li>
-      <li><strong>Crank n to 100.</strong> Both beliefs sharpen and the gap narrows: once
-      the interval shrinks safely inside the window, even the crude uniform reading does
-      fine. With enough data the shape stops mattering — the same washing-out you saw with
-      priors in step 4.</li>
-      <li><strong>Drop n to 3 or 4.</strong> The confidence interval balloons and the box
-      smears credence far into the red wings; the posterior, anchored by its prior, keeps
-      more mass in the green. The Bayesian advantage is largest exactly when data are
-      scarce — and exactly when the uniform reading is most tempting.</li>
-      <li><strong>Push p toward 10.</strong> The reward turns all-or-nothing: a flat
-      plateau out to ±1, a cliff beyond. Now only one thing matters — how much of your
-      belief sits <em>inside</em> the window — and a tall, narrow posterior and a fat box
-      can score closer than you'd think. Then raise <strong>c</strong>: the stakes scale,
-      and so does the gap between the two decisions.</li>
+      <li><strong>Defaults.</strong> Both rules say bet, and both win — the interval sits
+      well inside the ±1 window and the posterior's expectation is comfortably positive. With
+      ample, well-behaved data the two paradigms agree.</li>
+      <li><strong>Drop n to 3 or 4.</strong> The confidence interval balloons past ±1, so its
+      worst-case boundary turns negative and the classical rule <em>refuses</em> — its actual
+      pill goes grey at 0.00, a missed opportunity. The posterior, anchored by its prior,
+      still expects a positive return and bets — often winning. Scarce data is exactly where
+      the worst-case reading grows timid.</li>
+      <li><strong>Crank n to 100.</strong> Both beliefs sharpen, both bet, and their actual
+      payoffs converge near the peak reward c. With enough data the rules stop disagreeing —
+      the same washing-out you saw with priors in step 4.</li>
+      <li><strong>Push p toward 10.</strong> The reward turns all-or-nothing — but note the
+      break-even ε stays pinned at 1, so the <em>classical</em> bet/refuse verdict doesn't
+      move; only its worst-case number does. The Bayesian side <em>does</em> shift: a sharp
+      plateau rewards piling mass inside the window, so a tall posterior keeps a positive
+      expectation a fat box would lose. Then raise <strong>c</strong>: the stakes scale, and
+      so does the gap between what the two rules earn.</li>
       <li><strong>Tighten the prior</strong> (κ₀ ↑) and shift <strong>m₀</strong> off the
-      truth. The posterior's decision — its mode — now pulls away from the interval's
-      midpoint, and you can watch a confident-but-wrong prior <em>lower the actual reward</em>
-      even while it raises the estimated one: overconfidence, made quantitative.</li>
+      truth. The posterior's bet — its peak — pulls away from the interval's midpoint, and
+      you can watch a confident-but-wrong prior keep its <em>estimated</em> pill green and
+      betting while the <em>actual</em> pill slides red: overconfidence, made quantitative.</li>
     </ol>
 
     <h2>The moral</h2>
@@ -284,7 +294,7 @@ function marginalSvg(prior, lik, post, delta) {
 
    The pill carries both numbers. Their gap is the cost of not knowing Δ. */
 
-function rewardSvg({ dens, isBox, lo, hi, mode, delta, p, c, BK, estR, actR, accent, betterActual }) {
+function rewardSvg({ dens, isBox, lo, hi, mode, delta, p, c, BK, estR, actR, bet, accent }) {
   const tag = isBox ? "b" : "a";
   const rewE = (x) => c * Math.max(1 - Math.pow(Math.abs(x - mode), p), -1);   // centred on the decision
   const rewA = (x) => c * Math.max(1 - Math.pow(Math.abs(x - delta), p), -1);  // centred on the truth
@@ -356,15 +366,16 @@ function rewardSvg({ dens, isBox, lo, hi, mode, delta, p, c, BK, estR, actR, acc
 
   out.push(`<line x1='${ML}' x2='${ML + S}' y1='${BASE}' y2='${BASE}' stroke='${PAL.rule}' stroke-width='1'/>`);
 
-  // pills: estimated (the integral) and actual (the single point)
-  const pill = (y, label, val, bg, check) => {
-    const txt = `${label} ${val.toFixed(2)}`, w = txt.length * 6.6 + 22 + (check ? 15 : 0);
+  // pills: estimated — the rule's verdict (green when it says bet, grey when fold);
+  // actual — what we really earn (green win, red loss, grey no-play / refused)
+  const GREY = "#9AA0A6";
+  const pill = (y, label, val, bg) => {
+    const txt = `${label} ${val.toFixed(2)}`, w = txt.length * 6.6 + 22;
     return `<rect x='${ML + 8}' y='${y}' width='${w.toFixed(0)}' height='22' rx='11' fill='${bg}'/>` +
-           `<text x='${(ML + 8 + (w - (check ? 15 : 0)) / 2).toFixed(1)}' y='${y + 15}' text-anchor='middle' font-size='12' font-weight='700' fill='#fff'>${txt}</text>` +
-           (check ? `<text x='${(ML + 8 + w - 11).toFixed(1)}' y='${y + 15}' text-anchor='middle' font-size='12' fill='#fff'>✓</text>` : "");
+           `<text x='${(ML + 8 + w / 2).toFixed(1)}' y='${y + 15}' text-anchor='middle' font-size='12' font-weight='700' fill='#fff'>${txt}</text>`;
   };
-  out.push(pill(TOP + 6, "estimated", estR, REWARD_C, false));
-  out.push(pill(TOP + 32, "actual", actR, actR >= 0 ? "#2E7D5B" : "#C0392B", betterActual));
+  out.push(pill(TOP + 6, "estimated", estR, bet ? GRN_F : GREY));
+  out.push(pill(TOP + 32, "actual", actR, actR > 0 ? GRN_F : actR < 0 ? RED_F : GREY));
 
   return `<svg viewBox='0 0 ${FW} ${FH}' xmlns='http://www.w3.org/2000/svg'>${out.join("")}</svg>`;
 }
@@ -431,17 +442,24 @@ function render() {
   const ciLo = dbar - hw, ciHi = dbar + hw, boxH = 1 / (2 * hw);
   const box = (x) => (x >= ciLo && x <= ciHi) ? boxH : 0;
 
-  // the two decisions you could commit to: the posterior's mode, the CI's midpoint
+  // the two values you could bet on: the posterior's peak, the CI's midpoint
   const modePost = mn, modeCI = dbar;
   const rew = (x, ctr) => c * Math.max(1 - Math.pow(Math.abs(x - ctr), p), -1);
 
-  // ESTIMATED reward — expected, integrating your belief against a reward centred
-  // on your own decision; ACTUAL reward — that decision read off a reward centred
-  // on the hidden truth (a single point, no integral)
-  const estPost = integrate(x => post(x) * rew(x, modePost));
-  const estCI   = integrate(x => box(x)  * rew(x, modeCI));
-  const actPost = rew(modePost, delta);
-  const actCI   = rew(modeCI, delta);
+  // BAYESIAN — act on expected utility: average the reward (centred on your bet)
+  // against the whole posterior, and place the bet iff that expectation is positive
+  const erPost  = integrate(x => post(x) * rew(x, modePost));
+  const betPost = erPost > 0;
+
+  // CLASSICAL — the reward reaches zero at the break-even error ε (reward(ε) = 0;
+  // for this family ε = 1, the tolerance window). Bet iff the margin of error E —
+  // the CI half-width — stays within ε; report the worst-case reward c·(1 − E^p)
+  const EPS = 1, erCI = c * Math.max(1 - Math.pow(hw, p), -1), betCI = hw <= EPS;
+
+  // ACTUAL reward — the true reward at the value we committed to, earned only if we
+  // actually placed the bet; a refused bet earns nothing
+  const actPost = betPost ? rew(modePost, delta) : 0;
+  const actCI   = betCI  ? rew(modeCI,   delta) : 0;
 
   const BK = 0.9 * RUP / Math.max(tPdf(0, 2 * an) / scn, boxH, 0.2);
 
@@ -453,10 +471,10 @@ function render() {
 
   document.getElementById("figRewPost").innerHTML = rewardSvg({
     dens: post, isBox: false, mode: modePost, delta, p, c, BK,
-    estR: estPost, actR: actPost, betterActual: actPost >= actCI, accent: POST_C });
+    estR: erPost, actR: actPost, bet: betPost, accent: POST_C });
   document.getElementById("figRewCI").innerHTML = rewardSvg({
     dens: box, isBox: true, lo: ciLo, hi: ciHi, mode: modeCI, delta, p, c, BK,
-    estR: estCI, actR: actCI, betterActual: actCI > actPost, accent: PAL.blue });
+    estR: erCI, actR: actCI, bet: betCI, accent: PAL.blue });
 }
 
 document.getElementById("resample").addEventListener("click", () => {
