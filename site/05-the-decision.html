@@ -312,7 +312,7 @@ function rewardClamped(x, ctr, p, c) {
        sits ON it at your decision Δ̂ — the reward you really collect — joined by a
        dashed line to the middle of your belief (the posterior peak, or the CI bar). */
 
-function rewardSvg({ dens, isBox, lo, hi, mode, delta, p, c, BK, estR, estLo, estHi, actR, bet, accent, showEstimatedCurve = true }) {
+function rewardSvg({ dens, isBox, lo, hi, mode, delta, p, c, BK, estR, estLo, estHi, actR, bet, accent, showEstimatedCurve = true, egg = null }) {
   const tag = isBox ? "b" : "a";
   const rewE = (x) => rewardClamped(x, mode, p, c);  // centred on the decision
   const rewA = (x) => rewardClamped(x, delta, p, c); // centred on the truth
@@ -374,8 +374,28 @@ function rewardSvg({ dens, isBox, lo, hi, mode, delta, p, c, BK, estR, estLo, es
   const curve = (f, col, dash) =>
     `<polyline points='${linspace(loX, hiX, 421).map(x => `${xp(x).toFixed(1)},${yRc(f(x)).toFixed(1)}`).join(" ")}' ` +
     `fill='none' stroke='${col}' stroke-width='1.8'${dash ? ` stroke-dasharray='${dash}'` : ""}/>`;
-  if (showEstimatedCurve) out.push(curve(rewE, REWARD_C)); // estimated — centred on the decision
+  if (showEstimatedCurve || egg) out.push(curve(rewE, egg ? MAROON : REWARD_C)); // estimated — centred on the decision
   out.push(curve(rewA, PAL.green, "6 4")); // true — centred on the truth (dashed)
+
+  if (egg) {
+    const fillLo = Math.max(loX, egg.loX), fillHi = Math.min(hiX, egg.scanX);
+    if (fillHi > fillLo) {
+      const fillXs = linspace(fillLo, fillHi, egg.steps);
+      for (let i = 0; i < fillXs.length - 1; i++) {
+        const xL = fillXs[i], xR = fillXs[i + 1], xM = 0.5 * (xL + xR);
+        const reward = rewE(xM);
+        const y = yRc(reward);
+        const val = dens(xM) * reward;
+        const mag = egg.maxAbs > 0 ? Math.abs(val) / egg.maxAbs : 0;
+        if (mag < 0.01 || Math.abs(y - RMID) < 0.5) continue;
+        out.push(`<rect x='${xp(xL).toFixed(1)}' y='${Math.min(y, RMID).toFixed(1)}' width='${Math.max(0.8, xp(xR) - xp(xL)).toFixed(1)}' ` +
+                 `height='${Math.max(0.8, Math.abs(RMID - y)).toFixed(1)}' fill='${val >= 0 ? GRN_F : RED_F}' ` +
+                 `fill-opacity='${(0.08 + 0.84 * Math.sqrt(Math.min(1, mag))).toFixed(3)}'/>`);
+      }
+    }
+    const sx = Math.max(loX, Math.min(hiX, egg.scanX));
+    out.push(`<line x1='${xp(sx).toFixed(1)}' x2='${xp(sx).toFixed(1)}' y1='${TOP + 3}' y2='${BASE}' stroke='${MAROON}' stroke-width='1.2' opacity='0.9'/>`);
+  }
 
   // float 4: dotted links from the CI bar (reward 0.5) to the estimated-reward
   // curve at the MLE and at each interval extreme — the reward you'd score there
@@ -419,8 +439,9 @@ function rewardSvg({ dens, isBox, lo, hi, mode, delta, p, c, BK, estR, estLo, es
   };
   // estimated reward: a single expected value (posterior), or the min…max across the
   // interval (CI) — the centre earns 1, the extremes share the same endpoint value
-  const estDisp = isBox ? `${fmtRewardPill(estLo)}...${fmtRewardPill(estHi)}` : fmtRewardPill(estR);
-  out.push(pill(TOP + 6, "estimated", estDisp, bet ? GRN_F : GREY));
+  const estValue = egg ? egg.partialEst : estR;
+  const estDisp = isBox ? `${fmtRewardPill(estLo)}...${fmtRewardPill(estHi)}` : fmtRewardPill(estValue);
+  out.push(pill(TOP + 6, "estimated", estDisp, (egg ? estValue > 0 : bet) ? GRN_F : GREY));
   out.push(pill(TOP + 32, "actual", fmtRewardPill(actR), actR > 0 ? GRN_F : actR < 0 ? RED_F : GREY));
 
   return `<svg viewBox='0 0 ${FW} ${FH}' xmlns='http://www.w3.org/2000/svg'>${out.join("")}</svg>`;
@@ -432,12 +453,15 @@ const grpTruth = document.getElementById("grpTruth");
 const grpPrior = document.getElementById("grpPrior");
 const grpDecision = document.getElementById("grpDecision");
 const simArea = document.getElementById("simArea");
+const figRewPost = document.getElementById("figRewPost");
 const resampleBtn = document.getElementById("resample");
 const simBtn = document.getElementById("simulate");
 let pool = makePool(15); // one fixed draw — dots don't jitter as you drag
 let currentState = null;
 let simRunning = false;
 let simEntries = [];
+let rewardEggToken = 0;
+let rewardEggFrame = 0;
 
 const deltaS = makeSlider(grpTruth, { label: "true difference · Δ", min: -2, max: 2, step: 0.05, value: 0.8, fmt: v => v.toFixed(2), onInput: onControlChange });
 const varS   = makeSlider(grpTruth, { label: "true variance · σ²", min: 0.25, max: 4, step: 0.05, value: 1.0, fmt: v => v.toFixed(2), onInput: onControlChange });
@@ -471,7 +495,44 @@ function integrate(f) {
   return s * h;
 }
 
+function buildRewardEggData(state) {
+  const A = -12, B = 12, M = 2400, h = (B - A) / M;
+  const xs = new Array(M + 1);
+  const vals = new Array(M + 1);
+  const cum = new Array(M + 1);
+  let maxAbs = 0;
+  for (let i = 0; i <= M; i++) {
+    const x = A + h * i;
+    const v = state.post(x) * state.rew(x, state.modePost);
+    xs[i] = x;
+    vals[i] = v;
+    if (i === 0) cum[i] = 0;
+    else cum[i] = cum[i - 1] + 0.5 * (vals[i - 1] + v) * h;
+    if (x >= state.delta - HALF && x <= state.delta + HALF) maxAbs = Math.max(maxAbs, Math.abs(v));
+  }
+  return { A, B, h, xs, vals, cum, maxAbs, loX: state.delta - HALF, hiX: state.delta + HALF };
+}
+
+function rewardEggPartial(data, x) {
+  if (x <= data.A) return 0;
+  if (x >= data.B) return data.cum[data.cum.length - 1];
+  const idx = Math.max(1, Math.min(data.xs.length - 1, Math.floor((x - data.A) / data.h) + 1));
+  const x0 = data.xs[idx - 1], x1 = data.xs[idx];
+  const v0 = data.vals[idx - 1], v1 = data.vals[idx];
+  const frac = (x - x0) / (x1 - x0);
+  const vx = v0 + frac * (v1 - v0);
+  return data.cum[idx - 1] + 0.5 * (v0 + vx) * (x - x0);
+}
+
+function stopRewardEgg(restore = true) {
+  rewardEggToken += 1;
+  if (rewardEggFrame) cancelAnimationFrame(rewardEggFrame);
+  rewardEggFrame = 0;
+  if (restore && currentState) render(currentState);
+}
+
 function onControlChange() {
+  stopRewardEgg(false);
   dismissSim();
   render();
 }
@@ -589,20 +650,61 @@ function computeState(samplePool) {
   };
 }
 
-function render(state = computeState(pool)) {
+function renderRewardPost(state, rewardEgg = null) {
+  figRewPost.innerHTML = rewardSvg({
+    dens: state.post, isBox: false, mode: state.modePost, delta: state.delta, p: state.p, c: state.c, BK: state.BK,
+    estR: state.erPost, actR: state.actPost, bet: state.betPost, accent: POST_C, showEstimatedCurve: false, egg: rewardEgg });
+}
+
+function render(state = computeState(pool), opts = {}) {
   currentState = state;
   pool = state.pool;
 
   document.getElementById("figPop").innerHTML = populationSvg(state.delta, state.varr, state.n, state.pool);
   document.getElementById("figMarg").innerHTML = marginalSvg(state.prior, state.lik, state.post, state.delta);
 
-  document.getElementById("figRewPost").innerHTML = rewardSvg({
-    dens: state.post, isBox: false, mode: state.modePost, delta: state.delta, p: state.p, c: state.c, BK: state.BK,
-    estR: state.erPost, actR: state.actPost, bet: state.betPost, accent: POST_C, showEstimatedCurve: false });
+  renderRewardPost(state, opts.rewardEgg || null);
   document.getElementById("figRewCI").innerHTML = rewardSvg({
     dens: state.box, isBox: true, lo: state.ciLo, hi: state.ciHi, mode: state.modeCI, delta: state.delta,
     p: state.p, c: state.c, BK: state.BK, estR: state.erCI, estLo: state.erCIlo, estHi: state.erCIhi,
     actR: state.actCI, bet: state.betCI, accent: PAL.blue });
+}
+
+function startRewardEgg() {
+  if (simRunning || !currentState) return;
+  stopRewardEgg(false);
+
+  const token = ++rewardEggToken;
+  const state = currentState;
+  const eggData = buildRewardEggData(state);
+  const duration = 1800;
+  const steps = 120;
+  const start = performance.now();
+
+  const drawFrame = (scanX) => {
+    renderRewardPost(state, {
+      loX: eggData.loX,
+      scanX,
+      steps,
+      maxAbs: eggData.maxAbs,
+      partialEst: rewardEggPartial(eggData, scanX),
+    });
+  };
+
+  const tick = (now) => {
+    if (token !== rewardEggToken) return;
+    const t = Math.min(1, (now - start) / duration);
+    const scanX = eggData.loX + (eggData.hiX - eggData.loX) * t;
+    drawFrame(scanX);
+    if (t < 1) rewardEggFrame = requestAnimationFrame(tick);
+    else {
+      rewardEggFrame = 0;
+      if (token === rewardEggToken) render(state);
+    }
+  };
+
+  drawFrame(eggData.loX);
+  rewardEggFrame = requestAnimationFrame(tick);
 }
 
 function buildBayesSimSvg() {
@@ -924,12 +1026,20 @@ async function runSimulation() {
 
 resampleBtn.addEventListener("click", () => {
   if (simRunning) return;
+  stopRewardEgg(false);
   dismissSim();
   pool = makePool(); // only the button re-randomizes
   render();
 });
 
-simBtn.addEventListener("click", runSimulation);
+simBtn.addEventListener("click", () => {
+  stopRewardEgg(false);
+  runSimulation();
+});
+figRewPost.addEventListener("dblclick", (e) => {
+  e.preventDefault();
+  startRewardEgg();
+});
 
 render();
 </script>
