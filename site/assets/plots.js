@@ -1,6 +1,7 @@
 "use strict";
 /* plots.js — shared data-visualisation: the colour palette, the common 1-D
-   plotting geometry used by steps 1, 3, 4 & 5, the curve/SVG helpers, the two
+   plotting geometry used by steps 1, 3, 4 & 5, the curve/SVG helpers and reusable
+   chrome (the top-fade mask, the verdict pill, the splayed Δ markers), the two
    reusable figures (the populations panel and the prior·likelihood·posterior
    marginal), and the repeated-sampling interval simulation + hover wiring shared
    by steps 1 & 3. Pages keep only the figures that are unique to them. */
@@ -50,6 +51,45 @@ function svgPoint(svg, e) {
   return pt.matrixTransform(svg.getScreenCTM().inverse());
 }
 
+/* A luminance mask that dissolves a curve as it climbs out the top of the box, so
+   a band tighter/taller than the frame fades instead of clipping flat. The gradient
+   runs transparent at `top` → opaque by `soft` of the way down to `bottom`; the mask
+   itself covers the whole box (down to BASE) so nothing below the fade is clipped.
+   Returns the <defs> to drop in and the `mask=` reference for the group it clips;
+   `id` must be unique among masks live in the same SVG document. */
+function fadeTopMask(id, { top = TOP, bottom = BASE, soft = 0.22 } = {}) {
+  const g = `fadeG-${id}`, m = `fadeM-${id}`;
+  return {
+    defs: `<defs><linearGradient id='${g}' gradientUnits='userSpaceOnUse' x1='0' y1='${top}' x2='0' y2='${bottom}'>` +
+      `<stop offset='0' stop-color='#fff' stop-opacity='0'/>` +
+      `<stop offset='${soft}' stop-color='#fff' stop-opacity='1'/>` +
+      `<stop offset='1' stop-color='#fff' stop-opacity='1'/></linearGradient>` +
+      `<mask id='${m}'><rect x='0' y='${top}' width='${FW}' height='${BASE - top}' fill='url(#${g})'/></mask></defs>`,
+    mask: `url(#${m})`,
+  };
+}
+
+/* a verdict/score badge: a rounded pill sized to its label, white text centred */
+function pill(x, y, text, bg) {
+  const w = text.length * 6.6 + 23;
+  return `<rect x='${x}' y='${y}' width='${w.toFixed(0)}' height='22' rx='11' fill='${bg}'/>` +
+    `<text x='${(x + w / 2).toFixed(1)}' y='${y + 15}' text-anchor='middle' ` +
+    `font-size='12' font-weight='700' fill='#fff'>${text}</text>`;
+}
+
+/* a reference marker on a 1-D panel: a dashed vertical line from the baseline up to
+   the label, plus the label itself. `side` splays the text left (−1) / right (+1) /
+   centred (0) so neighbouring markers don't overprint. */
+function splayMarker(xv, color, label, side, { lineTopY, textY }) {
+  const x = Xp(xv);
+  const anchor = side < 0 ? "end" : side > 0 ? "start" : "middle";
+  const tx = side ? Math.min(Math.max(x + side * 5, ML + 12), ML + S - 12) : clampx(x);
+  return `<line x1='${x.toFixed(1)}' x2='${x.toFixed(1)}' y1='${BASE}' y2='${lineTopY}' ` +
+    `stroke='${color}' stroke-width='1.4' stroke-dasharray='5 4'/>` +
+    `<text x='${tx.toFixed(1)}' y='${textY}' text-anchor='${anchor}' font-size='13.5' ` +
+    `font-weight='600' fill='${color}'>${label}</text>`;
+}
+
 /* ---- the two populations and the sample in hand ------------------------
    Optionally lays down the hidden implied-mean guides that steps 1 & 3 reveal
    when their right-hand panel is hovered. */
@@ -91,11 +131,8 @@ function populationSvg(delta, varr, n, pool, guides = false) {
 
 function marginalSvg(prior, lik, post, delta) {
   const p = [];
-  p.push(`<defs><linearGradient id='fadeG' gradientUnits='userSpaceOnUse' x1='0' y1='${TOP}' x2='0' y2='${BASE}'>` +
-         `<stop offset='0' stop-color='#fff' stop-opacity='0'/>` +
-         `<stop offset='0.22' stop-color='#fff' stop-opacity='1'/>` +
-         `<stop offset='1' stop-color='#fff' stop-opacity='1'/></linearGradient>` +
-         `<mask id='fadeM'><rect x='0' y='${TOP}' width='${FW}' height='${SH}' fill='url(#fadeG)'/></mask></defs>`);
+  const fade = fadeTopMask("marg");
+  p.push(fade.defs);
 
   const xs = linspace(-HALF, HALF, 321);
   const dPrior = xs.map(prior), dPost = xs.map(post);
@@ -106,7 +143,7 @@ function marginalSvg(prior, lik, post, delta) {
     const line = curvePath(xs, dens, BASE);
     return `<polygon points='${Xp(-HALF).toFixed(1)},${BASE} ${line} ${Xp(HALF).toFixed(1)},${BASE}' fill='${col}' opacity='${op}'/>`;
   };
-  p.push(`<g mask='url(#fadeM)'>` +
+  p.push(`<g mask='${fade.mask}'>` +
          filled(dPrior, PRIOR_C, 0.10) +
          filled(dPost, POST_C, 0.12) +
          `<polyline points='${curvePath(xs, dPrior, BASE)}' fill='none' stroke='${PRIOR_C}' stroke-width='2'/>` +
@@ -120,17 +157,10 @@ function marginalSvg(prior, lik, post, delta) {
   p.push(`<text x='${ML + 6}' y='${(refY - 5).toFixed(1)}' font-size='10.5' font-style='italic' ` +
          `fill='${LIK_C}'>likelihood: support = 1 at peak</text>`);
 
-  const marker = (xv, color, lbl, side) => {
-    const x = Xp(xv);
-    const anchor = side < 0 ? "end" : side > 0 ? "start" : "middle";
-    const tx = side ? Math.min(Math.max(x + side * 5, ML + 12), ML + S - 12) : clampx(x);
-    return `<line x1='${x.toFixed(1)}' x2='${x.toFixed(1)}' y1='${BASE}' y2='${TOP + 21}' ` +
-           `stroke='${color}' stroke-width='1.4' stroke-dasharray='5 4'/>` +
-           `<text x='${tx.toFixed(1)}' y='${TOP + 16}' text-anchor='${anchor}' font-size='13.5' ` +
-           `font-weight='600' fill='${color}'>${lbl}</text>`;
-  };
-  p.push(marker(0, PAL.muted, "0", delta > 0.05 ? -1 : 0));
-  p.push(marker(delta, PAL.green, "Δ", 1));
+  const mark = (xv, color, lbl, side) =>
+    splayMarker(xv, color, lbl, side, { lineTopY: TOP + 21, textY: TOP + 16 });
+  p.push(mark(0, PAL.muted, "0", delta > 0.05 ? -1 : 0));
+  p.push(mark(delta, PAL.green, "Δ", 1));
 
   const lineX2 = ML + S, lineX1 = lineX2 - 24, labelX = lineX1 - 9;
   const item = (y, col, txt, sw = 2, dash = "") =>

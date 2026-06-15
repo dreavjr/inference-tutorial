@@ -1,8 +1,10 @@
 "use strict";
-/* stats.js — distributions and statistical inference built on math.js:
-   the Student-t family (native, no library), the normal CDF, the two-sample
-   t-test, sampling pools, and the Normal-inverse-gamma conjugate model shared
-   by the prior/decision pages. */
+/* stats.js — the statistical model, built on math.js and shared by every page:
+   the Student-t family (native, no library) and normal CDF; sampling pools and
+   drawSample (turn a pool into one experiment); the two-sample t-test and its
+   power; and the Normal-inverse-gamma conjugate model with helpers that read it
+   back as 1-D curves over Δ. Pages compose these; they hold no inference of their
+   own — only how to draw it. */
 
 const POOL = 100; // fixed pool of random draws — dots don't jitter while you drag
 
@@ -17,6 +19,19 @@ function makePool(seed) {
   };
   const fill = (f) => Array.from({ length: POOL }, f);
   return { z1: fill(norm), z2: fill(norm), j1: fill(r), j2: fill(r) };
+}
+
+/* Turn a pool into one experiment: two groups of n drawn from populations
+   centred at ∓Δ/2 with spread σ, plus the n per-pair differences
+   dᵢ = x_{B,i} − x_{A,i} ~ Normal(Δ, 2σ²). Every page draws its sample this way,
+   so the same pool + knobs always yield the same data across the series. */
+function drawSample(pool, { delta, sigma, n }) {
+  const xa = pool.z1.slice(0, n).map(z => -delta / 2 + sigma * z);
+  const xb = pool.z2.slice(0, n).map(z =>  delta / 2 + sigma * z);
+  const d  = xb.map((v, i) => v - xa[i]);
+  const dbar = mean(d);
+  const ssd  = d.reduce((s, v) => s + (v - dbar) ** 2, 0);   // Σ(dᵢ − d̄)²
+  return { xa, xb, d, dbar, ssd };
 }
 
 /* ---- Student's t distribution ------------------------------------------ */
@@ -41,6 +56,8 @@ function tInv(p, df) { // quantile, by bisection
   return (lo + hi) / 2;
 }
 
+const tCrit = (alpha, df) => tInv(1 - alpha / 2, df);   // two-sided critical t
+
 /* ---- normal distribution ----------------------------------------------- */
 
 const normPdf = (x) => Math.exp(-0.5 * x * x) / Math.sqrt(2 * Math.PI);
@@ -51,9 +68,20 @@ const normCdf = (x) => 0.5 * (1 + erf(x / Math.SQRT2));
 function tTest(xa, xb) {
   const n = xa.length, m = xb.length;
   const sp2 = ((n - 1) * svar(xa) + (m - 1) * svar(xb)) / (n + m - 2);
-  const t = (mean(xb) - mean(xa)) / Math.sqrt(sp2 * (1 / n + 1 / m));
-  const df = n + m - 2;
-  return { t, df, p: 2 * (1 - tCdf(Math.abs(t), df)) };
+  const dObs = mean(xb) - mean(xa);                  // observed difference of means
+  const se = Math.sqrt(sp2 * (1 / n + 1 / m));       // its standard error
+  const df = n + m - 2, t = dObs / se;
+  return { t, df, p: 2 * (1 - tCdf(Math.abs(t), df)), dObs, se, sp: Math.sqrt(sp2) };
+}
+
+/* Power of the test at the true Δ, via the normal approximation to the noncentral
+   t: we reject when |D̂| > t_crit·se_true, so power is the mass of the shifted null
+   beyond ±t_crit. β = 1 − power is the chance this n misses a real effect. */
+function tTestPower({ delta, sigma, n, alpha, df }) {
+  const seTrue = sigma * Math.sqrt(2 / n);
+  const tc = tCrit(alpha, df), ncp = delta / seTrue;
+  const power = normCdf(ncp - tc) + normCdf(-ncp - tc);
+  return { power, beta: 1 - power };
 }
 
 /* ---- Normal-inverse-gamma conjugate model ------------------------------
@@ -76,3 +104,30 @@ function nigUpdate(m0, k0, a0, b0, n, dbar, ssd) {
   const bn = b0 + ssd / 2 + k0 * n * (dbar - m0) ** 2 / (2 * kn);
   return { kn, mn, an, bn };
 }
+
+/* ---- reading the model as 1-D curves over Δ ----------------------------- */
+
+/* a located, scaled Student-t density: x ↦ t((x−loc)/scale; df)/scale. The flat-prior
+   posterior of step 3 and both NIG marginals of steps 4-5 are exactly this shape. */
+const locScaleTpdf = (loc, scale, df) => (x) => tPdf((x - loc) / scale, df) / scale;
+
+/* the marginal of a Normal-inverse-gamma over Δ (σ²_d integrated out) is a
+   Student-t: df = 2a, centre m, scale √(b/(a·κ)). */
+function nigMarginalDelta(m, k, a, b) {
+  return { loc: m, scale: Math.sqrt(b / (a * k)), df: 2 * a };
+}
+
+/* the Gaussian profile likelihood over Δ, peak-normalised to 1 — a relative
+   support weighting, not a density: centre d̄, sd √(ssd/((n−1)·n)). */
+function likelihoodProfile(dbar, ssd, n) {
+  const sd = Math.sqrt(ssd / (n - 1) / n);
+  return (x) => Math.exp(-0.5 * ((x - dbar) / sd) ** 2);
+}
+
+/* ---- where the (Δ, σ) surfaces peak, as the group std dev σ (steps 4-5) --
+   At Δ = m the σ²_d slice of the NIG is Inv-Gamma(a+½, b) — the extra ½ comes from
+   the Normal factor's σ⁻¹ — with mode b/(a+3/2); then σ = √(mode/2). */
+const nigSigmaMode = (a, b) => Math.sqrt(b / (a + 1.5) / 2);
+
+/* the MLE of the group std dev from the differences: σ̂²_d = ssd/n, σ = √(σ̂²_d/2). */
+const mleSigma = (ssd, n) => Math.sqrt(ssd / n / 2);

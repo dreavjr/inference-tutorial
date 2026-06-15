@@ -147,26 +147,22 @@ function posteriorSvg(delta, dObs, se, df, alpha) {
   const p = [];
 
   // a luminance mask that dissolves the curve over the top fifth of the box
-  p.push(`<defs><linearGradient id='fadeG' gradientUnits='userSpaceOnUse' ` +
-         `x1='0' y1='${TOP}' x2='0' y2='${BASE}'>` +
-         `<stop offset='0' stop-color='#fff' stop-opacity='0'/>` +
-         `<stop offset='0.22' stop-color='#fff' stop-opacity='1'/>` +
-         `<stop offset='1' stop-color='#fff' stop-opacity='1'/></linearGradient>` +
-         `<mask id='fadeM'><rect x='0' y='${TOP}' width='${FW}' height='${SH}' fill='url(#fadeG)'/></mask></defs>`);
+  const fade = fadeTopMask("post");
+  p.push(fade.defs);
 
   const ds = linspace(-HALF, HALF, 321);
   const dens = ds.map(d => tPdf((d - dObs) / se, df) / se);
 
   // the (1−α) highest-density interval. The posterior is a symmetric, unimodal
   // shifted-and-scaled t, so its HDI is exactly the equal-tailed band Δ̂ ± t·se.
-  const tc = tInv(1 - alpha / 2, df);
+  const tc = tCrit(alpha, df);
   const hdiLo = Math.max(dObs - tc * se, -HALF), hdiHi = Math.min(dObs + tc * se, HALF);
 
   // outline the whole curve, but shade only the mass inside the HDI
   const outline = ds.map((d, i) => `${Xp(d).toFixed(1)},${Yp(BASE, dens[i]).toFixed(1)}`).join(" ");
   const hx = linspace(hdiLo, hdiHi, 161);
   const hpts = hx.map(d => `${Xp(d).toFixed(1)},${Yp(BASE, tPdf((d - dObs) / se, df) / se).toFixed(1)}`).join(" ");
-  p.push(`<g mask='url(#fadeM)'>` +
+  p.push(`<g mask='${fade.mask}'>` +
          `<polygon points='${Xp(hdiLo).toFixed(1)},${BASE} ${hpts} ${Xp(hdiHi).toFixed(1)},${BASE}' ` +
          `fill='${PAL.ink}' opacity='0.14'/>` +
          `<polyline points='${outline}' fill='none' stroke='${PAL.ink}' stroke-width='2'/></g>`);
@@ -175,15 +171,8 @@ function posteriorSvg(delta, dObs, se, df, alpha) {
   // reference markers — dashed, full height. The true Δ and observed Δ̂ share the
   // top line but splay their labels to opposite sides (smaller→left, larger→right)
   // so they never overprint each other; the null sits one line below, centred.
-  const marker = (xv, color, lbl, lblY, side) => {
-    const x = Xp(xv);
-    const anchor = side < 0 ? "end" : side > 0 ? "start" : "middle";
-    const tx = side ? Math.min(Math.max(x + side * 5, ML + 12), ML + S - 12) : clampx(x);
-    return `<line x1='${x.toFixed(1)}' x2='${x.toFixed(1)}' y1='${BASE}' y2='${lblY + 5}' ` +
-           `stroke='${color}' stroke-width='1.4' stroke-dasharray='5 4'/>` +
-           `<text x='${tx.toFixed(1)}' y='${lblY}' text-anchor='${anchor}' font-size='13.5' ` +
-           `font-weight='600' fill='${color}'>${lbl}</text>`;
-  };
+  const marker = (xv, color, lbl, lblY, side) =>
+    splayMarker(xv, color, lbl, side, { lineTopY: lblY + 5, textY: lblY });
   const dLeft = delta <= dObs;            // which of Δ, Δ̂ is the left one
   p.push(marker(delta, PAL.green, "Δ", TOP + 16, dLeft ? -1 : 1));
   p.push(marker(dObs, PAL.ink, "Δ̂", TOP + 16, dLeft ? 1 : -1));
@@ -193,12 +182,8 @@ function posteriorSvg(delta, dObs, se, df, alpha) {
   // HDI clear of 0 ⇒ the effect's sign is settled — "tolerable risk"; HDI still
   // straddling 0 ⇒ we can't even rule out no effect — "intolerable risk".
   const containsZero = hdiLo <= 0 && hdiHi >= 0;
-  const vtxt = containsZero ? "intolerable risk" : "tolerable risk";
-  const vw = vtxt.length * 6.7 + 24, vy = TOP + 44;
-  p.push(`<rect x='${ML + 8}' y='${vy}' width='${vw.toFixed(0)}' height='23' rx='11.5' ` +
-         `fill='${containsZero ? "#9AA0A6" : "#C0392B"}'/>`);
-  p.push(`<text x='${(ML + 8 + vw / 2).toFixed(1)}' y='${vy + 16}' text-anchor='middle' ` +
-         `font-size='12.5' font-weight='600' fill='#fff'>${vtxt}</text>`);
+  p.push(pill(ML + 8, TOP + 44, containsZero ? "intolerable risk" : "tolerable risk",
+         containsZero ? "#9AA0A6" : "#C0392B"));
 
   // hover guide (hidden until hover)
   p.push(`<line id='hoverLine' x1='${X0}' x2='${X0}' y1='${BASE}' y2='${BASE}' ` +
@@ -226,12 +211,8 @@ function onSlider() { sim.dismiss(); render(); }
 function render() {
   const delta = deltaS.value, varr = varS.value, n = nS.value, alpha = alphaS.value;
   const sigma = Math.sqrt(varr);
-  const xa = pool.z1.slice(0, n).map(z => -delta / 2 + sigma * z);
-  const xb = pool.z2.slice(0, n).map(z =>  delta / 2 + sigma * z);
-  const dObs = mean(xb) - mean(xa);
-  const sp = Math.sqrt((svar(xa) + svar(xb)) / 2);
-  const se = sp * Math.sqrt(2 / n);
-  const df = 2 * n - 2;
+  const { xa, xb } = drawSample(pool, { delta, sigma, n });
+  const { df, dObs, se } = tTest(xa, xb);
 
   document.getElementById("figPop").innerHTML = populationSvg(delta, varr, n, pool, true);
   document.getElementById("figPost").innerHTML = posteriorSvg(delta, dObs, se, df, alpha);

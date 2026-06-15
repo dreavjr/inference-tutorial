@@ -225,11 +225,48 @@ function rewardClamped(x, ctr, p, c) {
        sits ON it at your decision Δ̂ — the reward you really collect — joined by a
        dashed line to the middle of your belief (the posterior peak, or the CI bar). */
 
-function rewardSvg({ dens, isBox, lo, hi, mode, delta, p, c, BK, estR, estLo, estHi, actR, bet, accent, showEstimatedCurve = true, egg = null }) {
+/* the posterior belief region of a reward panel: the green/red integrand fill
+   under the curve (green where the reward is +, red where −), the curve outline,
+   and — for the static view — the gold "expected-reward lens", the overlap the
+   E[U] integral measures. The double-click `sweep` easter egg (startRewardEgg)
+   replaces the faint uniform fill with a magnitude-shaded one that grows only out
+   to the sweep centre, and drops the lens. Kept out here so rewardSvg reads as the
+   plain decision view. */
+function posteriorBelief({ dens, rewAt, accent, estMode, xp, yB, beliefH, yR, drawLo, drawHi, sweep }) {
+  let out = "";
+  const fillXs = linspace(drawLo, drawHi, 220);
+  for (let i = 0; i < fillXs.length - 1; i++) {
+    const xL = fillXs[i], xR = fillXs[i + 1], xM = 0.5 * (xL + xR);
+    const y = yB(dens(xM));
+    let rectW = Math.max(0.8, xp(xR) - xp(xL)), opacity = "0.12";
+    if (sweep) {
+      if (xL >= estMode) continue;                       // only the swept-through region is filled
+      if (xR > estMode) rectW = Math.max(0.8, xp(estMode) - xp(xL));
+      const mag = sweep.maxAbs > 0 ? Math.abs(dens(xM) * rewAt(xM)) / sweep.maxAbs : 0;
+      opacity = (0.08 + 0.84 * Math.sqrt(Math.min(1, mag))).toFixed(3);
+    }
+    out += `<rect x='${xp(xL).toFixed(1)}' y='${y.toFixed(1)}' width='${rectW.toFixed(1)}' ` +
+      `height='${Math.max(0.8, RMID - y).toFixed(1)}' fill='${rewAt(xM) >= 0 ? GRN_F : RED_F}' opacity='${opacity}'/>`;
+  }
+  const top = linspace(drawLo, drawHi, 321).map(x => `${xp(x).toFixed(1)},${yB(dens(x)).toFixed(1)}`).join(" ");
+  out += `<polyline points='${top}' fill='none' stroke='${accent}' stroke-width='2'/>`;
+
+  if (!sweep) {   // expected-reward lens: overlap of the belief and the gold reward
+    const oLo = Math.max(drawLo, estMode - 1), oHi = Math.min(drawHi, estMode + 1);
+    if (oHi > oLo) {
+      const xs = linspace(oLo, oHi, Math.max(8, Math.round((oHi - oLo) * 60)));
+      const lt = xs.map(x => { const h = Math.max(0, Math.min(beliefH(x), RMID - yR(rewAt(x)))); return `${xp(x).toFixed(1)},${(RMID - h).toFixed(1)}`; }).join(" ");
+      out += `<polygon points='${xp(oLo).toFixed(1)},${RMID.toFixed(1)} ${lt} ${xp(oHi).toFixed(1)},${RMID.toFixed(1)}' fill='${REWARD_C}' opacity='0.20'/>`;
+    }
+  }
+  return out;
+}
+
+function rewardSvg({ dens, isBox, lo, hi, mode, delta, p, c, BK, estR, estLo, estHi, actR, bet, accent, showEstimatedCurve = true, sweep = null }) {
   const tag = isBox ? "b" : "a";
-  const estMode = egg ? egg.center : mode;
-  const rewE = (x) => rewardClamped(x, estMode, p, c);  // centred on the decision
-  const rewA = (x) => rewardClamped(x, delta, p, c); // centred on the truth
+  const estMode = sweep ? sweep.center : mode;          // the gold reward is centred on the bet (or sweep)
+  const rewE = (x) => rewardClamped(x, estMode, p, c);  // estimated reward, centred on the decision
+  const rewA = (x) => rewardClamped(x, delta, p, c);    // true reward, centred on the hidden truth
   const yR = (r) => r >= 0 ? RMID - r * RUP : RMID - r * RDN;   // fixed scale: reward +1 → top, −1 → base
   const yRc = (r) => Math.max(TOP + 3, Math.min(BASE, yR(r))); // clamped to the plot area
   const yB = (d) => RMID - Math.min(d * BK, RUP * 0.96);
@@ -242,15 +279,13 @@ function rewardSvg({ dens, isBox, lo, hi, mode, delta, p, c, BK, estR, estLo, es
   const clampPX = (px) => Math.min(Math.max(px, ML), ML + S);
   const out = [];
 
-  out.push(`<defs><linearGradient id='fadeR${tag}' gradientUnits='userSpaceOnUse' x1='0' y1='${TOP}' x2='0' y2='${RMID}'>` +
-           `<stop offset='0' stop-color='#fff' stop-opacity='0'/><stop offset='0.18' stop-color='#fff' stop-opacity='1'/>` +
-           `<stop offset='1' stop-color='#fff' stop-opacity='1'/></linearGradient>` +
-           `<mask id='fadeRm${tag}'><rect x='0' y='${TOP}' width='${FW}' height='${SH}' fill='url(#fadeR${tag})'/></mask></defs>`);
+  const fade = fadeTopMask("rew" + tag, { bottom: RMID, soft: 0.18 });
+  out.push(fade.defs);
 
   const drawLo = isBox ? Math.max(lo, loX) : loX, drawHi = isBox ? Math.min(hi, hiX) : hiX;
 
   // the belief -------------------------------------------------------------
-  let belief = "", lens = "";
+  let belief = "";
   if (isBox) {
     // a confidence interval is NOT a density — draw it as a flat error bar at
     // reward 0.5, with end caps and a midpoint marker at the MLE
@@ -261,33 +296,9 @@ function rewardSvg({ dens, isBox, lo, hi, mode, delta, p, c, BK, estR, estLo, es
       belief += `<line x1='${xx.toFixed(1)}' x2='${xx.toFixed(1)}' y1='${(barY - 5).toFixed(1)}' y2='${(barY + 5).toFixed(1)}' stroke='${accent}' stroke-width='2'/>`;
     belief += `<circle cx='${xm.toFixed(1)}' cy='${barY.toFixed(1)}' r='3.6' fill='${accent}'/>`;
   } else {
-    const fillXs = linspace(drawLo, drawHi, 220);
-    for (let i = 0; i < fillXs.length - 1; i++) {
-      const xL = fillXs[i], xR = fillXs[i + 1], xM = 0.5 * (xL + xR);
-      const y = yB(dens(xM));
-      const val = dens(xM) * rewE(xM);
-      const mag = egg && egg.maxAbs > 0 ? Math.abs(val) / egg.maxAbs : 0;
-      const fullW = Math.max(0.8, xp(xR) - xp(xL));
-      let rectW = fullW;
-      if (egg) {
-        if (xL >= estMode) continue;
-        if (xR > estMode) rectW = Math.max(0.8, xp(estMode) - xp(xL));
-      }
-      belief += `<rect x='${xp(xL).toFixed(1)}' y='${y.toFixed(1)}' width='${rectW.toFixed(1)}' ` +
-                `height='${Math.max(0.8, RMID - y).toFixed(1)}' fill='${rewE(xM) >= 0 ? GRN_F : RED_F}' ` +
-                `opacity='${egg ? (0.08 + 0.84 * Math.sqrt(Math.min(1, mag))).toFixed(3) : "0.12"}'/>`;
-    }
-    const top = linspace(drawLo, drawHi, 321).map(x => `${xp(x).toFixed(1)},${yB(dens(x)).toFixed(1)}`).join(" ");
-    belief += `<polyline points='${top}' fill='none' stroke='${accent}' stroke-width='2'/>`;
-    // expected-reward lens: overlap of belief and the gold (estimated) reward
-    const oLo = Math.max(drawLo, estMode - 1), oHi = Math.min(drawHi, estMode + 1);
-    if (!egg && oHi > oLo) {
-      const xs = linspace(oLo, oHi, Math.max(8, Math.round((oHi - oLo) * 60)));
-      const lt = xs.map(x => { const h = Math.max(0, Math.min(beliefH(x), RMID - yR(rewE(x)))); return `${xp(x).toFixed(1)},${(RMID - h).toFixed(1)}`; }).join(" ");
-      lens = `<polygon points='${xp(oLo).toFixed(1)},${RMID.toFixed(1)} ${lt} ${xp(oHi).toFixed(1)},${RMID.toFixed(1)}' fill='${REWARD_C}' opacity='0.20'/>`;
-    }
+    belief += posteriorBelief({ dens, rewAt: rewE, accent, estMode, xp, yB, beliefH, yR, drawLo, drawHi, sweep });
   }
-  out.push(`<g mask='url(#fadeRm${tag})'>${belief}${lens}</g>`);
+  out.push(`<g mask='${fade.mask}'>${belief}</g>`);
 
   // the zero-line of the reward axis
   out.push(`<line x1='${ML}' x2='${ML + S}' y1='${RMID.toFixed(1)}' y2='${RMID.toFixed(1)}' stroke='${PAL.rule}' stroke-width='1'/>`);
@@ -297,7 +308,7 @@ function rewardSvg({ dens, isBox, lo, hi, mode, delta, p, c, BK, estR, estLo, es
   const curve = (f, col, dash) =>
     `<polyline points='${linspace(loX, hiX, 421).map(x => `${xp(x).toFixed(1)},${yRc(f(x)).toFixed(1)}`).join(" ")}' ` +
     `fill='none' stroke='${col}' stroke-width='1.8'${dash ? ` stroke-dasharray='${dash}'` : ""}/>`;
-  if (showEstimatedCurve || egg) out.push(curve(rewE, egg ? MAROON : REWARD_C)); // estimated — centred on the decision
+  if (showEstimatedCurve || sweep) out.push(curve(rewE, sweep ? MAROON : REWARD_C)); // estimated — centred on the decision
   out.push(curve(rewA, PAL.green, "6 4")); // true — centred on the truth (dashed)
 
   // float 4: dotted links from the CI bar (reward 0.5) to the estimated-reward
@@ -333,19 +344,13 @@ function rewardSvg({ dens, isBox, lo, hi, mode, delta, p, c, BK, estR, estLo, es
   out.push(`<line x1='${ML}' x2='${ML + S}' y1='${BASE}' y2='${BASE}' stroke='${PAL.rule}' stroke-width='1'/>`);
 
   // pills: estimated — the rule's verdict (green when it says bet, grey when fold);
-  // actual — what we really earn (green win, red loss, grey no-play / refused)
-  const GREY = "#9AA0A6";
-  const pill = (y, label, disp, bg) => {
-    const txt = `${label} ${disp}`, w = txt.length * 6.6 + 22;
-    return `<rect x='${ML + 8}' y='${y}' width='${w.toFixed(0)}' height='22' rx='11' fill='${bg}'/>` +
-           `<text x='${(ML + 8 + w / 2).toFixed(1)}' y='${y + 15}' text-anchor='middle' font-size='12' font-weight='700' fill='#fff'>${txt}</text>`;
-  };
-  // estimated reward: a single expected value (posterior), or the min…max across the
-  // interval (CI) — the centre earns 1, the extremes share the same endpoint value
-  const estValue = egg ? egg.estR : estR;
+  // actual — what we really earn (green win, red loss, grey no-play / refused).
+  // estimated reward is one expected value (posterior), or the min…max across the
+  // interval (CI) — the centre earns 1, the extremes share the same endpoint value.
+  const estValue = sweep ? sweep.estR : estR;
   const estDisp = isBox ? `${fmtRewardPill(estLo)}...${fmtRewardPill(estHi)}` : fmtRewardPill(estValue);
-  out.push(pill(TOP + 6, "estimated", estDisp, (egg ? estValue > 0 : bet) ? GRN_F : GREY));
-  out.push(pill(TOP + 32, "actual", fmtRewardPill(actR), actR > 0 ? GRN_F : actR < 0 ? RED_F : GREY));
+  out.push(pill(ML + 8, TOP + 6, `estimated ${estDisp}`, (sweep ? estValue > 0 : bet) ? GRN_F : GREY));
+  out.push(pill(ML + 8, TOP + 32, `actual ${fmtRewardPill(actR)}`, actR > 0 ? GRN_F : actR < 0 ? RED_F : GREY));
 
   return `<svg viewBox='0 0 ${FW} ${FH}' xmlns='http://www.w3.org/2000/svg'>${out.join("")}</svg>`;
 }
@@ -506,53 +511,50 @@ function computeState(samplePool) {
   const alpha = alphaS.value, p = pS.value, c = cS.value;
   const sigma = Math.sqrt(varr);
 
-  const xa = samplePool.z1.slice(0, n).map(z => -delta / 2 + sigma * z);
-  const xb = samplePool.z2.slice(0, n).map(z =>  delta / 2 + sigma * z);
-  const d = xb.map((v, i) => v - xa[i]);
-  const dbar = mean(d);
-  const ssd = d.reduce((s, v) => s + (v - dbar) ** 2, 0);
-
+  // one experiment: the sample, its difference summary, the conjugate posterior
+  const { xa, xb, dbar, ssd } = drawSample(samplePool, { delta, sigma, n });
+  const { df: dfC, se } = tTest(xa, xb);
   const { kn, mn, an, bn } = nigUpdate(m0, k0, A0, B0, n, dbar, ssd);
 
-  const sc0 = Math.sqrt(B0 / (A0 * k0));
-  const scn = Math.sqrt(bn / (an * kn));
-  const sdLik = Math.sqrt(ssd / (n - 1) / n);
-  const post = (x) => tPdf((x - mn) / scn, 2 * an) / scn;
+  // the three readings over Δ — prior, likelihood, posterior (steps 3-4)
+  const pri = nigMarginalDelta(m0, k0, A0, B0);
+  const pos = nigMarginalDelta(mn, kn, an, bn);
+  const prior = locScaleTpdf(pri.loc, pri.scale, pri.df);
+  const post  = locScaleTpdf(pos.loc, pos.scale, pos.df);
+  const lik   = likelihoodProfile(dbar, ssd, n);
 
-  const sp = Math.sqrt((svar(xa) + svar(xb)) / 2);
-  const se = sp * Math.sqrt(2 / n), dfC = 2 * n - 2;
-  const hw = tInv(1 - alpha / 2, dfC) * se;
+  // the (1−α) confidence interval, and the "CI read as a uniform density"
+  const hw = tCrit(alpha, dfC) * se;
   const ciLo = dbar - hw, ciHi = dbar + hw, boxH = 1 / (2 * hw);
   const box = (x) => (x >= ciLo && x <= ciHi) ? boxH : 0;
 
+  // each rule bets on the peak of its belief: the posterior mode mₙ, or the MLE d̄
   const modePost = mn, modeCI = dbar;
   const rew = (x, ctr) => rewardClamped(x, ctr, p, c);
 
+  // Bayesian rule: bet iff the posterior's expected reward (centred on the bet) > 0
   const erPost = integrate(x => post(x) * rew(x, modePost));
   const betPost = erPost > 0;
 
+  // CI rule: worst-case — the reward at the interval edge; bet iff that stays ≥ 0
   const ciEdgeR = rew(ciLo, modeCI);
-  const erCIlo = Math.min(1, ciEdgeR);
-  const erCIhi = Math.max(1, ciEdgeR);
-  const erCI = erCIlo;
-  const betCI = erCIlo >= 0;
+  const erCIlo = Math.min(1, ciEdgeR), erCIhi = Math.max(1, ciEdgeR);
+  const erCI = erCIlo, betCI = erCIlo >= 0;
 
-  const actPostRaw = rew(modePost, delta);
-  const actCIRaw = rew(modeCI, delta);
+  // what each rule actually earns once the hidden Δ is revealed (0 if it refused)
+  const actPostRaw = rew(modePost, delta), actCIRaw = rew(modeCI, delta);
   const actPost = betPost ? actPostRaw : 0;
   const actCI = betCI ? actCIRaw : 0;
 
-  const BK = 0.9 * RUP / Math.max(tPdf(0, 2 * an) / scn, boxH, 0.2);
-  const postHalf = tInv(0.995, 2 * an) * scn;
+  // drawing scales: belief-height factor, and the posterior's 99% half-width
+  const BK = 0.9 * RUP / Math.max(post(mn), boxH, 0.2);
+  const postHalf = tInv(0.995, pos.df) * pos.scale;
 
   return {
     pool: samplePool,
     delta, varr, n, m0, k0, B0, alpha, p, c, sigma,
-    xa, xb, dbar, ssd, kn, mn, an, bn, sc0, scn, sdLik,
-    sp, se, dfC, hw, ciLo, ciHi, boxH, BK, postHalf,
-    prior: (x) => tPdf((x - m0) / sc0, 2 * A0) / sc0,
-    lik: (x) => Math.exp(-0.5 * ((x - dbar) / sdLik) ** 2),
-    post, box, rew,
+    xa, xb, dbar, ssd, kn, mn, an, bn, se, dfC, hw, ciLo, ciHi, boxH, BK, postHalf,
+    prior, lik, post, box, rew,
     modePost, modeCI,
     erPost, betPost,
     erCI, erCIlo, erCIhi, betCI,
@@ -563,7 +565,7 @@ function computeState(samplePool) {
 function renderRewardPost(state, rewardEgg = null) {
   figRewPost.innerHTML = rewardSvg({
     dens: state.post, isBox: false, mode: state.modePost, delta: state.delta, p: state.p, c: state.c, BK: state.BK,
-    estR: state.erPost, actR: state.actPost, bet: state.betPost, accent: POST_C, showEstimatedCurve: false, egg: rewardEgg });
+    estR: state.erPost, actR: state.actPost, bet: state.betPost, accent: POST_C, showEstimatedCurve: false, sweep: rewardEgg });
 }
 
 function render(state = computeState(pool), opts = {}) {
@@ -815,13 +817,6 @@ function wireSimHover(bayesSvg, ciSvg) {
   const bayesMarker = bayesSvg.querySelector("#simBayesMarker");
   const ciMarker = ciSvg.querySelector("#simCIMarker");
   let last = -1;
-
-  const svgPoint = (svg, e) => {
-    const pt = svg.createSVGPoint();
-    pt.x = e.clientX;
-    pt.y = e.clientY;
-    return pt.matrixTransform(svg.getScreenCTM().inverse());
-  };
 
   const activate = (idx) => {
     if (idx === last || idx < 0 || idx >= simEntries.length) return;
