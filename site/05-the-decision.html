@@ -347,8 +347,14 @@ function rewardSvg({ dens, isBox, lo, hi, mode, delta, p, c, BK, estR, estLo, es
       belief += `<line x1='${xx.toFixed(1)}' x2='${xx.toFixed(1)}' y1='${(barY - 5).toFixed(1)}' y2='${(barY + 5).toFixed(1)}' stroke='${accent}' stroke-width='2'/>`;
     belief += `<circle cx='${xm.toFixed(1)}' cy='${barY.toFixed(1)}' r='3.6' fill='${accent}'/>`;
   } else {
+    const fillXs = linspace(drawLo, drawHi, 220);
+    for (let i = 0; i < fillXs.length - 1; i++) {
+      const xL = fillXs[i], xR = fillXs[i + 1], xM = 0.5 * (xL + xR);
+      const y = yB(dens(xM));
+      belief += `<rect x='${xp(xL).toFixed(1)}' y='${y.toFixed(1)}' width='${Math.max(0.8, xp(xR) - xp(xL)).toFixed(1)}' ` +
+                `height='${Math.max(0.8, RMID - y).toFixed(1)}' fill='${rewE(xM) >= 0 ? GRN_F : RED_F}' opacity='0.12'/>`;
+    }
     const top = linspace(drawLo, drawHi, 321).map(x => `${xp(x).toFixed(1)},${yB(dens(x)).toFixed(1)}`).join(" ");
-    belief += `<polygon points='${xp(drawLo).toFixed(1)},${RMID.toFixed(1)} ${top} ${xp(drawHi).toFixed(1)},${RMID.toFixed(1)}' fill='${accent}' opacity='0.07'/>`;
     belief += `<polyline points='${top}' fill='none' stroke='${accent}' stroke-width='2'/>`;
     // expected-reward lens: overlap of belief and the gold (estimated) reward
     const oLo = Math.max(drawLo, mode - 1), oHi = Math.min(drawHi, mode + 1);
@@ -433,7 +439,7 @@ let currentState = null;
 let simRunning = false;
 let simEntries = [];
 
-const deltaS = makeSlider(grpTruth, { label: "true difference · Δ", min: 0, max: 3, step: 0.05, value: 0.8, fmt: v => v.toFixed(2), onInput: onControlChange });
+const deltaS = makeSlider(grpTruth, { label: "true difference · Δ", min: -2, max: 2, step: 0.05, value: 0.8, fmt: v => v.toFixed(2), onInput: onControlChange });
 const varS   = makeSlider(grpTruth, { label: "true variance · σ²", min: 0.25, max: 4, step: 0.05, value: 1.0, fmt: v => v.toFixed(2), onInput: onControlChange });
 const nS     = makeSlider(grpTruth, { label: "sample size · n per group", min: 3, max: 100, step: 1, value: 12, fmt: v => v.toFixed(0), onInput: onControlChange });
 
@@ -619,8 +625,9 @@ function buildBayesSimSvg() {
          `</svg>`;
 }
 
-function buildCISimSvg() {
+function buildCISimSvg(delta, span) {
   const x0 = SML, x1 = SIMW - SMR, lgY = SIMH - 6;
+  const trueY = simCIY(delta, span);
   let lx = x0;
   const item = (swatch, label) => {
     const out = swatch + `<text x='${lx + 22}' y='${lgY}' font-size='10.5' fill='${PAL.muted}'>${label}</text>`;
@@ -631,8 +638,9 @@ function buildCISimSvg() {
          `<g id='simCICols'></g>` +
          `<line id='simCIMarker' x1='0' x2='0' y1='${SIM_PLOT_TOP}' y2='${SIM_PLOT_BOT}' stroke='${PAL.ink}' stroke-width='1' stroke-dasharray='3 3' opacity='0'/>` +
          `<line x1='${x0}' x2='${x1}' y1='${SIM_MID.toFixed(1)}' y2='${SIM_MID.toFixed(1)}' stroke='${PAL.ink}' stroke-width='1.2' stroke-dasharray='4 4' opacity='0.72'/>` +
+         `<line x1='${x0}' x2='${x1}' y1='${trueY.toFixed(1)}' y2='${trueY.toFixed(1)}' stroke='${PAL.green}' stroke-width='1.2' stroke-dasharray='4 4' opacity='0.72'/>` +
          `<text x='${x1}' y='${(SIM_MID - 5).toFixed(1)}' text-anchor='end' font-size='11' fill='${PAL.ink}'>0</text>` +
-         `<text x='${x1}' y='${(SIM_PLOT_TOP + 11).toFixed(1)}' text-anchor='end' font-size='10' fill='${PAL.muted}'>+1</text>` +
+         `<text x='${x1}' y='${(trueY - 5).toFixed(1)}' text-anchor='end' font-size='11' fill='${PAL.green}'>true Δ</text>` +
          `<text x='${(SML - 8).toFixed(1)}' y='${SIM_TEXT1Y}' text-anchor='end' font-size='9.5' fill='${PAL.muted}'>est</text>` +
          `<text x='${(SML - 8).toFixed(1)}' y='${SIM_TEXT2Y}' text-anchor='end' font-size='9.5' fill='${PAL.muted}'>got</text>` +
          item(`<line x1='${lx}' x2='${lx + 14}' y1='${lgY - 3}' y2='${lgY - 3}' stroke='${MAROON}' stroke-width='3' stroke-linecap='round'/>`, "accepted CI") +
@@ -647,11 +655,10 @@ function simTopY(rel, span) {
   return SIM_MID - Math.max(-halfPx, Math.min(halfPx, rel * scale));
 }
 
-function simRewardY(r) {
-  const val = Math.max(-1, Math.min(1, r));
-  return val >= 0
-    ? SIM_MID - val * (SIM_MID - SIM_PLOT_TOP)
-    : SIM_MID - val * (SIM_PLOT_BOT - SIM_MID);
+function simCIY(v, span) {
+  const halfPx = (SIM_PLOT_BOT - SIM_PLOT_TOP) / 2;
+  const scale = halfPx / Math.max(span, 1e-6);
+  return SIM_MID - Math.max(-halfPx, Math.min(halfPx, v * scale));
 }
 
 function bayesSampleGroup(state, idx, span, maxAbs) {
@@ -717,13 +724,14 @@ function bayesSampleGroup(state, idx, span, maxAbs) {
   return g;
 }
 
-function ciSampleGroup(state, idx) {
+function ciSampleGroup(state, idx, span) {
   const x = SML + (idx + 0.5) * SIM_SPACING;
   const g = svgNode("g", { "data-idx": String(idx) });
   const frameW = SIM_SPACING * 0.8;
   const col = state.betCI ? MAROON : GREY;
-  const yHi = simRewardY(1);
-  const yLo = simRewardY(state.erCIlo);
+  const yLo = simCIY(state.ciLo, span);
+  const yHi = simCIY(state.ciHi, span);
+  const yMid = simCIY(state.modeCI, span);
 
   g.appendChild(svgNode("rect", {
     x: (x - frameW / 2).toFixed(1), y: SIM_PLOT_TOP.toFixed(1), width: frameW.toFixed(1),
@@ -742,6 +750,10 @@ function ciSampleGroup(state, idx) {
       stroke: col, "stroke-width": "1.8", "stroke-linecap": "round"
     }));
   }
+  g.appendChild(svgNode("circle", {
+    cx: x.toFixed(1), cy: yMid.toFixed(1), r: "2.4",
+    fill: col
+  }));
 
   const predTxt = svgNode("text", {
     x: x.toFixed(1), y: SIM_TEXT1Y.toFixed(1), "text-anchor": "middle",
@@ -847,6 +859,10 @@ async function runSimulation() {
     0.9,
     ...draws.map(s => Math.max(s.postHalf, Math.abs(s.delta - s.modePost) + 0.25, Math.abs(s.ciLo - s.modePost), Math.abs(s.ciHi - s.modePost)))
   );
+  const ciSpan = Math.max(
+    0.9,
+    ...draws.map(s => Math.max(Math.abs(s.delta) + 0.25, Math.abs(s.ciLo), Math.abs(s.ciHi), Math.abs(s.modeCI)))
+  );
 
   let bayesMaxAbs = 0;
   for (const s of draws) {
@@ -863,8 +879,8 @@ async function runSimulation() {
     `<div class='sim-stack'>` +
       `<div class='sim-subcap'>Bayesian rule · posterior × reward integrand around Δ̂</div>` +
       buildBayesSimSvg() +
-      `<div class='sim-subcap'>Confidence-interval rule · reward interval around 0</div>` +
-      buildCISimSvg() +
+      `<div class='sim-subcap'>Confidence-interval rule · CI around 0</div>` +
+      buildCISimSvg(draws[0].delta, ciSpan) +
     `</div>`;
 
   const bayesSvg = simArea.querySelector("#simBayesSvg");
@@ -879,7 +895,7 @@ async function runSimulation() {
     render(state);
 
     bayesCols.appendChild(bayesSampleGroup(state, i, bayesSpan, bayesMaxAbs));
-    ciCols.appendChild(ciSampleGroup(state, i));
+    ciCols.appendChild(ciSampleGroup(state, i, ciSpan));
 
     sumExp += state.erPost;
     sumGotPost += state.actPost;
