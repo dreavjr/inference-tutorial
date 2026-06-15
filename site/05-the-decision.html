@@ -25,23 +25,24 @@
     <p>Bayesian decision theory closes that last gap with one rule:
     <strong>act to maximise expected utility under your posterior.</strong> It needs two
     ingredients — the posterior you already have, and a <strong>reward model</strong> that
-    says how good each outcome is. We use a simple one-parameter family:</p>
+    says how good each outcome is. We use a simple two-parameter family:</p>
 
-    <p class="formula" style="font-style:normal">U(x)&ensp;=&ensp;c&thinsp;·&thinsp;(1&thinsp;−&thinsp;|Δ&thinsp;−&thinsp;x|<sup>p</sup>)<span style="font-size:14px;color:#6D675D">&emsp;(floored at −c)</span></p>
+    <p class="formula" style="font-style:normal">U(x)&ensp;=&ensp;1&thinsp;−&thinsp;|Δ&thinsp;−&thinsp;x|<sup>p</sup>&thinsp;−&thinsp;c&thinsp;·&thinsp;|Δ&thinsp;−&thinsp;x|</p>
 
     <p>Read it plainly: if the truth is <strong>Δ</strong> and you commit to the value
-    <strong>x</strong>, you earn the most — a full <em>c</em> — when you land exactly on
-    the truth; the reward falls to <em>zero</em> when you miss by exactly one unit, goes
-    negative beyond that, and bottoms out at a flat penalty <strong>−c</strong> once
-    you're badly wrong. So the reward carves a fixed <strong>tolerance window</strong>,
-    Δ ± 1, that you want your belief to fall inside.</p>
+    <strong>x</strong>, you earn the most — a full <em>1</em> — when you land exactly on the
+    truth. Miss, and two penalties bite: a <em>polynomial</em> one, |Δ − x|<sup>p</sup>, and
+    a <em>linear</em> one, c · |Δ − x|. The reward falls through <em>zero</em> at a
+    break-even error <strong>ε</strong> — the largest miss you can still profit from — and
+    keeps dropping past it. Both p and c pull ε inward: a steeper polynomial, or a heavier
+    linear charge, narrows the margin you're allowed.</p>
 
     <table class="concept">
       <tr><th>knob</th><th>what it does</th><th>here</th></tr>
-      <tr><td><strong>p</strong></td><td>the <em>degree</em> — the shape of tolerance: a
-          forgiving tent at p = 1, a sharp all-or-nothing plateau as p climbs</td><td>a slider (1…10)</td></tr>
-      <tr><td><strong>c</strong></td><td>the <em>steepness</em> — the stakes: it scales
-          the whole reward, peak and penalty alike</td><td>a slider (1…10)</td></tr>
+      <tr><td><strong>p</strong></td><td>the <em>polynomial degree</em> — how the penalty
+          curves: a gentle bowl at p = 1, a flat top with steep walls as p climbs</td><td>a slider (1…10)</td></tr>
+      <tr><td><strong>c</strong></td><td>the <em>linear penalty</em> — a flat charge per unit
+          of error; raising it tilts the whole reward down and pulls the break-even ε inward</td><td>a slider (1…10)</td></tr>
       <tr><td><strong>Δ</strong></td><td>where the reward is centred — the truth itself;
           we can draw it here only because we simulate</td><td>the green line</td></tr>
     </table>
@@ -66,10 +67,10 @@
     <em>uniform block</em> — “every value inside equally plausible, everything outside
     impossible” — the same flat box step 1 drew. You can't take an expectation against a
     non-distribution, so the rule turns <strong>worst-case</strong>. The reward hits zero at
-    a break-even error <strong>ε</strong> (solve reward(ε) = 0 — here the ±1 tolerance
-    window). Compare it to your <strong>margin of error E</strong>, the interval's
-    half-width: <strong>bet iff E ≤ ε</strong>, so that even the interval's worst boundary
-    still pays. The number reported is that worst-case reward, c·(1 − E<sup>p</sup>).</p>
+    a break-even error <strong>ε</strong> (solve 1 − ε<sup>p</sup> − c·ε = 0). Compare it to
+    your <strong>margin of error E</strong>, the interval's half-width:
+    <strong>bet iff E ≤ ε</strong>, so that even the interval's worst boundary still pays.
+    The number reported is that worst-case reward, 1 − E<sup>p</sup> − c·E.</p>
 
     <p>Then each panel shows what the decision <em>really</em> earns. The
     <strong style="color:#A77B2E">estimated</strong> pill is the rule's verdict — its number,
@@ -120,23 +121,23 @@
   <section class="prose">
     <h2>Try this</h2>
     <ol>
-      <li><strong>Defaults.</strong> Both rules say bet, and both win — the interval sits
-      well inside the ±1 window and the posterior's expectation is comfortably positive. With
-      ample, well-behaved data the two paradigms agree.</li>
-      <li><strong>Drop n to 3 or 4.</strong> The confidence interval balloons past ±1, so its
-      worst-case boundary turns negative and the classical rule <em>refuses</em> — its actual
-      pill goes grey at 0.00, a missed opportunity. The posterior, anchored by its prior,
-      still expects a positive return and bets — often winning. Scarce data is exactly where
-      the worst-case reading grows timid.</li>
-      <li><strong>Crank n to 100.</strong> Both beliefs sharpen, both bet, and their actual
-      payoffs converge near the peak reward c. With enough data the rules stop disagreeing —
-      the same washing-out you saw with priors in step 4.</li>
-      <li><strong>Push p toward 10.</strong> The reward turns all-or-nothing — but note the
-      break-even ε stays pinned at 1, so the <em>classical</em> bet/refuse verdict doesn't
-      move; only its worst-case number does. The Bayesian side <em>does</em> shift: a sharp
-      plateau rewards piling mass inside the window, so a tall posterior keeps a positive
-      expectation a fat box would lose. Then raise <strong>c</strong>: the stakes scale, and
-      so does the gap between what the two rules earn.</li>
+      <li><strong>Defaults.</strong> Out of the box the two rules already <em>disagree</em>.
+      The posterior expects a positive return and bets — and wins (the actual pill turns
+      green). The confidence interval, though, is wider than the break-even ε, so its
+      worst-case boundary is a loss and the classical rule <em>refuses</em>, banking 0. The
+      Bayesian's nerve against the worst-case rule's timidity, on the very first screen.</li>
+      <li><strong>Crank n to 100.</strong> The interval shrinks inside ε; now both rules bet
+      and both win, their payoffs converging near the peak reward of 1. With enough data the
+      disagreement washes out — just as the prior did in step 4.</li>
+      <li><strong>Drop n to 3 or 4.</strong> Now neither dares: the interval balloons far
+      past ε so the classical rule folds, and the posterior smears so wide that even its
+      <em>expected</em> reward goes negative — the Bayesian folds too. When the data truly
+      can't support the bet, both rules say so.</li>
+      <li><strong>Move p and c.</strong> Watch the break-even ε. Pushing <strong>p</strong>
+      toward 10 <em>flattens</em> the reward near the truth, so ε widens — more error is
+      tolerated before the polynomial bites, and the classical rule grows bolder. Raising
+      <strong>c</strong> does the opposite: the linear charge bites at every distance, ε
+      pulls sharply in, and both rules turn cautious.</li>
       <li><strong>Tighten the prior</strong> (κ₀ ↑) and shift <strong>m₀</strong> off the
       truth. The posterior's bet — its peak — pulls away from the interval's midpoint, and
       you can watch a confident-but-wrong prior keep its <em>estimated</em> pill green and
@@ -178,7 +179,6 @@ const PRIOR_C = "#8E6FAE", LIK_C = "#C96A5E", POST_C = "#333333";
 const REWARD_C = "#A77B2E";                 // the reward landscape
 const GRN_F = "#2E7D5B", RED_F = "#C0392B"; // belief painted by reward sign
 const A0 = 2;                               // variance prior: a₀ fixed and gentle
-const CMAX = 10;                            // reward axis is absolute: ±CMAX (the c slider's max)
 
 /* ---- geometry: the 1-D panels (same scale as steps 1, 3 & 4) ------------- */
 const S = 460, SH = 300, HALF = 5.0, YMAX = 0.9;
@@ -190,10 +190,10 @@ const Xp = (x) => X0 + x * SC;
 const Yp = (base, dens, cap = SH) => base - Math.min(dens * K, cap);
 const clampx = (px, pad = 28) => Math.min(Math.max(px, ML + pad), ML + S - pad);
 
-/* reward panels: a signed vertical axis. Reward 0 rides a mid-line; +c climbs
-   to the top, −c sinks to the baseline. Beliefs (always ≥ 0) rise from the
-   mid-line too, so painting their fill by the sign of the reward beneath each x
-   shows the product directly: green earns, red pays. */
+/* reward panels: a signed vertical axis. Reward 0 rides a mid-line; +1 (the peak,
+   at the truth) climbs to the top, −1 sinks to the baseline, lower rewards clamp.
+   Beliefs (always ≥ 0) rise from the mid-line too, so painting their fill by the
+   sign of the reward beneath each x shows the product directly: green earns, red pays. */
 const RMID = TOP + 0.52 * SH, RUP = RMID - (TOP + 8), RDN = BASE - RMID;
 
 function curvePath(xs, dens, base, cap = S) {
@@ -282,10 +282,11 @@ function marginalSvg(prior, lik, post, delta) {
 }
 
 /* ---- panels 3 & 4: a belief scored against the reward model, twice --------
-   Every panel is centred horizontally on the true difference Δ, and shares ONE
-   horizontal scale (xp) and ONE absolute vertical reward scale (yR, spanning
-   ±CMAX) across all three curves — true reward, estimated reward, and belief —
-   so a change in c grows the reward against a fixed-height belief.
+   Every panel is centred horizontally on the true difference Δ, and all three
+   curves — true reward, estimated reward, and belief — share ONE horizontal
+   scale (xp). The vertical reward scale (yR) is fixed: the peak reward +1 (at
+   the truth) rides at the top, 0 at the mid-line, −1 at the base, with lower
+   rewards clamped to the floor.
 
      • the ESTIMATED reward (gold) — a reward centred on your own decision Δ̂
        (the posterior's mode, or the interval's midpoint). The shaded lens is the
@@ -296,12 +297,11 @@ function marginalSvg(prior, lik, post, delta) {
 
 function rewardSvg({ dens, isBox, lo, hi, mode, delta, p, c, BK, estR, actR, bet, accent }) {
   const tag = isBox ? "b" : "a";
-  const rewE = (x) => c * Math.max(1 - Math.pow(Math.abs(x - mode), p), -1);   // centred on the decision
-  const rewA = (x) => c * Math.max(1 - Math.pow(Math.abs(x - delta), p), -1);  // centred on the truth
-  const yR = (r) => r >= 0 ? RMID - (r / CMAX) * RUP : RMID - (r / CMAX) * RDN; // absolute: ±CMAX fills the axis
+  const rewE = (x) => { const e = Math.abs(x - mode);  return 1 - Math.pow(e, p) - c * e; }; // centred on the decision
+  const rewA = (x) => { const e = Math.abs(x - delta); return 1 - Math.pow(e, p) - c * e; }; // centred on the truth
+  const yR = (r) => r >= 0 ? RMID - r * RUP : RMID - r * RDN;   // fixed scale: reward +1 → top, −1 → base
   const yB = (d) => RMID - Math.min(d * BK, RUP * 0.96);
   const beliefH = (x) => RMID - yB(dens(x));          // belief height above the zero-line (px)
-  const cy = Math.max(TOP + 3, Math.min(BASE, yR(c))), ny = Math.max(TOP + 3, Math.min(BASE, yR(-c)));
 
   // the panel is centred on the truth Δ; one shared horizontal mapping for all curves
   const cx = delta, xp = (x) => X0 + (x - cx) * SC;
@@ -354,10 +354,10 @@ function rewardSvg({ dens, isBox, lo, hi, mode, delta, p, c, BK, estR, actR, bet
   out.push(curve(rewE, REWARD_C));   // estimated — centred on the decision
   out.push(curve(rewA, PAL.green));  // true — centred on the truth
 
-  // reward magnitude labels, riding at the actual peak +c and floor −c (they move with c)
-  out.push(`<text x='${ML + S - 4}' y='${(cy - 4).toFixed(1)}' text-anchor='end' font-size='10' fill='${PAL.muted}'>+c</text>`);
+  // reward magnitude labels at the fixed axis extremes: peak +1, zero, floor −1
+  out.push(`<text x='${ML + S - 4}' y='${(TOP + 13).toFixed(1)}' text-anchor='end' font-size='10' fill='${PAL.muted}'>+1</text>`);
   out.push(`<text x='${ML + S - 4}' y='${(RMID - 4).toFixed(1)}' text-anchor='end' font-size='10' fill='${PAL.muted}'>0</text>`);
-  out.push(`<text x='${ML + S - 4}' y='${(ny - 4).toFixed(1)}' text-anchor='end' font-size='10' fill='${PAL.muted}'>−c</text>`);
+  out.push(`<text x='${ML + S - 4}' y='${(BASE - 5).toFixed(1)}' text-anchor='end' font-size='10' fill='${PAL.muted}'>−1</text>`);
 
   // the decision Δ̂ and the reward it really earns: a dot ON the true-reward (green)
   // curve at Δ̂, joined by a dashed line to the middle of the belief
@@ -409,8 +409,9 @@ const alphaS = makeSlider(grpDecision, { label: "false-positive rate · α (t-te
 const pS     = makeSlider(grpDecision, { label: "reward model degree · p", min: 1, max: 10, step: 0.1, value: 2, fmt: v => v.toFixed(1), onInput: render });
 const cS     = makeSlider(grpDecision, { label: "reward model steepness · c", min: 1, max: 10, step: 0.1, value: 1, fmt: v => v.toFixed(1), onInput: render });
 
-// ∫ f(x) dx over a wide range by the trapezoid rule (the reward is floored at
-// −c, so the expected-reward integrand is bounded and this always converges)
+// ∫ f(x) dx over a wide range by the trapezoid rule. The reward is unbounded below,
+// but the posterior / box decays fast enough that the product converges, and the wide
+// finite range captures essentially all of the mass.
 function integrate(f) {
   const A = -12, B = 12, M = 4000, h = (B - A) / M;
   let s = 0;
@@ -453,17 +454,21 @@ function render() {
 
   // the two values you could bet on: the posterior's peak, the CI's midpoint
   const modePost = mn, modeCI = dbar;
-  const rew = (x, ctr) => c * Math.max(1 - Math.pow(Math.abs(x - ctr), p), -1);
+  const rew = (x, ctr) => { const e = Math.abs(x - ctr); return 1 - Math.pow(e, p) - c * e; };
 
   // BAYESIAN — act on expected utility: average the reward (centred on your bet)
   // against the whole posterior, and place the bet iff that expectation is positive
   const erPost  = integrate(x => post(x) * rew(x, modePost));
   const betPost = erPost > 0;
 
-  // CLASSICAL — the reward reaches zero at the break-even error ε (reward(ε) = 0;
-  // for this family ε = 1, the tolerance window). Bet iff the margin of error E —
-  // the CI half-width — stays within ε; report the worst-case reward c·(1 − E^p)
-  const EPS = 1, erCI = c * Math.max(1 - Math.pow(hw, p), -1), betCI = hw <= EPS;
+  // CLASSICAL — the reward falls through zero at the break-even error ε, where
+  // 1 − ε^p − c·ε = 0 (a function of both p and c). Bet iff the margin of error E —
+  // the CI half-width — stays within ε; report the worst-case reward 1 − E^p − c·E.
+  // U(0)=1>0 and U(1)=−c<0, so ε lies in (0,1): find it by bisection.
+  let elo = 0, ehi = 1;
+  for (let i = 0; i < 60; i++) { const em = (elo + ehi) / 2; if (1 - Math.pow(em, p) - c * em > 0) elo = em; else ehi = em; }
+  const EPS = (elo + ehi) / 2;
+  const erCI = 1 - Math.pow(hw, p) - c * hw, betCI = hw <= EPS;
 
   // ACTUAL reward — the true reward at the value we committed to, earned only if we
   // actually placed the bet; a refused bet earns nothing
