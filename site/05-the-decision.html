@@ -354,7 +354,13 @@ function rewardSvg({ dens, isBox, lo, hi, mode, delta, p, c, BK, estR, estLo, es
       const y = yB(dens(xM));
       const val = dens(xM) * rewE(xM);
       const mag = egg && egg.maxAbs > 0 ? Math.abs(val) / egg.maxAbs : 0;
-      belief += `<rect x='${xp(xL).toFixed(1)}' y='${y.toFixed(1)}' width='${Math.max(0.8, xp(xR) - xp(xL)).toFixed(1)}' ` +
+      const fullW = Math.max(0.8, xp(xR) - xp(xL));
+      let rectW = fullW;
+      if (egg) {
+        if (xL >= estMode) continue;
+        if (xR > estMode) rectW = Math.max(0.8, xp(estMode) - xp(xL));
+      }
+      belief += `<rect x='${xp(xL).toFixed(1)}' y='${y.toFixed(1)}' width='${rectW.toFixed(1)}' ` +
                 `height='${Math.max(0.8, RMID - y).toFixed(1)}' fill='${rewE(xM) >= 0 ? GRN_F : RED_F}' ` +
                 `opacity='${egg ? (0.08 + 0.84 * Math.sqrt(Math.min(1, mag))).toFixed(3) : "0.12"}'/>`;
     }
@@ -498,13 +504,24 @@ function buildRewardEggData(state) {
 }
 
 function rewardEggEstimate(data, state, center) {
+  if (center <= data.A) return 0;
   let s = 0;
-  for (let i = 0; i <= data.M; i++) {
+  let prevX = data.A;
+  let prevV = state.post(prevX) * state.rew(prevX, center);
+  for (let i = 1; i <= data.M; i++) {
     const x = data.A + data.h * i;
     const v = state.post(x) * state.rew(x, center);
-    s += ((i === 0 || i === data.M) ? 0.5 : 1) * v;
+    if (x >= center) {
+      const frac = (center - prevX) / (x - prevX);
+      const midV = prevV + frac * (v - prevV);
+      s += 0.5 * (prevV + midV) * (center - prevX);
+      return s;
+    }
+    s += 0.5 * (prevV + v) * data.h;
+    prevX = x;
+    prevV = v;
   }
-  return s * data.h;
+  return s;
 }
 
 function stopRewardEgg(restore = true) {
