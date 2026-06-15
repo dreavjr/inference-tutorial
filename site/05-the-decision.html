@@ -475,6 +475,14 @@ function fmtReward(v) {
   return z > 0 ? `+${z.toFixed(2)}` : z.toFixed(2);
 }
 
+function fmtRewardLabel(v) {
+  return `${Math.round(Math.abs(v) * 100)}`;
+}
+
+function fmtRewardSum(v) {
+  return `${(v * 100).toFixed(1)}`;
+}
+
 function rewardTextColor(v) {
   return v > 0 ? GRN_F : v < 0 ? RED_F : GREY;
 }
@@ -600,12 +608,13 @@ function buildBayesSimSvg() {
          `<line id='simBayesMarker' x1='0' x2='0' y1='${SIM_PLOT_TOP}' y2='${SIM_PLOT_BOT}' stroke='${PAL.ink}' stroke-width='1' stroke-dasharray='3 3' opacity='0'/>` +
          `<line x1='${x0}' x2='${x1}' y1='${SIM_MID.toFixed(1)}' y2='${SIM_MID.toFixed(1)}' stroke='${PAL.ink}' stroke-width='1.2' stroke-dasharray='4 4' opacity='0.72'/>` +
          `<text x='${x1}' y='${(SIM_MID - 5).toFixed(1)}' text-anchor='end' font-size='11' fill='${PAL.ink}'>Δ̂</text>` +
-         `<text x='${(SML - 8).toFixed(1)}' y='${SIM_TEXT1Y}' text-anchor='end' font-size='9.5' fill='${PAL.muted}'>exp</text>` +
+         `<text x='${(SML - 8).toFixed(1)}' y='${SIM_TEXT1Y}' text-anchor='end' font-size='9.5' fill='${PAL.muted}'>est</text>` +
          `<text x='${(SML - 8).toFixed(1)}' y='${SIM_TEXT2Y}' text-anchor='end' font-size='9.5' fill='${PAL.muted}'>got</text>` +
          item(`<rect x='${lx}' y='${lgY - 8}' width='12' height='6' rx='2' fill='${GRN_F}' fill-opacity='0.75'/>`, "positive integrand") +
          item(`<rect x='${lx}' y='${lgY - 8}' width='12' height='6' rx='2' fill='${RED_F}' fill-opacity='0.75'/>`, "negative integrand") +
-         item(`<polygon points='${starPoints(lx + 6, lgY - 4.5, 5, 2.2)}' fill='${POST_C}'/>`, "bet") +
-         item(`<circle cx='${lx + 6}' cy='${lgY - 4.5}' r='4.5' fill='none' stroke='${GREY}' stroke-width='1.5'/>`, "skip") +
+         item(`<circle cx='${lx + 6}' cy='${lgY - 4.5}' r='4.5' fill='${MAROON}'/>`, "bet") +
+         item(`<circle cx='${lx + 6}' cy='${lgY - 4.5}' r='4.5' fill='${GREY}'/>`, "skip") +
+         item(`<polygon points='${starPoints(lx + 6, lgY - 4.5, 5, 2.2)}' fill='${PAL.green}'/>`, "true Δ") +
          `<text id='simBayesSum' x='${x1}' y='${lgY}' text-anchor='end' font-size='10.5' fill='${PAL.muted}' opacity='0'></text>` +
          `</svg>`;
 }
@@ -624,7 +633,7 @@ function buildCISimSvg() {
          `<line x1='${x0}' x2='${x1}' y1='${SIM_MID.toFixed(1)}' y2='${SIM_MID.toFixed(1)}' stroke='${PAL.ink}' stroke-width='1.2' stroke-dasharray='4 4' opacity='0.72'/>` +
          `<text x='${x1}' y='${(SIM_MID - 5).toFixed(1)}' text-anchor='end' font-size='11' fill='${PAL.ink}'>0</text>` +
          `<text x='${x1}' y='${(SIM_PLOT_TOP + 11).toFixed(1)}' text-anchor='end' font-size='10' fill='${PAL.muted}'>+1</text>` +
-         `<text x='${(SML - 8).toFixed(1)}' y='${SIM_TEXT1Y}' text-anchor='end' font-size='9.5' fill='${PAL.muted}'>pred</text>` +
+         `<text x='${(SML - 8).toFixed(1)}' y='${SIM_TEXT1Y}' text-anchor='end' font-size='9.5' fill='${PAL.muted}'>est</text>` +
          `<text x='${(SML - 8).toFixed(1)}' y='${SIM_TEXT2Y}' text-anchor='end' font-size='9.5' fill='${PAL.muted}'>got</text>` +
          item(`<line x1='${lx}' x2='${lx + 14}' y1='${lgY - 3}' y2='${lgY - 3}' stroke='${MAROON}' stroke-width='3' stroke-linecap='round'/>`, "accepted CI") +
          item(`<line x1='${lx}' x2='${lx + 14}' y1='${lgY - 3}' y2='${lgY - 3}' stroke='${GREY}' stroke-width='3' stroke-linecap='round'/>`, "rejected CI") +
@@ -649,6 +658,7 @@ function bayesSampleGroup(state, idx, span, maxAbs) {
   const x = SML + (idx + 0.5) * SIM_SPACING;
   const g = svgNode("g", { "data-idx": String(idx) });
   const frameW = SIM_SPACING * 0.8;
+  const trueY = simTopY(state.delta - state.modePost, span);
   g.appendChild(svgNode("rect", {
     x: (x - frameW / 2).toFixed(1), y: SIM_PLOT_TOP.toFixed(1), width: frameW.toFixed(1),
     height: (SIM_PLOT_BOT - SIM_PLOT_TOP).toFixed(1), rx: "4", fill: PAL.ink, "fill-opacity": "0",
@@ -675,29 +685,33 @@ function bayesSampleGroup(state, idx, span, maxAbs) {
   }
 
   if (state.betPost) {
-    g.appendChild(svgNode("polygon", {
-      points: starPoints(x, SIM_MID, 6.2, 2.9),
-      fill: POST_C
+    g.appendChild(svgNode("circle", {
+      cx: x.toFixed(1), cy: SIM_MID.toFixed(1), r: "3.1",
+      fill: MAROON
     }));
   } else {
     g.appendChild(svgNode("circle", {
-      cx: x.toFixed(1), cy: SIM_MID.toFixed(1), r: "5.2",
-      fill: "none", stroke: GREY, "stroke-width": "1.6"
+      cx: x.toFixed(1), cy: SIM_MID.toFixed(1), r: "3.1",
+      fill: GREY
     }));
   }
+  g.appendChild(svgNode("polygon", {
+    points: starPoints(x, trueY, 3.7, 1.7),
+    fill: PAL.green
+  }));
 
   const expTxt = svgNode("text", {
     x: x.toFixed(1), y: SIM_TEXT1Y.toFixed(1), "text-anchor": "middle",
     "font-size": "8.4", "font-weight": "600", fill: rewardTextColor(state.erPost)
   });
-  expTxt.textContent = fmtReward(state.erPost);
+  expTxt.textContent = fmtRewardLabel(state.erPost);
   g.appendChild(expTxt);
 
   const gotTxt = svgNode("text", {
     x: x.toFixed(1), y: SIM_TEXT2Y.toFixed(1), "text-anchor": "middle",
     "font-size": "8.4", "font-weight": "600", fill: rewardTextColor(state.actPost)
   });
-  gotTxt.textContent = fmtReward(state.actPost);
+  gotTxt.textContent = fmtRewardLabel(state.actPost);
   g.appendChild(gotTxt);
 
   return g;
@@ -733,22 +747,29 @@ function ciSampleGroup(state, idx) {
     x: x.toFixed(1), y: SIM_TEXT1Y.toFixed(1), "text-anchor": "middle",
     "font-size": "8.4", "font-weight": "600", fill: rewardTextColor(state.erCIlo)
   });
-  predTxt.textContent = fmtReward(state.erCIlo);
+  predTxt.textContent = fmtRewardLabel(state.erCIlo);
   g.appendChild(predTxt);
 
   const gotTxt = svgNode("text", {
     x: x.toFixed(1), y: SIM_TEXT2Y.toFixed(1), "text-anchor": "middle",
     "font-size": "8.4", "font-weight": "600", fill: rewardTextColor(state.actCI)
   });
-  gotTxt.textContent = fmtReward(state.actCI);
+  gotTxt.textContent = fmtRewardLabel(state.actCI);
   g.appendChild(gotTxt);
 
   return g;
 }
 
-function setSimSummary(svg, id, leftLabel, leftSum, rightSum) {
+function overbarTspan(label) {
+  return `<tspan style='text-decoration:overline'>${label}</tspan>`;
+}
+
+function setSimSummary(svg, id, leftLabel, leftMean, rightMean, maxMean) {
   const text = svg.querySelector(id);
-  text.textContent = `Σ ${leftLabel} ${fmtReward(leftSum)} · Σ got ${fmtReward(rightSum)}`;
+  text.innerHTML =
+    `${overbarTspan(leftLabel)} ${fmtRewardSum(leftMean)} · ` +
+    `${overbarTspan("got")} ${fmtRewardSum(rightMean)} · ` +
+    `${overbarTspan("max")} ${fmtRewardSum(maxMean)}`;
   text.setAttribute("opacity", "1");
 }
 
@@ -868,8 +889,10 @@ async function runSimulation() {
     await sleep(SIM_WAIT);
   }
 
-  setSimSummary(bayesSvg, "#simBayesSum", "exp", sumExp, sumGotPost);
-  setSimSummary(ciSvg, "#simCISum", "pred", sumPred, sumGotCI);
+  const nDraws = draws.length;
+  const maxMean = 1;
+  setSimSummary(bayesSvg, "#simBayesSum", "est", sumExp / nDraws, sumGotPost / nDraws, maxMean);
+  setSimSummary(ciSvg, "#simCISum", "est", sumPred / nDraws, sumGotCI / nDraws, maxMean);
 
   simRunning = false;
   setControlsDisabled(false);

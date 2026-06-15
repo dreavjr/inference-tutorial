@@ -238,7 +238,7 @@ button.resample:disabled:hover { background: transparent; color: var(--ink); }
 .sim-area .figcap { margin: 0 0 8px; }
 .sim-area svg { display: block; width: 100%; height: auto; }
 .sim-area svg text { font-family: var(--sans); }
-.sim-stack { display: grid; gap: 10px; }
+.sim-stack { display: grid; gap: 18px; }
 .sim-subcap {
   font: 600 11px/1.45 var(--sans);
   letter-spacing: .08em;
