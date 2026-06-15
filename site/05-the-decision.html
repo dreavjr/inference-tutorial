@@ -494,10 +494,10 @@ function render() {
   const erCI = erCIlo;
   const betCI = erCI > 0;
 
-  // ACTUAL reward — the true reward at the value we committed to, earned only if we
-  // actually placed the bet; a refused bet earns nothing
-  const actPost = betPost ? rew(modePost, delta) : 0;
-  const actCI   = betCI  ? rew(modeCI,   delta) : 0;
+  // ACTUAL reward — the true reward at the value we committed to, regardless of
+  // whether the rule chose to bet
+  const actPost = rew(modePost, delta);
+  const actCI   = rew(modeCI,   delta);
 
   const BK = 0.9 * RUP / Math.max(tPdf(0, 2 * an) / scn, boxH, 0.2);
 
