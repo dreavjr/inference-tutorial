@@ -34,15 +34,16 @@
     truth. Miss, and two penalties bite: a <em>polynomial</em> one, |Δ − x|<sup>p</sup>, and
     a <em>linear</em> one, c · |Δ − x|. The reward falls through <em>zero</em> at a
     break-even error <strong>ε</strong> — the largest miss you can still profit from — and
-    keeps dropping past it. Both p and c pull ε inward: a steeper polynomial, or a heavier
-    linear charge, narrows the margin you're allowed.</p>
+    keeps dropping past it. Raising <em>c</em> pulls ε inward; raising <em>p</em>, oddly,
+    pushes it outward — for misses under one unit a higher power bites less, so a little more
+    error is forgiven. (With c = 0, only the polynomial remains and ε sits at exactly 1.)</p>
 
     <table class="concept">
       <tr><th>knob</th><th>what it does</th><th>here</th></tr>
       <tr><td><strong>p</strong></td><td>the <em>polynomial degree</em> — how the penalty
           curves: a gentle bowl at p = 1, a flat top with steep walls as p climbs</td><td>a slider (1…10)</td></tr>
       <tr><td><strong>c</strong></td><td>the <em>linear penalty</em> — a flat charge per unit
-          of error; raising it tilts the whole reward down and pulls the break-even ε inward</td><td>a slider (1…10)</td></tr>
+          of error; raising it tilts the whole reward down and pulls the break-even ε inward</td><td>a slider (0…10)</td></tr>
       <tr><td><strong>Δ</strong></td><td>where the reward is centred — the truth itself;
           we can draw it here only because we simulate</td><td>the green line</td></tr>
     </table>
@@ -62,19 +63,21 @@
     <p>and <strong>place the bet only when that expectation is positive</strong>. The shaded
     gold lens is the overlap the integral measures.</p>
 
-    <p>On the <strong>right</strong>, the naïve reading of a classical result: take the
-    <strong style="color:#3D6FB0">(1 − α) confidence interval</strong> and treat it as a
-    <em>uniform block</em> — “every value inside equally plausible, everything outside
-    impossible” — the same flat box step 1 drew. You can't take an expectation against a
-    non-distribution, so the rule turns <strong>worst-case</strong>. The reward hits zero at
-    a break-even error <strong>ε</strong> (solve 1 − ε<sup>p</sup> − c·ε = 0). Compare it to
-    your <strong>margin of error E</strong>, the interval's half-width:
-    <strong>bet iff E ≤ ε</strong>, so that even the interval's worst boundary still pays.
-    The number reported is that worst-case reward, 1 − E<sup>p</sup> − c·E.</p>
+    <p>On the <strong>right</strong>, the classical reading. A
+    <strong style="color:#3D6FB0">(1 − α) confidence interval</strong> is not a distribution,
+    so there's nothing to average against — we draw it honestly as a flat error bar: the
+    <strong>MLE</strong> Δ̂ at its centre, a <strong>margin of error E</strong> (the
+    half-width) reaching either way. With no distribution to take an expectation over, the
+    rule turns <strong>worst-case</strong>. The reward hits zero at a break-even error
+    <strong>ε</strong> (solve 1 − ε<sup>p</sup> − c·ε = 0); compare it to E —
+    <strong>bet iff E ≤ ε</strong>, so that even the interval's worst boundary still pays. The
+    dotted links read the reward you'd score at the MLE (the most, always 1) and at each
+    extreme (the least, 1 − E<sup>p</sup> − c·E).</p>
 
     <p>Then each panel shows what the decision <em>really</em> earns. The
-    <strong style="color:#A77B2E">estimated</strong> pill is the rule's verdict — its number,
-    turning <strong style="color:#2E7D5B">green</strong> when the rule says place the bet and
+    <strong style="color:#A77B2E">estimated</strong> pill is the rule's own forecast — the
+    posterior's expected reward, or the CI's <em>min … max</em> range — turning
+    <strong style="color:#2E7D5B">green</strong> when the rule says place the bet and
     <strong style="color:#9AA0A6">grey</strong> when it says fold. The
     <strong style="color:#2E7D5B">actual</strong> pill is the payoff once the hidden truth Δ
     is revealed: the true reward (the green curve, centred on Δ) read at the point you
@@ -121,23 +124,20 @@
   <section class="prose">
     <h2>Try this</h2>
     <ol>
-      <li><strong>Defaults.</strong> Out of the box the two rules already <em>disagree</em>.
-      The posterior expects a positive return and bets — and wins (the actual pill turns
-      green). The confidence interval, though, is wider than the break-even ε, so its
-      worst-case boundary is a loss and the classical rule <em>refuses</em>, banking 0. The
-      Bayesian's nerve against the worst-case rule's timidity, on the very first screen.</li>
-      <li><strong>Crank n to 100.</strong> The interval shrinks inside ε; now both rules bet
-      and both win, their payoffs converging near the peak reward of 1. With enough data the
-      disagreement washes out — just as the prior did in step 4.</li>
-      <li><strong>Drop n to 3 or 4.</strong> Now neither dares: the interval balloons far
-      past ε so the classical rule folds, and the posterior smears so wide that even its
-      <em>expected</em> reward goes negative — the Bayesian folds too. When the data truly
-      can't support the bet, both rules say so.</li>
-      <li><strong>Move p and c.</strong> Watch the break-even ε. Pushing <strong>p</strong>
-      toward 10 <em>flattens</em> the reward near the truth, so ε widens — more error is
-      tolerated before the polynomial bites, and the classical rule grows bolder. Raising
-      <strong>c</strong> does the opposite: the linear charge bites at every distance, ε
-      pulls sharply in, and both rules turn cautious.</li>
+      <li><strong>Defaults.</strong> With c = 0 the only penalty is the polynomial, so the
+      break-even ε sits at exactly 1 — and the confidence interval fits inside it. Both rules
+      bet, and both win: a gentle starting point where the two paradigms agree.</li>
+      <li><strong>Drop n to 3 or 4.</strong> The confidence interval balloons past ε = 1, so
+      its worst-case boundary turns negative and the classical rule <em>refuses</em>, banking
+      0. The posterior stays compact enough to still expect a positive return — it bets, and
+      here wins. The Bayesian's edge is sharpest when data are scarce.</li>
+      <li><strong>Crank n to 100.</strong> Both beliefs sharpen, both bet, and their actual
+      payoffs converge near the peak reward of 1 — with enough data the rules agree again.</li>
+      <li><strong>Raise c, the linear penalty.</strong> Now every miss is charged, so the
+      break-even ε pulls inward below 1. First the wide-interval classical rule folds; push c
+      further and even the posterior's expectation drops below zero, so the Bayesian folds
+      too. High enough stakes make both refuse. (With c &gt; 0, try <strong>p</strong> as
+      well — a higher power now <em>widens</em> ε, nudging both rules back toward betting.)</li>
       <li><strong>Tighten the prior</strong> (κ₀ ↑) and shift <strong>m₀</strong> off the
       truth. The posterior's bet — its peak — pulls away from the interval's midpoint, and
       you can watch a confident-but-wrong prior keep its <em>estimated</em> pill green and
@@ -288,24 +288,27 @@ function marginalSvg(prior, lik, post, delta) {
    the truth) rides at the top, 0 at the mid-line, −1 at the base, with lower
    rewards clamped to the floor.
 
-     • the ESTIMATED reward (gold) — a reward centred on your own decision Δ̂
-       (the posterior's mode, or the interval's midpoint). The shaded lens is the
-       overlap of belief and reward the expected-reward integral measures.
-     • the TRUE reward (green) — a reward centred on the hidden truth Δ. The dot
-       sits ON this curve at your decision Δ̂ — the reward you really collect — and
-       a dashed line joins it to the middle of your belief. */
+     • the ESTIMATED reward (gold, solid) — centred on your decision Δ̂. On the
+       posterior panel the shaded lens is the overlap the expected-reward integral
+       measures; on the CI panel, dotted links drop from the interval's midpoint
+       (the MLE) and its two extremes to this curve — the reward you'd score there.
+     • the TRUE reward (green, dashed) — centred on the hidden truth Δ. The dot
+       sits ON it at your decision Δ̂ — the reward you really collect — joined by a
+       dashed line to the middle of your belief (the posterior peak, or the CI bar). */
 
 function rewardSvg({ dens, isBox, lo, hi, mode, delta, p, c, BK, estR, actR, bet, accent }) {
   const tag = isBox ? "b" : "a";
   const rewE = (x) => { const e = Math.abs(x - mode);  return 1 - Math.pow(e, p) - c * e; }; // centred on the decision
   const rewA = (x) => { const e = Math.abs(x - delta); return 1 - Math.pow(e, p) - c * e; }; // centred on the truth
   const yR = (r) => r >= 0 ? RMID - r * RUP : RMID - r * RDN;   // fixed scale: reward +1 → top, −1 → base
+  const yRc = (r) => Math.max(TOP + 3, Math.min(BASE, yR(r))); // clamped to the plot area
   const yB = (d) => RMID - Math.min(d * BK, RUP * 0.96);
   const beliefH = (x) => RMID - yB(dens(x));          // belief height above the zero-line (px)
 
-  // the panel is centred on the truth Δ; one shared horizontal mapping for all curves
-  const cx = delta, xp = (x) => X0 + (x - cx) * SC;
-  const loX = cx - HALF, hiX = cx + HALF;             // visible window in data units
+  // floats 3 & 4 reuse the exact horizontal mapping of floats 1 & 2 — x ∈ [−HALF, HALF]
+  // centred on 0, via Xp — so all four panels line up column-for-column
+  const xp = Xp;
+  const loX = -HALF, hiX = HALF;                      // visible window in data units
   const clampPX = (px) => Math.min(Math.max(px, ML), ML + S);
   const out = [];
 
@@ -316,43 +319,51 @@ function rewardSvg({ dens, isBox, lo, hi, mode, delta, p, c, BK, estR, actR, bet
 
   const drawLo = isBox ? Math.max(lo, loX) : loX, drawHi = isBox ? Math.min(hi, hiX) : hiX;
 
-  // the belief, rising from the zero-line: a faint fill behind a crisp outline
-  let belief = "";
+  // the belief -------------------------------------------------------------
+  let belief = "", lens = "";
   if (isBox) {
-    const hY = yB(dens((lo + hi) / 2));
-    const xlo = clampPX(xp(lo)).toFixed(1), xhi = clampPX(xp(hi)).toFixed(1);
-    const rect = `${xlo},${RMID.toFixed(1)} ${xlo},${hY.toFixed(1)} ${xhi},${hY.toFixed(1)} ${xhi},${RMID.toFixed(1)}`;
-    belief += `<polygon points='${rect}' fill='${accent}' opacity='0.07'/>`;
-    belief += `<polyline points='${rect}' fill='none' stroke='${accent}' stroke-width='2'/>`;
+    // a confidence interval is NOT a density — draw it as a flat error bar at
+    // reward 0.5, with end caps and a midpoint marker at the MLE
+    const barY = yR(0.5);
+    const xlo = clampPX(xp(lo)), xhi = clampPX(xp(hi)), xm = clampPX(xp(mode));
+    belief += `<line x1='${xlo.toFixed(1)}' x2='${xhi.toFixed(1)}' y1='${barY.toFixed(1)}' y2='${barY.toFixed(1)}' stroke='${accent}' stroke-width='3'/>`;
+    for (const xx of [xlo, xhi])
+      belief += `<line x1='${xx.toFixed(1)}' x2='${xx.toFixed(1)}' y1='${(barY - 5).toFixed(1)}' y2='${(barY + 5).toFixed(1)}' stroke='${accent}' stroke-width='2'/>`;
+    belief += `<circle cx='${xm.toFixed(1)}' cy='${barY.toFixed(1)}' r='3.6' fill='${accent}'/>`;
   } else {
     const top = linspace(drawLo, drawHi, 321).map(x => `${xp(x).toFixed(1)},${yB(dens(x)).toFixed(1)}`).join(" ");
     belief += `<polygon points='${xp(drawLo).toFixed(1)},${RMID.toFixed(1)} ${top} ${xp(drawHi).toFixed(1)},${RMID.toFixed(1)}' fill='${accent}' opacity='0.07'/>`;
     belief += `<polyline points='${top}' fill='none' stroke='${accent}' stroke-width='2'/>`;
-  }
-
-  // the estimated reward, made visible: shade the lens under BOTH belief and the
-  // gold curve (the overlap the expected-reward integral measures)
-  const oLo = Math.max(drawLo, mode - 1), oHi = Math.min(drawHi, mode + 1);
-  let lens = "";
-  if (oHi > oLo) {
-    const xs = linspace(oLo, oHi, Math.max(8, Math.round((oHi - oLo) * 60)));
-    const top = xs.map(x => {
-      const h = Math.max(0, Math.min(beliefH(x), RMID - yR(rewE(x))));
-      return `${xp(x).toFixed(1)},${(RMID - h).toFixed(1)}`;
-    }).join(" ");
-    lens = `<polygon points='${xp(oLo).toFixed(1)},${RMID.toFixed(1)} ${top} ${xp(oHi).toFixed(1)},${RMID.toFixed(1)}' fill='${REWARD_C}' opacity='0.20'/>`;
+    // expected-reward lens: overlap of belief and the gold (estimated) reward
+    const oLo = Math.max(drawLo, mode - 1), oHi = Math.min(drawHi, mode + 1);
+    if (oHi > oLo) {
+      const xs = linspace(oLo, oHi, Math.max(8, Math.round((oHi - oLo) * 60)));
+      const lt = xs.map(x => { const h = Math.max(0, Math.min(beliefH(x), RMID - yR(rewE(x)))); return `${xp(x).toFixed(1)},${(RMID - h).toFixed(1)}`; }).join(" ");
+      lens = `<polygon points='${xp(oLo).toFixed(1)},${RMID.toFixed(1)} ${lt} ${xp(oHi).toFixed(1)},${RMID.toFixed(1)}' fill='${REWARD_C}' opacity='0.20'/>`;
+    }
   }
   out.push(`<g mask='url(#fadeRm${tag})'>${belief}${lens}</g>`);
 
   // the zero-line of the reward axis
   out.push(`<line x1='${ML}' x2='${ML + S}' y1='${RMID.toFixed(1)}' y2='${RMID.toFixed(1)}' stroke='${PAL.rule}' stroke-width='1'/>`);
 
-  // the two reward landscapes, on the same horizontal scale as the belief
-  const curve = (f, col) =>
-    `<polyline points='${linspace(loX, hiX, 421).map(x => `${xp(x).toFixed(1)},${Math.max(TOP + 3, Math.min(BASE, yR(f(x)))).toFixed(1)}`).join(" ")}' ` +
-    `fill='none' stroke='${col}' stroke-width='1.8'/>`;
-  out.push(curve(rewE, REWARD_C));   // estimated — centred on the decision
-  out.push(curve(rewA, PAL.green));  // true — centred on the truth
+  // the two reward landscapes — estimated (gold, solid), true (green, dashed)
+  const curve = (f, col, dash) =>
+    `<polyline points='${linspace(loX, hiX, 421).map(x => `${xp(x).toFixed(1)},${yRc(f(x)).toFixed(1)}`).join(" ")}' ` +
+    `fill='none' stroke='${col}' stroke-width='1.8'${dash ? ` stroke-dasharray='${dash}'` : ""}/>`;
+  out.push(curve(rewE, REWARD_C));         // estimated — centred on the decision
+  out.push(curve(rewA, PAL.green, "6 4")); // true — centred on the truth (dashed)
+
+  // float 4: dotted links from the CI bar (reward 0.5) to the estimated-reward
+  // curve at the MLE and at each interval extreme — the reward you'd score there
+  if (isBox) {
+    const barY = yR(0.5);
+    for (const xx of [lo, mode, hi]) {
+      const px = clampPX(xp(xx)), gy = yRc(rewE(xx));
+      out.push(`<line x1='${px.toFixed(1)}' x2='${px.toFixed(1)}' y1='${barY.toFixed(1)}' y2='${gy.toFixed(1)}' stroke='${REWARD_C}' stroke-width='1.2' stroke-dasharray='1 3' stroke-linecap='round'/>`);
+      out.push(`<circle cx='${px.toFixed(1)}' cy='${gy.toFixed(1)}' r='3' fill='${REWARD_C}'/>`);
+    }
+  }
 
   // reward magnitude labels at the fixed axis extremes: peak +1, zero, floor −1
   out.push(`<text x='${ML + S - 4}' y='${(TOP + 13).toFixed(1)}' text-anchor='end' font-size='10' fill='${PAL.muted}'>+1</text>`);
@@ -363,8 +374,8 @@ function rewardSvg({ dens, isBox, lo, hi, mode, delta, p, c, BK, estR, actR, bet
   // curve at Δ̂, joined by a dashed line to the middle of the belief
   const dvalX = Math.max(loX, Math.min(hiX, mode));
   const mx = xp(dvalX);
-  const dotY = Math.max(TOP + 3, Math.min(BASE, yR(rewA(dvalX))));
-  const beliefTopY = isBox ? yB(dens((lo + hi) / 2)) : yB(dens(dvalX));
+  const dotY = yRc(rewA(dvalX));
+  const beliefTopY = isBox ? yR(0.5) : yB(dens(dvalX));
   out.push(`<line x1='${mx.toFixed(1)}' x2='${mx.toFixed(1)}' y1='${beliefTopY.toFixed(1)}' y2='${dotY.toFixed(1)}' stroke='${PAL.ink}' stroke-width='1.1' stroke-dasharray='4 3'/>`);
   out.push(`<circle cx='${mx.toFixed(1)}' cy='${dotY.toFixed(1)}' r='4.2' fill='${PAL.ink}'/>`);
 
@@ -378,13 +389,16 @@ function rewardSvg({ dens, isBox, lo, hi, mode, delta, p, c, BK, estR, actR, bet
   // pills: estimated — the rule's verdict (green when it says bet, grey when fold);
   // actual — what we really earn (green win, red loss, grey no-play / refused)
   const GREY = "#9AA0A6";
-  const pill = (y, label, val, bg) => {
-    const txt = `${label} ${val.toFixed(2)}`, w = txt.length * 6.6 + 22;
+  const pill = (y, label, disp, bg) => {
+    const txt = `${label} ${disp}`, w = txt.length * 6.6 + 22;
     return `<rect x='${ML + 8}' y='${y}' width='${w.toFixed(0)}' height='22' rx='11' fill='${bg}'/>` +
            `<text x='${(ML + 8 + w / 2).toFixed(1)}' y='${y + 15}' text-anchor='middle' font-size='12' font-weight='700' fill='#fff'>${txt}</text>`;
   };
-  out.push(pill(TOP + 6, "estimated", estR, bet ? GRN_F : GREY));
-  out.push(pill(TOP + 32, "actual", actR, actR > 0 ? GRN_F : actR < 0 ? RED_F : GREY));
+  // estimated reward: a single expected value (posterior), or the min…max across the
+  // interval (CI) — max at the MLE (always 1), min equally at the two extremes
+  const estDisp = isBox ? `${rewE(lo).toFixed(2)}…${rewE(mode).toFixed(2)}` : estR.toFixed(2);
+  out.push(pill(TOP + 6, "estimated", estDisp, bet ? GRN_F : GREY));
+  out.push(pill(TOP + 32, "actual", actR.toFixed(2), actR > 0 ? GRN_F : actR < 0 ? RED_F : GREY));
 
   return `<svg viewBox='0 0 ${FW} ${FH}' xmlns='http://www.w3.org/2000/svg'>${out.join("")}</svg>`;
 }
@@ -407,7 +421,7 @@ const s0S    = makeSlider(grpPrior, { label: "prior centre for σ² · σ²₀",
 
 const alphaS = makeSlider(grpDecision, { label: "false-positive rate · α (t-test)", min: 0.005, max: 0.2, step: 0.005, value: 0.05, fmt: v => v.toFixed(3), onInput: render });
 const pS     = makeSlider(grpDecision, { label: "reward model degree · p", min: 1, max: 10, step: 0.1, value: 2, fmt: v => v.toFixed(1), onInput: render });
-const cS     = makeSlider(grpDecision, { label: "reward model steepness · c", min: 1, max: 10, step: 0.1, value: 1, fmt: v => v.toFixed(1), onInput: render });
+const cS     = makeSlider(grpDecision, { label: "reward linear penalty · c", min: 0, max: 10, step: 0.1, value: 0, fmt: v => v.toFixed(1), onInput: render });
 
 // ∫ f(x) dx over a wide range by the trapezoid rule. The reward is unbounded below,
 // but the posterior / box decays fast enough that the product converges, and the wide
