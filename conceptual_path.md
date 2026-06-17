@@ -3,6 +3,8 @@ The sequence of demonstrations is done, the code is refactored. Now we must revi
 
 # Step 1: Classical statistical test
 
+## Pedagogical plan
+
 Classical inference doesn't accept parameters as random variables because that would clash with the frequentist notion of probability. To bypass that blocking point, we define the "experiment" as the source of variation. Each experiment is associated to a random sample, thus the importance of sampling distributions and test statistcs. Instead of conceptualizing the uncertainty of a parameter, we will instead conceptualize significance: how often our experiment leads to the right decision (test) or to the right range of possibilities (confidence interval).
 
 We cannot control directly for power, but, under the assumptions of the statistical model, we can compute how much power our current sample size gives us, or vice versa.
@@ -44,6 +46,8 @@ The moral:
 
 # Step 2: What we want vs. can control
 
+## Pedagogical plan
+
 The ideas of power and significance appear throughout the literature with different names: sensitivity and specificity, true positive rate and true negative rate, etc. They are formal properties of the test but do not correspond to what we will observe in the field, because they disconsider base rates. PPV and NPV correspond much more to what we will see in the field ("the test tagged this as positive/negative: how often can I expect it to be right?") while power and significance answer "the sample is positive/negative: how often can I expect the test to tag it right" (which is not as useful, because the true labels are, of course, unknown: if I had them I wouldn't need a test!).
 
 Take-homes:
@@ -76,6 +80,8 @@ The moral:
 
 # Step 3: A difference in style?
 
+## Pedagogical plan
+
 Bayesian probabilities are not tied to frequencies: they represent what you must conclude when you are reasoning under uncertainty. A probability distribution represent how much you can locate the value of a random variable given all that you know. This small change changes everything, because now parameters don't have to be fixed: their distribution represent what you know about them, not frequencies that depend on repetition.
 
 Concepts:
@@ -91,6 +97,8 @@ Take-homes:
 - This is not the full Bayesian treatment: (1) I'm using maximum a posteriori with an uninformative prior = same as maximum likelihood. Credible intervals force a binarization of the decision that goes against the Bayesian ethos.
 
 ## Current material
+
+## Pedagogical plan
 
 Page: `03-bayesian-t-test.html` — "The Bayesian t-test: from is there an effect? to how big is it?"
 
@@ -116,6 +124,8 @@ The moral:
 - One sleight of hand remains — "with flat priors" was itself a choice, made explicit in the next step.
 
 # Step 4: Bayesian inference's pipeline: prior -> lihelihood -> posterior -> da capo
+
+## Pedagogical plan
 
 Full Bayeasian treatment: representation of uncertainty, marginalization of nuisance variables (the variance, in this case). Conclusion is not a single value or hard interval: the posterior _is_ the conclusion.
 
@@ -152,6 +162,10 @@ The moral:
 
 # Step 5: Everyone is entitled to their opinion (but they'll lose money if they disagree with me)
 
+## Pedagogical plan
+
+The full Bayesian treatment is the logical way to think under uncertainty. In other words, given what you know, the probabilities it outputs are the  unique fully-coherent conclusion. Even with the cost model known by both, a decision based on classical inference has a free parameter (alpha) that must be chosen externally to the decision apparatus, while the Bayesian decision apparatus can marginalize over all nuisances to make a decision that maximizes expected reward. The consequence is that under a system of bets, the Bayesian decision procedure will inevitably make better bets (in expectation), provided that you don't start from too wrong _and_ too strong assumptions.
+
 ## Current material
 
 Page: `05-the-decision.html` — "The Bayesian decision: from a posterior to an act"
@@ -182,5 +196,11 @@ The moral:
 - Practical materials and tools
 - Academic material
 
+# Step 6: Another decision, on binary data
+
+Beta-Binomial model for a binary classifier
 
 
+## Current material
+
+Not created yet

@@ -1,0 +1,351 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Do it yourself · Bayes on binary data</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/style.css">
+<style>
+/* ---- notebook mock-up (page-local; promoted to shared CSS once the design
+   settles and the in-browser engine is wired) -------------------------------- */
+.nb { margin: 40px 0; display: grid; gap: 20px; }
+
+.callout {
+  background: #F4F1EA;
+  border: 1px solid var(--rule);
+  border-left: 3px solid var(--orange);
+  border-radius: 10px;
+  padding: 16px 22px;
+  font-size: 15.5px;
+  color: var(--soft);
+}
+.callout strong { color: var(--ink); }
+
+.nb-cell {
+  border: 1px solid var(--rule);
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--card);
+  box-shadow: 0 1px 2px rgba(60, 50, 30, .04);
+}
+.nb-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 7px 14px;
+  border-bottom: 1px solid var(--rule);
+  background: #F4F1EA;
+  font: 600 10.5px/1 var(--sans);
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.nb-bar .gutter { font-variant-numeric: tabular-nums; color: #B6B0A2; }
+.nb-bar .tag { padding: 2px 9px; border-radius: 999px; }
+.nb-bar .tag.you  { background: #E7EEF6; color: #355E92; }
+.nb-bar .tag.given{ background: #ECE7DC; color: #7C7563; }
+.nb-run {
+  margin-left: auto;
+  font: 600 11px/1 var(--sans);
+  border: 1px solid var(--rule);
+  background: var(--card);
+  color: var(--muted);
+  border-radius: 999px;
+  padding: 5px 13px;
+  cursor: not-allowed;
+}
+textarea.nb-code {
+  display: block;
+  width: 100%;
+  border: 0;
+  padding: 14px 16px;
+  font: 13px/1.62 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  color: #33312C;
+  background: #FCFBF8;
+  resize: vertical;
+  tab-size: 4;
+  white-space: pre;
+  overflow-wrap: normal;
+  overflow-x: auto;
+}
+.nb-cell.given textarea.nb-code { background: #F7F5F0; color: #545049; }
+.nb-out {
+  border-top: 1px dashed var(--rule);
+  padding: 13px 16px;
+  min-height: 46px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font: italic 400 13px/1.5 var(--sans);
+  color: var(--muted);
+  background:
+    repeating-linear-gradient(45deg, #FCFBF8 0 9px, #F6F4EF 9px 18px);
+}
+.nb-out .dot { font-style: normal; color: #B6B0A2; }
+.nb-q {
+  border-left: 3px solid var(--blue);
+  padding: 6px 0 6px 22px;
+  margin: 1.4em 0 0;
+}
+.nb-q ul { margin: 0; padding-left: 20px; }
+.nb-q li { margin: 0 0 .7em; }
+.nb-q li:last-child { margin-bottom: 0; }
+.todo { color: #B23A2E; font-style: normal; font-weight: 600; }
+</style>
+</head>
+<body>
+<main>
+  <header class="page">
+    <p class="kicker"><a href="index.html">From p-values to posteriors</a><span class="sep">·</span>Do it yourself</p>
+    <h1>Do it yourself: <em>Bayes on binary data</em></h1>
+  </header>
+
+  <section class="prose">
+    <div class="callout">
+      <p style="margin:0 0 .6em"><strong>This page is deliberately unfinished.</strong>
+      The first five steps handed you sliders on a machine someone else built. This one
+      hands you the <em>parts</em>. You write the half-dozen lines at its heart; the
+      plots are already wired to whatever you return.</p>
+      <p style="margin:0"><span class="todo">Note —</span> the in-browser Python engine
+      is not connected yet, so the <b>Run</b> buttons are inert and the cells below are a
+      sketch of the finished exercise. We are settling the <em>design</em> first.</p>
+    </div>
+
+    <p>Every model so far lived on a continuous effect size Δ. But <a href="02-pvalues-and-power.html">Step
+    2</a> never did — it was about a <strong>binary</strong> verdict (positive / negative,
+    correct / wrong) and a <strong>base rate</strong>, and it was the one step that never
+    got its Bayesian answer. Here is that answer.</p>
+
+    <p>The object is a <strong>classifier</strong> with a single unknown: its true success
+    rate <strong>p</strong>. You watch it decide <em>n</em> labelled cases, it gets
+    <em>k</em> right, and you want the honest distribution over <em>p</em> — then a
+    decision. The whole pipeline you met in steps 3–5 returns, on new data:</p>
+
+    <p class="formula" style="font-style:normal"><em>posterior</em>&ensp;∝&ensp;<em>prior</em>&ensp;×&ensp;<em>likelihood</em>&emsp;→&emsp;<em>expected utility</em>&ensp;→&ensp;<em>act</em></p>
+
+    <p>Two things make binary data the right place to <em>code</em> this by hand, rather
+    than drag a slider over it:</p>
+
+    <table class="concept">
+      <tr><th>what changes</th><th>why it helps</th></tr>
+      <tr><td><em>p</em> is a probability, so its <strong>entire</strong> universe is the interval [0, 1]</td>
+          <td>the prior, likelihood and posterior are just arrays over a fine grid — no
+          tails to truncate, no axis bounds to guess (the thing that made Step 4's plane fiddly)</td></tr>
+      <tr><td>the Beta–Binomial pair is <strong>conjugate</strong></td>
+          <td>the exact posterior is known on paper — so you can <em>check</em> your
+          numerical answer against ground truth before trusting it anywhere else</td></tr>
+    </table>
+
+    <p>So your grid is a <em>numerical</em> answer to a problem that also has an
+    <em>analytic</em> one. That is not busywork — it is the only honest way to learn a
+    method: practise it where the answer key exists, then carry it where it doesn't.</p>
+  </section>
+
+  <!-- ============================ THE NOTEBOOK ============================ -->
+  <section class="nb">
+
+    <!-- ---- 0 · setup (provided) ---- -->
+    <h2 style="margin:0">0 · Setup</h2>
+    <p class="prose" style="margin:0">The grid, the data, and the prior. The prior is
+    exactly Step 2's base rate, written as a <strong>Beta(α, β)</strong> — a handful of
+    imaginary cases you saw before the real ones (echoing Step 4's κ₀: a prior priced in
+    pseudo-observations, here the pseudo-count α + β).</p>
+    <div class="nb-cell given">
+      <div class="nb-bar"><span class="gutter">In [1]</span><span class="tag given">provided</span><button class="nb-run" disabled>▶ Run</button></div>
+      <textarea class="nb-code" rows="19" spellcheck="false" readonly>import numpy as np
+import matplotlib.pyplot as plt
+from scipy.stats import beta as beta_dist        # the answer key, used once below
+
+# --- the grid: the whole trick lives here -------------------------------
+# p is a probability, so its entire universe is [0, 1]. Slice it finely.
+N  = 1001
+p  = np.linspace(0.0, 1.0, N)        # the rate axis: every candidate p
+dp = p[1] - p[0]
+
+# --- the data: one classifier, scored on a labelled set -----------------
+n = 40        # cases seen
+k = 27        # times it was right     (try other (n, k) once it runs)
+
+# --- the prior = Step 2's base rate, as a Beta --------------------------
+# mean alpha/(alpha+beta); "worth" alpha+beta imaginary cases.
+# Lax = small, opinionated = large.
+alpha, beta = 6.0, 4.0</textarea>
+    </div>
+
+    <!-- ---- 1 · prior ---- -->
+    <h2 style="margin:.6em 0 0">1 · The prior, on the grid</h2>
+    <p class="prose" style="margin:0">A Beta density is just <em>p<sup>α−1</sup>(1−p)<sup>β−1</sup></em>
+    up to a constant. You don't need the constant — the normaliser you write in cell 3
+    divides it out anyway.</p>
+    <div class="nb-cell">
+      <div class="nb-bar"><span class="gutter">In [2]</span><span class="tag you">your code</span><button class="nb-run" disabled>▶ Run</button></div>
+      <textarea class="nb-code" rows="10" spellcheck="false">def prior_kernel(p, alpha, beta):
+    """Un-normalised Beta density on the grid: p**(alpha-1) * (1-p)**(beta-1).
+
+    in : p (N,) in [0, 1];  alpha > 0, beta > 0
+    out: (N,) non-negative, NOT yet normalised
+    """
+    # TODO — one line.
+    raise NotImplementedError</textarea>
+      <div class="nb-out"><span class="dot">▢</span> output appears here — the prior curve over [0, 1] — once you fill the cell and the engine is wired.</div>
+    </div>
+
+    <!-- ---- 2 · likelihood ---- -->
+    <h2 style="margin:.6em 0 0">2 · The likelihood, read as a function of <em>p</em></h2>
+    <p class="prose" style="margin:0">Same Binomial as Step 1's machine, but now <em>p</em>
+    is the variable and the data <em>(n, k)</em> are fixed. Drop the <em>n-choose-k</em>
+    constant: it is identical for every <em>p</em> and washes out in normalisation.</p>
+    <div class="nb-cell">
+      <div class="nb-bar"><span class="gutter">In [3]</span><span class="tag you">your code</span><button class="nb-run" disabled>▶ Run</button></div>
+      <textarea class="nb-code" rows="9" spellcheck="false">def likelihood(p, n, k):
+    """The data's vote for each p: p**k * (1-p)**(n-k).
+
+    in : p (N,);  n trials, k successes
+    out: (N,) non-negative (un-normalised)
+    """
+    # TODO
+    raise NotImplementedError</textarea>
+      <div class="nb-out"><span class="dot">▢</span> output: the likelihood curve, peaked at the observed rate k / n.</div>
+    </div>
+
+    <!-- ---- 3 · normalise → posterior ---- -->
+    <h2 style="margin:.6em 0 0">3 · Normalise — <span style="color:var(--muted)">the one hard line</span></h2>
+    <p class="prose" style="margin:0">Step 4 called normalisation <em>the</em> main
+    challenge of Bayesian inference. On a 1-D grid it shrinks to a single Riemann sum:
+    divide the curve by its own area. Write it once; use it for prior, likelihood and
+    posterior alike.</p>
+    <div class="nb-cell">
+      <div class="nb-bar"><span class="gutter">In [4]</span><span class="tag you">your code</span><button class="nb-run" disabled>▶ Run</button></div>
+      <textarea class="nb-code" rows="16" spellcheck="false">def normalize(density, dp):
+    """Scale a non-negative curve so it integrates to 1 over the grid.
+
+    in : density (N,) >= 0;  dp = grid spacing
+    out: (N,) with  out.sum() * dp == 1
+    """
+    # TODO — divide by the area.
+    raise NotImplementedError
+
+
+# Bayes as multiplication, then one normalisation:
+prior_d    = normalize(prior_kernel(p, alpha, beta), dp)
+like_d     = normalize(likelihood(p, n, k), dp)
+posterior  = normalize(prior_kernel(p, alpha, beta) * likelihood(p, n, k), dp)
+
+# plot_three(p, prior_d, like_d, posterior)   # prior · likelihood · posterior</textarea>
+      <div class="nb-out"><span class="dot">▢</span> output: the prior → likelihood → posterior triptych — the Step-4 picture, now on [0, 1].</div>
+    </div>
+
+    <!-- ---- 4 · conjugate check (provided) ---- -->
+    <h2 style="margin:.6em 0 0">4 · Check it against the answer key</h2>
+    <p class="prose" style="margin:0">Because Beta is conjugate to the Binomial, the exact
+    posterior is, with no grid at all, <strong>Beta(α+k, β+n−k)</strong>. Overlay it on
+    your numerical curve: they should lie on top of each other. If they don't, the bug is
+    in <code>normalize</code>.</p>
+    <div class="nb-cell given">
+      <div class="nb-bar"><span class="gutter">In [5]</span><span class="tag given">provided</span><button class="nb-run" disabled>▶ Run</button></div>
+      <textarea class="nb-code" rows="6" spellcheck="false" readonly>post_exact = beta_dist(alpha + k, beta + n - k).pdf(p)   # closed form — no sum
+
+# plot_overlay(p, posterior, post_exact)                 # numerical vs analytic
+# assert np.allclose(posterior, post_exact, atol=1e-3)</textarea>
+      <div class="nb-out"><span class="dot">▢</span> output: your posterior and the analytic Beta superimposed — trust earned.</div>
+    </div>
+
+    <!-- ---- 5 · belief → act ---- -->
+    <h2 style="margin:.6em 0 0">5 · From belief to act</h2>
+    <p class="prose" style="margin:0">Step 5's rule, on new data: pair the posterior with a
+    reward and act on <strong>expected utility</strong>. The decision is <em>bet</em> (act
+    on a case) or <em>fold</em> (do nothing, a guaranteed 0). Acting on a true positive
+    earns <code>GAIN</code>; acting on a false positive costs <code>COST</code>. The grid
+    sum below is the <em>general</em> recipe — it works for any reward; this one happens
+    to be simple enough to also have a closed form, which is a second thing to check
+    against.</p>
+    <div class="nb-cell">
+      <div class="nb-bar"><span class="gutter">In [6]</span><span class="tag you">your code</span><button class="nb-run" disabled>▶ Run</button></div>
+      <textarea class="nb-code" rows="20" spellcheck="false">GAIN = 1.0     # reward for acting on a true positive
+COST = 2.0     # penalty for acting on a false positive
+               # (folding is always 0; missing or skipping a negative cost 0 too)
+
+def expected_utility_act(p, posterior, dp):
+    """E[U(act)] = integral of [GAIN*p - COST*(1-p)] * posterior(p) dp.
+
+    The per-case payoff of acting is GAIN when the case is a true positive
+    (probability p) and -COST when it is a false positive (probability 1-p).
+    Averaging it against the posterior is one weighted sum over the grid.
+    """
+    # TODO — weight the per-case payoff by the posterior and sum.
+    raise NotImplementedError
+
+
+def decide(p, posterior, dp):
+    """Bet (act) iff E[U(act)] > 0, else fold. Return (value, 'bet' | 'fold')."""
+    # TODO
+    raise NotImplementedError</textarea>
+      <div class="nb-out"><span class="dot">▢</span> output: E[U(act)] as a number, a bet / fold pill, and a check against the closed form GAIN·E[p] − COST·(1−E[p]) with E[p] = (α+k)/(α+β+n).</div>
+    </div>
+
+    <!-- ---- 6 · the catch ---- -->
+    <h2 style="margin:.6em 0 0">6 · Why this was a toy</h2>
+    <div class="nb-cell given">
+      <div class="nb-bar"><span class="gutter">In [7]</span><span class="tag given">read me</span><button class="nb-run" disabled>▶ Run</button></div>
+      <textarea class="nb-code" rows="7" spellcheck="false" readonly># No code — a thought experiment.
+# Your grid spent N = 1001 cells on ONE rate. A model with d unknown rates
+# needs N**d cells: for d = 5 that is 1001**5 ≈ 1e15 — already impossible.
+# The line you wrote in cell 4 is a friendly toy here and a brick wall there.
+# That wall is the whole reason MCMC and variational inference exist.</textarea>
+    </div>
+  </section>
+
+  <section class="prose">
+    <h2>Questions to answer <span style="font-weight:400;color:var(--muted);font-size:18px">(once it runs)</span></h2>
+    <div class="nb-q">
+      <ul>
+        <li>Set <code>alpha, beta = 1, 1</code> — the flat prior. Is it as innocent here as
+        it looked in Step 3? What rate does it secretly bet on before any data, and what
+        does it claim about a rate of 0 or 1?</li>
+        <li>Push the prior hard toward a wrong rate (<code>alpha, beta = 40, 4</code>) and
+        watch the posterior pull away from <code>k / n</code> — then raise <em>n</em>.
+        Which one wins, and at what point? (You priced this in pseudo-observations:
+        α + β imaginary cases against <em>n</em> real ones.)</li>
+        <li>Make the success genuinely rare — a low-mean prior, say <code>alpha, beta = 2, 40</code>.
+        How much data does it take to move the posterior, and how does that compare with
+        the certainty the same <em>k / n</em> would suggest on its own?</li>
+        <li>Raise <code>COST</code> until <code>decide</code> folds. Does it fold sooner
+        when the posterior is wide (small <em>n</em>) than when it is sharp? Tie the
+        break-even back to the threshold <code>COST / (GAIN + COST)</code> and to Step 5.</li>
+      </ul>
+    </div>
+
+    <h2>The moral <span style="font-weight:400;color:var(--muted);font-size:18px">(write your own)</span></h2>
+    <div class="moral">
+      <ul>
+        <li><span class="todo">TODO —</span> the same four boxes (prior, likelihood,
+        posterior, decision) you dragged through five steps are, on binary data, ten lines
+        of array arithmetic. State that in your own words.</li>
+        <li><span class="todo">TODO —</span> conjugacy gave a free answer key — twice (the
+        posterior <em>and</em> the decision). Say what the grid is <em>for</em>, then, if
+        the closed form was there all along.</li>
+        <li><span class="todo">TODO —</span> the grid that solved this in one line is
+        hopeless in five dimensions — the one honest sentence about what the rest of
+        Bayesian computation is <em>for</em>.</li>
+      </ul>
+    </div>
+
+    <table class="concept">
+      <tr><th>you wrote</th><th>it is the same as…</th><th>seen before in</th></tr>
+      <tr><td><code>prior_kernel</code></td><td>belief before data, priced in pseudo-cases (α + β)</td><td>Step 4 · κ₀</td></tr>
+      <tr><td><code>normalize</code></td><td>making the area 1 — "the main challenge"</td><td>Step 4</td></tr>
+      <tr><td><code>expected_utility_act</code> / <code>decide</code></td><td>act to maximise E[U]</td><td>Step 5</td></tr>
+      <tr><td><span class="todo">TODO</span></td><td><span class="todo">TODO — fill in once you've run it</span></td><td>—</td></tr>
+    </table>
+  </section>
+
+  <nav class="pager">
+    <a href="05-the-decision.html"><span class="lbl">Previous</span><span class="title">←&ensp;The Bayesian decision</span></a>
+    <a class="next" href="index.html"><span class="lbl">Done</span><span class="title">Back to the start&ensp;→</span></a>
+  </nav>
+</main>
+</body>
+</html>
