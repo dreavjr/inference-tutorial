@@ -32,7 +32,7 @@
             <p>This page makes the prior explicit. Bayes' theorem is a multiplication —</p>
 
             <p class="formula" style="font-style:normal">
-                <em>posterior</em>&ensp;∝&ensp;<em>prior</em>&ensp;×&ensp;<em>likelihood</em>
+                <em>posterior</em>&ensp;~&ensp;<em>prior</em>&ensp;×&ensp;<em>likelihood</em>
             </p>
 
             <p>— and our unknowns come as a pair: the effect <strong>Δ</strong> and the noise
@@ -115,7 +115,7 @@
                     <div class="fig" id="figLik"></div>
                 </figure>
                 <figure>
-                    <figcaption class="figcap">3 · ∝ the posterior</figcaption>
+                    <figcaption class="figcap">3 · ~ the posterior</figcaption>
                     <div class="fig" id="figPost2d"></div>
                 </figure>
             </div>
@@ -246,8 +246,8 @@
         function fieldURI(vals, rgb) {
             const N = GRID_W * GRID_H;
 
-            // displayed density ∝ p(Δ,σ) = p(Δ,σ²_d)·(dσ²_d/dσ) = p·4σ. On a uniform (Δ,σ)
-            // grid the per-cell probability mass is ∝ this same quantity, so ordering pixels
+            // displayed density ~ p(Δ,σ) = p(Δ,σ²_d)·(dσ²_d/dσ) = p·4σ. On a uniform (Δ,σ)
+            // grid the per-cell probability mass is ~ this same quantity, so ordering pixels
             // by it and accumulating gives the enclosed-volume fraction directly.
             let mx = -Infinity;
             for (let i = 0; i < N; i++) if (vals[i] > mx) mx = vals[i];
