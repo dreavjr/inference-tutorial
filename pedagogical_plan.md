@@ -41,6 +41,37 @@ The moral:
 - It is not the probability that H₀ is true, and a rejection is not a measure of effect size or importance.
 - "Reject H₀" just stamps positive on the study; how much belief that deserves is the subject of the next step.
 
+## Inferences
+
+### Inference 1 — Pooled two-sample t-test
+
+- **Short description:** testing whether the two means of two Gaussian populations with the same unknown variance are equal (classical pooled two-sample t-test).
+- **Mathematical model:** frequentist, so *no prior or posterior*.
+  - *Likelihood:* each group i.i.d. Gaussian, `x_A ~ Normal(μ_A, σ²)`, `x_B ~ Normal(μ_B, σ²)`, common unknown σ². H₀: Δ = μ_B − μ_A = 0.
+  - *Sampling distribution / test statistic:* `t = (x̄_B − x̄_A) / (s_p·√(1/n + 1/m))` which, under H₀, follows a Student-t with `df = n + m − 2`. The p-value is the two-sided tail area; reject if p ≤ α.
+- **Critical code** (`assets/stats.js`, `tTest`):
+
+```js
+const sp2 = ((n - 1) * svar(xa) + (m - 1) * svar(xb)) / (n + m - 2);
+const dObs = mean(xb) - mean(xa);                  // observed difference of means
+const se = Math.sqrt(sp2 * (1 / n + 1 / m));       // its standard error
+const df = n + m - 2, t = dObs / se;
+return { t, df, p: 2 * (1 - tCdf(Math.abs(t), df)), dObs, se, sp: Math.sqrt(sp2) };
+```
+
+### Inference 2 — Power / Type-II error at the true Δ
+
+- **Short description:** computing the power (1 − β) of the above test at a hypothesized true effect Δ, via the normal approximation to the noncentral t.
+- **Mathematical model:** frequentist; no prior/posterior. We reject when `|D̂| > t_crit·se_true`, so power is the mass of the null distribution shifted to the true Δ that falls beyond ±t_crit (noncentrality `ncp = Δ/se_true`).
+- **Critical code** (`assets/stats.js`, `tTestPower`):
+
+```js
+const seTrue = sigma * Math.sqrt(2 / n);
+const tc = tCrit(alpha, df), ncp = delta / seTrue;
+const power = normCdf(ncp - tc) + normCdf(-ncp - tc);
+return { power, beta: 1 - power };
+```
+
 # Step 2: What we want vs. can control
 
 ## Pedagogical plan
@@ -74,6 +105,28 @@ The moral:
 - PPV and NPV are properties of your result; they condition on what you observed and depend inescapably on the base rate.
 - Same test, different population → a positive means something different; p-value and power are blind to this, and more data won't fix it.
 - Getting from (sensitivity, specificity, base rate) to (PPV, NPV) is exactly Bayes' theorem — where we go next.
+
+## Inferences
+
+### Inference — Predictive values from operating characteristics + base rate (diagnostic Bayes)
+
+- **Short description:** inferring PPV/NPV (how often a positive/negative *verdict* is correct) from sensitivity (power), specificity (1 − α), and the base rate — Bayes' theorem in its diagnostic-test form. This page has no continuous parameter and no sampling; the "inference" is the deterministic inversion on a 2×2 table.
+- **Mathematical model:** Bayes on counts, not a density.
+  - *Prior:* the base rate, `P(condition +) = prev`.
+  - *Likelihood:* sensitivity `P(predicted + | condition +)` and specificity `P(predicted − | condition −)`.
+  - *Posterior:* PPV `= TP/(TP+FP) = P(condition + | predicted +)` and NPV `= TN/(TN+FN)`.
+  - *Computation:* exact / analytic (closed-form Bayes); the page realizes it as integer counts over a finite population.
+- **Critical code** (`02-pvalues-and-power.html`):
+
+```js
+function confusion(prev, sens, spec, total) {
+  const [P, N] = split(total, prev);     // prior: base-rate split into condition ±
+  const [TP, FN] = split(P, sens);       // likelihood: sensitivity within positives
+  const [TN, FP] = split(N, spec);       // likelihood: specificity within negatives
+  return { P, N, TP, FN, FP, TN, PP: TP + FP, PN: FN + TN };
+}
+// posterior (predictive values): PPV = pct(c.TP, c.PP), NPV = pct(c.TN, c.PN)
+```
 
 # Step 3: A difference in style?
 
@@ -120,6 +173,26 @@ The moral:
 - The shape is the message: "significant" can hide a curve spanning trivial to enormous effects; "not significant" can hide a curve tight around zero. The stamp throws that away; the distribution keeps it.
 - One sleight of hand remains — "with flat priors" was itself a choice, made explicit in the next step.
 
+## Inferences
+
+### Inference — Bayesian posterior over the mean difference Δ, with flat priors
+
+- **Short description:** estimating the effect size Δ = μ_B − μ_A as a full posterior distribution under flat (non-informative) priors — which yields a shifted, scaled Student-t, i.e. step 1's t-distribution re-centred on the observed difference.
+- **Mathematical model:**
+  - *Likelihood:* Gaussian, as in step 1 (`dᵢ ~ Normal(Δ, σ²_d)`).
+  - *Prior:* flat (improper) on Δ and on log σ — "let the data speak."
+  - *Posterior over Δ* (σ² marginalized out): a located-scaled Student-t centred at `Δ̂ = x̄_B − x̄_A`, scale = the t-test's standard error `se`, `df = n + m − 2`.
+- **How the posterior was computed:** *analytic* — the flat-prior result coincides with the classical sampling object, so the page re-uses `tTest`'s `(dObs, se, df)`; no numerical integration. The (1−α) HDI is exactly the equal-tailed band `Δ̂ ± t·se`.
+- **Critical code** (`03-bayesian-t-test.html`, `render` + `posteriorSvg`):
+
+```js
+const { df, dObs, se } = tTest(xa, xb);
+...
+const dens = ds.map(d => tPdf((d - dObs) / se, df) / se);   // posterior density over Δ
+const tc = tCrit(alpha, df);
+const hdiLo = Math.max(dObs - tc * se, -HALF), hdiHi = Math.min(dObs + tc * se, HALF);
+```
+
 # Step 4: Bayesian inference's pipeline: prior -> lihelihood -> posterior -> da capo
 
 ## Pedagogical plan
@@ -157,6 +230,41 @@ The moral:
 - When n is small, weakly-informative beats non-informative; when n is large the argument dissolves on its own — so the cases where a lax prior "plays it safe" are precisely the cases where it doesn't.
 - The prior is a dial to disclose, not a sin to hide: state it, vary it, show the posterior barely moves — that is what a robust claim looks like.
 
+## Inferences
+
+### Inference — Full Bayesian joint posterior over (Δ, σ²_d) via a Normal-inverse-gamma conjugate prior
+
+- **Short description:** jointly estimating the effect Δ and the noise σ² from the per-pair differences, with a conjugate Normal-inverse-gamma prior, then reporting the marginal posterior over Δ (the variance integrated out as a nuisance).
+- **Mathematical model:**
+  - *Prior (Normal-inverse-gamma):* `Δ | σ²_d ~ Normal(m₀, σ²_d/κ₀)` and `σ²_d ~ Inv-Gamma(a₀, b₀)`. Here `σ²_d = 2σ²` (the variance of a difference of two groups). a₀ is held fixed and gentle; b₀ tracks the σ²₀ slider; m₀, κ₀ are sliders.
+  - *Likelihood:* the n per-pair differences `dᵢ ~ Normal(Δ, σ²_d)`.
+  - *Posterior:* Normal-inverse-gamma with updated `(mₙ, κₙ, aₙ, bₙ)`; the *marginal over Δ* is a located-scaled Student-t with `df = 2aₙ`, `loc = mₙ`, `scale = √(bₙ/(aₙ·κₙ))`.
+- **How the posterior was computed:** *conjugate prior–likelihood → closed-form (analytic) update* (`nigUpdate`). The 2-D (Δ, σ) surfaces are evaluated on a grid only for the equal-volume heatmap drawing (with a Jacobian for the σ² → σ reparametrization); the inference itself is the analytic conjugate update, and the Δ marginal is the analytic Student-t.
+- **Critical code** (`04-full-bayesian.html`, `render`):
+
+```js
+const { dbar, ssd } = drawSample(pool, { delta, sigma, n });
+const { kn, mn, an, bn } = nigUpdate(m0, k0, A0, B0, n, dbar, ssd);   // conjugate update
+...
+const pri = nigMarginalDelta(m0, k0, A0, B0);
+const pos = nigMarginalDelta(mn, kn, an, bn);                          // Student-t marginal over Δ
+```
+
+  with the closed-form update and marginal in `assets/stats.js`:
+
+```js
+function nigUpdate(m0, k0, a0, b0, n, dbar, ssd) {
+  const kn = k0 + n;
+  const mn = (k0 * m0 + n * dbar) / kn;
+  const an = a0 + n / 2;
+  const bn = b0 + ssd / 2 + k0 * n * (dbar - m0) ** 2 / (2 * kn);
+  return { kn, mn, an, bn };
+}
+function nigMarginalDelta(m, k, a, b) {
+  return { loc: m, scale: Math.sqrt(b / (a * k)), df: 2 * a };   // df = 2a
+}
+```
+
 # Step 5: Everyone is entitled to their opinion (but they'll lose money if they disagree with me)
 
 ## Pedagogical plan
@@ -192,6 +300,45 @@ The moral:
 - Accessible resources
 - Practical materials and tools
 - Academic material
+
+## Inferences
+
+### Inference — Bayesian decision by expected utility under the posterior (vs. the classical CI worst-case rule)
+
+- **Short description:** turning the step-4 posterior over Δ into an *action* (bet / fold) by maximizing expected utility; the inferential object is the expected reward `E[U] = ∫ reward(Δ − Δ̂)·P(Δ) dΔ` averaged against the posterior, contrasted with a classical (1−α) confidence-interval rule read worst-case.
+- **Mathematical model:**
+  - *Prior / Likelihood / Posterior:* identical to step 4 — the same Normal-inverse-gamma conjugate posterior, marginal over Δ a Student-t.
+  - *Reward (utility):* `U(x) = 1 − |Δ − x|^p − c·|Δ − x|`, clamped at −1; sliders for degree p and linear penalty c.
+  - *Bayesian rule:* bet iff `E[U] > 0`, betting on the posterior mode mₙ.
+  - *Classical rule:* take the (1−α) CI `d̄ ± t·se`; with no distribution to average over, act worst-case — bet iff the reward at the interval edge stays ≥ 0.
+- **How computed:** the posterior is the same analytic conjugate update (`nigUpdate` / `nigMarginalDelta`); the *decision* expectation is then obtained by **numerical integration** (trapezoid rule, M = 4000 over [−12, 12]) of posterior × reward — not a closed form, since the reward is non-conjugate.
+- **Critical code** (`05-the-decision.html`, `computeState` + helpers):
+
+```js
+const { kn, mn, an, bn } = nigUpdate(m0, k0, A0, B0, n, dbar, ssd);
+const pos = nigMarginalDelta(mn, kn, an, bn);
+...
+const rew = (x, ctr) => rewardClamped(x, ctr, p, c);   // U = max(-1, 1 - |x-ctr|^p - c|x-ctr|)
+// Bayesian rule: expected reward of betting on the posterior mode
+const erPost = integrate(x => post(x) * rew(x, modePost));
+const betPost = erPost > 0;
+// CI rule: worst-case reward at the interval edge
+const hw = tCrit(alpha, dfC) * se;
+const ciLo = dbar - hw, ciHi = dbar + hw;
+const ciEdgeR = rew(ciLo, modeCI);
+const erCI = Math.min(1, ciEdgeR), betCI = erCI >= 0;
+```
+
+  with the numerical integrator:
+
+```js
+function integrate(f) {                 // ∫f dx by the trapezoid rule
+  const A = -12, B = 12, M = 4000, h = (B - A) / M;
+  let s = 0;
+  for (let i = 0; i <= M; i++) s += ((i === 0 || i === M) ? 0.5 : 1) * f(A + h * i);
+  return s * h;
+}
+```
 
 # Step 6 (do-it-yourself appendix): Bayes on binary data
 
@@ -313,3 +460,53 @@ Not yet done: wire the in-browser Python engine and the plot helpers (`plot_thre
 `plot_overlay`, the E[U]/bet-fold output); promote the notebook CSS to shared; decide whether
 to link the page from `index.html` (currently unlinked so it doesn't read as a sixth live
 step); resolve the reward-model open question above.
+
+## Inferences
+
+(Reference implementation: `bayesian-decision-do-it-yourself.ipynb` — the notebook with answers
+filled in; the page `do-it-yourself.html` is the learner-facing mock-up.)
+
+### Inference — Beta-Binomial posterior for a classifier's success rate p, computed numerically on a grid
+
+- **Short description:** estimating a binary classifier's success rate p from `(n, k)` (k successes in n cases) using a Beta prior conjugate to the Binomial likelihood; the posterior is computed *numerically* on a [0, 1] grid (normalization by a Riemann sum) and cross-checked against the analytic `Beta(α+k, β+n−k)`.
+- **Mathematical model:**
+  - *Prior:* `p ~ Beta(α, β)`, kernel `p^(α−1)·(1−p)^(β−1)` — step 2's base rate, now as a density; pseudo-count α+β echoes step 4's κ₀.
+  - *Likelihood:* `k ~ Binomial(n, p)`, kernel `p^k·(1−p)^(n−k)` (the n-choose-k constant dropped — it washes out in normalization).
+  - *Posterior:* `Beta(α+k, β+n−k)`.
+- **How computed:** *numerical* — grid `p = linspace(0,1,N)`, multiply prior kernel × likelihood, then normalize by dividing by its own Riemann-sum area (`density.sum()·dp`). The conjugacy supplies an *analytic* answer key (`scipy.stats.beta`) that the numerical posterior is asserted to match to 1e-3.
+- **Critical code** (`bayesian-decision-do-it-yourself.ipynb`, cells 1–4):
+
+```python
+def prior_kernel(p, alpha, beta):
+    return p**(alpha - 1) * (1 - p)**(beta - 1)        # un-normalised Beta
+
+def likelihood(p, n, k):
+    return p**k * (1 - p)**(n - k)                     # Binomial kernel in p
+
+def normalize(density, dp):
+    return density / (density.sum() * dp)              # the one hard line
+
+posterior  = normalize(prior_kernel(p, alpha, beta) * likelihood(p, n, k), dp)
+post_exact = beta_dist(alpha + k, beta + n - k).pdf(p) # conjugate answer key
+assert np.allclose(posterior, post_exact, atol=1e-3)
+```
+
+### Inference — Bet/fold decision by expected utility over the posterior
+
+- **Short description:** the step-5 decision rule on binary data — pair the posterior over p with a reward (GAIN on a true positive, COST on a false positive) and act iff the expected utility of acting is positive.
+- **Mathematical model:** per-case payoff of acting is `GAIN·p − COST·(1−p)`; `E[U(act)] = ∫ (GAIN·p − COST·(1−p))·posterior(p) dp`, a single weighted sum over the grid. Bet iff `E[U] > 0`. Because the reward is *linear* in p, there is also a closed form using only the posterior mean `E[p] = (α+k)/(α+β+n)`, with break-even at `COST/(GAIN+COST)`.
+- **How computed:** numerical expectation over the grid posterior (a Riemann sum), with the linear closed form as a second answer-key check. Note this is an *expectation* over the single unknown p, not a *marginalization* of a nuisance (there is only one parameter).
+- **Critical code** (`bayesian-decision-do-it-yourself.ipynb`, cell 5):
+
+```python
+def expected_utility_act(p, posterior, dp):
+    payoff = GAIN * p - COST * (1 - p)
+    return np.sum(payoff * posterior) * dp
+
+def decide(p, posterior, dp):
+    value = expected_utility_act(p, posterior, dp)
+    return value, ("bet" if value > 0 else "fold")
+
+E_p         = (alpha + k) / (alpha + beta + n)         # closed-form check
+closed_form = GAIN * E_p - COST * (1 - E_p)
+```
