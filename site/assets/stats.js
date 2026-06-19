@@ -74,13 +74,29 @@ function tTest(xa, xb) {
   return { t, df, p: 2 * (1 - tCdf(Math.abs(t), df)), dObs, se, sp: Math.sqrt(sp2) };
 }
 
-/* Power of the test at the true Δ, via the normal approximation to the noncentral
-   t: we reject when |D̂| > t_crit·se_true, so power is the mass of the shifted null
-   beyond ±t_crit. β = 1 − power is the chance this n misses a real effect. */
+/* Power of the test at the true Δ. The statistic is a noncentral t(df, ncp):
+   t = Z/√(W/df) with Z ~ Normal(ncp, 1), ncp = Δ/se_true, and W ~ χ²_df the
+   independent scale from the pooled-variance estimate. So power is the normal-tail
+   formula Φ(ncp − t_c·s) + Φ(−ncp − t_c·s) — with s = √(W/df) — averaged over the
+   χ² spread of the estimated SD, not pretending it is known (the error a plain
+   normal makes, badly so at small n). Simpson over the χ² bulk; ~1e-4 accurate.
+   β = 1 − power is the chance this n misses a real effect. */
 function tTestPower({ delta, sigma, n, alpha, df }) {
   const seTrue = sigma * Math.sqrt(2 / n);
   const tc = tCrit(alpha, df), ncp = delta / seTrue;
-  const power = normCdf(ncp - tc) + normCdf(-ncp - tc);
+  const sd = Math.sqrt(2 * df);                 // χ²_df sd; integrate over its bulk
+  const lo = Math.max(1e-6, df - 10 * sd), hi = df + 12 * sd;
+  const M = 400, h = (hi - lo) / M;
+  const logK = -(df / 2) * Math.log(2) - logGamma(df / 2);
+  const chi2pdf = (w) => Math.exp(logK + (df / 2 - 1) * Math.log(w) - w / 2);
+  let power = 0;
+  for (let i = 0; i <= M; i++) {
+    const w = lo + h * i, s = Math.sqrt(w / df);
+    const tail = normCdf(ncp - tc * s) + normCdf(-ncp - tc * s);
+    const wt = (i === 0 || i === M) ? 1 : (i % 2 ? 4 : 2);   // Simpson weights
+    power += wt * tail * chi2pdf(w);
+  }
+  power = Math.min(1, power * h / 3);
   return { power, beta: 1 - power };
 }
 

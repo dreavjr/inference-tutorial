@@ -108,7 +108,10 @@
                 <p class="hint">drag a slider — the truth changes; press the button — a new sample is drawn;
                     <b>hover the right panel</b> to read off the implied population means
                 </p>
-                <div id="sliders" class="sliders"></div>
+                <div id="sliders" class="sliders">
+                    <div id="grpLeft"></div>
+                    <div id="grpRight"></div>
+                </div>
                 <div class="resample-row">
                     <button class="resample" id="resample">↻&ensp;new sample</button>
                     <button class="resample" id="simulate">▶&ensp;simulate</button>
@@ -283,14 +286,16 @@
         /* ---- wiring -------------------------------------------------------------- */
 
         const sliders = document.getElementById("sliders");
+        const grpLeft = document.getElementById("grpLeft");
+        const grpRight = document.getElementById("grpRight");
         let pool = makePool(24); // one fixed draw — dots don't jitter as you drag
 
-        // row-major fill of the 2-column grid → col 1: Δ, σ²   col 2: N, α.
+        // col 1: Δ, σ²   col 2: N, α.
         // changing the truth invalidates a running/finished simulation, so dismiss it.
-        const deltaS = makeSlider(sliders, { label: "true difference · Δ", min: 0, max: 3, step: 0.05, value: 0.8, fmt: v => v.toFixed(2), onInput: onSlider });
-        const nS = makeSlider(sliders, { label: "sample size · N per group", min: 3, max: 100, step: 1, value: 12, fmt: v => v.toFixed(0), onInput: onSlider });
-        const varS = makeSlider(sliders, { label: "true variance · σ²", min: 0.25, max: 4, step: 0.05, value: 1.0, fmt: v => v.toFixed(2), onInput: onSlider });
-        const alphaS = makeSlider(sliders, { label: "false-positive rate · α", min: 0.005, max: 0.2, step: 0.005, value: 0.05, fmt: v => v.toFixed(3), onInput: onSlider });
+        const deltaS = makeSlider(grpLeft, { label: "true difference · Δ", min: 0, max: 3, step: 0.05, value: 0.8, fmt: v => v.toFixed(2), onInput: onSlider });
+        const nS = makeSlider(grpRight, { label: "sample size · N per group", min: 3, max: 100, step: 1, value: 12, fmt: v => v.toFixed(0), onInput: onSlider });
+        const varS = makeSlider(grpLeft, { label: "true variance · σ²", min: 0.25, max: 4, step: 0.05, value: 1.0, fmt: v => v.toFixed(2), onInput: onSlider });
+        const alphaS = makeSlider(grpRight, { label: "false-positive rate · α", min: 0.005, max: 0.2, step: 0.005, value: 0.05, fmt: v => v.toFixed(3), onInput: onSlider });
 
         function onSlider() { sim.dismiss(); render(); }
 
