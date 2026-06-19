@@ -102,7 +102,7 @@
                         <p class="ctl-group-label">the prior</p>
                     </div>
                 </div>
-                <div class="resample-row"><button class="resample" id="resample">↻&ensp;new sample</button></div>
+                <div class="resample-row"><button class="resample" id="resample">↻&ensp;new sample</button><button class="resample" id="reset">↺&ensp;reset</button></div>
             </div>
 
             <div class="figrow three">
@@ -466,6 +466,7 @@
         });
 
         render();
+        wireReset(document.getElementById("reset"), document.getElementById("sliders"));
     </script>
 </body>
 

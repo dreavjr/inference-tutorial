@@ -205,6 +205,9 @@
                     <div id="grpLeft"></div>
                     <div id="grpRight"></div>
                 </div>
+                <div class="resample-row">
+                    <button class="resample" id="reset">↺&ensp;reset</button>
+                </div>
             </div>
 
             <div class="figrow">
@@ -438,6 +441,7 @@
         }
 
         refresh();
+        wireReset(document.getElementById("reset"), document.getElementById("sliders"));
     </script>
 </body>
 

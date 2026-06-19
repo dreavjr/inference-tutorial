@@ -3,3 +3,4 @@ refs/
 .ipynb_checkpoints/
 .claude/
 .venv/
+aux/

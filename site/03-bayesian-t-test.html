@@ -89,6 +89,7 @@
                 <div class="resample-row">
                     <button class="resample" id="resample">↻&ensp;new sample</button>
                     <button class="resample" id="simulate">▶&ensp;simulate</button>
+                    <button class="resample" id="reset">↺&ensp;reset</button>
                 </div>
             </div>
 
@@ -282,6 +283,7 @@
         });
 
         render();
+        wireReset(document.getElementById("reset"), document.getElementById("sliders"));
     </script>
 </body>
 
