@@ -143,7 +143,7 @@ Take-homes:
 
 ## Current material
 
-Page: `03-full-bayesian.html` — "The full Bayesian approach"
+Page: `03-bayesian-approach.html` — "The Bayesian approach"
 
 Intro text (summary): Names step 3's sleight of hand: the flat prior, which declared every effect size (Δ = 0.1, 3, a million) equally believable — not humility but a strong claim. Makes the prior explicit via Bayes as multiplication: posterior ~ prior × likelihood. The unknowns come as a pair — effect Δ and noise σ² — so the prior is a distribution over that plane; the conjugate choice is the Normal-inverse-gamma: Δ | σ²_d ~ Normal(m₀, σ²_d/κ₀) and σ²_d ~ Inv-Gamma(a₀, b₀). Three panels draw prior (purple), likelihood (terracotta), posterior (dark) as filled equal-volume contours over the (Δ, σ) plane (σ as standard deviation, both axes same scale), with a green cross at the true (Δ, σ). Below: the data and the marginal over Δ as the three 1-D shadows. A simplification keeps the algebra on one screen: the model is fed the n per-pair differences dᵢ = x_{B,i} − x_{A,i}, each Normal(Δ, σ²_d) with σ²_d = 2σ².
 
@@ -167,7 +167,7 @@ The moral:
 
 ## Inferences
 
-### Inference — Full Bayesian joint posterior over (Δ, σ²_d) via a Normal-inverse-gamma conjugate prior
+### Inference — Bayesian joint posterior over (Δ, σ²_d) via a Normal-inverse-gamma conjugate prior
 
 - **Short description:** jointly estimating the effect Δ and the noise σ² from the per-pair differences, with a conjugate Normal-inverse-gamma prior, then reporting the marginal posterior over Δ (the variance integrated out as a nuisance).
 - **Mathematical model:**
@@ -175,7 +175,7 @@ The moral:
   - *Likelihood:* the n per-pair differences `dᵢ ~ Normal(Δ, σ²_d)`.
   - *Posterior:* Normal-inverse-gamma with updated `(mₙ, κₙ, aₙ, bₙ)`; the *marginal over Δ* is a located-scaled Student-t with `df = 2aₙ`, `loc = mₙ`, `scale = √(bₙ/(aₙ·κₙ))`.
 - **How the posterior was computed:** *conjugate prior–likelihood → closed-form (analytic) update* (`nigUpdate`). The 2-D (Δ, σ) surfaces are evaluated on a grid only for the equal-volume heatmap drawing (with a Jacobian for the σ² → σ reparametrization); the inference itself is the analytic conjugate update, and the Δ marginal is the analytic Student-t.
-- **Critical code** (`03-full-bayesian.html`, `render`):
+- **Critical code** (`03-bayesian-approach.html`, `render`):
 
 ```js
 const { dbar, ssd } = drawSample(pool, { delta, sigma, n });
@@ -204,7 +204,7 @@ function nigMarginalDelta(m, k, a, b) {
 
 ## Pedagogical plan
 
-The full Bayesian treatment is the logical way to think under uncertainty. In other words, given what you know, the probabilities it outputs are the  unique fully-coherent conclusion. Even with the cost model known by both, a decision based on classical inference has a free parameter (alpha) that must be chosen externally to the decision apparatus, while the Bayesian decision apparatus can marginalize over all nuisances to make a decision that maximizes expected reward. The consequence is that under a system of bets, the Bayesian decision procedure will inevitably make better bets (in expectation), provided that you don't start from too wrong _and_ too strong assumptions.
+The Bayesian treatment is the logical way to think under uncertainty. In other words, given what you know, the probabilities it outputs are the  unique fully-coherent conclusion. Even with the cost model known by both, a decision based on classical inference has a free parameter (alpha) that must be chosen externally to the decision apparatus, while the Bayesian decision apparatus can marginalize over all nuisances to make a decision that maximizes expected reward. The consequence is that under a system of bets, the Bayesian decision procedure will inevitably make better bets (in expectation), provided that you don't start from too wrong _and_ too strong assumptions.
 
 ## Current material
 
@@ -291,7 +291,7 @@ Myths to dismiss:
 - I can use Bayesian inference to mimick hard-threshold classical tests and still reap the benefits => if you don't add informative priors ("let the data speak for itself" zealousness) and force sharp decisions instead of exploit the uncertainty, Bayesian inference can give exactly the same results as classical inference
 
 Take-homes:
-- This is not the full Bayesian treatment: (1) I'm using maximum a posteriori with an uninformative prior = same as maximum likelihood. Credible intervals force a binarization of the decision that goes against the Bayesian ethos.
+- This is not the Bayesian treatment: (1) I'm using maximum a posteriori with an uninformative prior = same as maximum likelihood. Credible intervals force a binarization of the decision that goes against the Bayesian ethos.
 
 ## Current material
 
