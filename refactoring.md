@@ -31,7 +31,7 @@ Legend: [ ] todo · [~] in progress · [x] done · [!] needs verify
 ### 3. Pages — use the model + helpers, align naming (main fn = `render`)
 - [x] 01-the-t-test.html  (refresh→render; drawSample/tTest/tCrit/tTestPower; fadeTopMask/pill) — verified
 - [x] 03-bayesian-t-test.html (drawSample/tTest/tCrit; fadeTopMask/pill/splayMarker) — verified
-- [x] 04-the-prior.html (drawSample diffs; nigMarginalDelta/locScaleTpdf/likelihoodProfile; nigSigmaMode/mleSigma) — verified
+- [x] 04-full-bayesian.html (drawSample diffs; nigMarginalDelta/locScaleTpdf/likelihoodProfile; nigSigmaMode/mleSigma) — verified
 - [x] 05-the-decision.html (computeState via model layer; dropped local svgPoint; fadeTopMask/shared pill;
       egg→sweep, posterior belief region extracted to posteriorBelief() out of core rewardSvg) — verified
       NOTE: fadeTopMask mask now always covers down to BASE (gradient end ≠ mask end) — needed for reward panels.

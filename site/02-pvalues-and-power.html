@@ -1,190 +1,319 @@
 <!doctype html>
 <html lang="en">
+
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>2 · What p-values and power can do for you — and what they can't</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/style.css">
-<style>
-  /* the 2×2 contingency table — large, four equal quadrants, vertical labels */
-  table.cmx { border-collapse: collapse; font-family: var(--sans); margin: 4px 0; width: 100%; table-layout: fixed; }
-  .cmx td, .cmx th { padding: 6px 8px; text-align: center; font-weight: 400; }
-  .cmx th.colhead { font-size: 12.5px; color: var(--muted); font-weight: 600; padding-bottom: 12px; }
-  .cmx th.rowlab { padding: 0 2px; }
-  .cmx th.rowlab span { writing-mode: vertical-rl; transform: rotate(180deg); display: inline-block;
-    font-size: 13px; font-weight: 600; letter-spacing: .02em; white-space: nowrap; }
-  .cmx td.count { border: 1.5px solid var(--rule); height: 124px; vertical-align: middle; }
-  .cmx td.count .n { display: block; font-size: 32px; font-weight: 600; color: #2A2A2A; font-variant-numeric: tabular-nums; line-height: 1; }
-  .cmx td.count .code { display: block; font-size: 11px; color: var(--muted); letter-spacing: .08em; margin-top: 6px; }
-  .cmx td.tot { color: var(--muted); font-size: 13.5px; font-variant-numeric: tabular-nums; }
-  /* row metrics (sensitivity, specificity) read vertically, mirroring the row
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>2 · What p-values and power can do for you — and what they can't</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="assets/style.css">
+    <style>
+        /* the 2×2 contingency table — large, four equal quadrants, vertical labels */
+        table.cmx {
+            border-collapse: collapse;
+            font-family: var(--sans);
+            margin: 4px 0;
+            width: 100%;
+            table-layout: fixed;
+        }
+
+        .cmx td,
+        .cmx th {
+            padding: 6px 8px;
+            text-align: center;
+            font-weight: 400;
+        }
+
+        .cmx th.colhead {
+            font-size: 12.5px;
+            color: var(--muted);
+            font-weight: 600;
+            padding-bottom: 12px;
+        }
+
+        .cmx th.rowlab {
+            padding: 0 2px;
+        }
+
+        .cmx th.rowlab span {
+            writing-mode: vertical-rl;
+            transform: rotate(180deg);
+            display: inline-block;
+            font-size: 13px;
+            font-weight: 600;
+            letter-spacing: .02em;
+            white-space: nowrap;
+        }
+
+        .cmx td.count {
+            border: 1.5px solid var(--rule);
+            height: 124px;
+            vertical-align: middle;
+        }
+
+        .cmx td.count .n {
+            display: block;
+            font-size: 32px;
+            font-weight: 600;
+            color: #2A2A2A;
+            font-variant-numeric: tabular-nums;
+            line-height: 1;
+        }
+
+        .cmx td.count .code {
+            display: block;
+            font-size: 11px;
+            color: var(--muted);
+            letter-spacing: .08em;
+            margin-top: 6px;
+        }
+
+        .cmx td.tot {
+            color: var(--muted);
+            font-size: 13.5px;
+            font-variant-numeric: tabular-nums;
+        }
+
+        /* row metrics (sensitivity, specificity) read vertically, mirroring the row
      labels; name and number sit on two parallel lines, each centred */
-  .cmx td.metric.vert { padding: 0; }
-  .cmx td.metric.vert .mwrap { writing-mode: vertical-rl; transform: rotate(180deg); display: inline-block; white-space: nowrap; text-align: center; }
-  .cmx td.metric.vert .name { display: block; font-size: 10px; color: var(--muted); letter-spacing: .06em; }
-  .cmx td.metric.vert .val { display: block; font-size: 16px; font-weight: 700; color: #333; font-variant-numeric: tabular-nums; }
-  /* column metrics (PPV, NPV) stay horizontal, beneath their columns */
-  .cmx td.metric.col .name { display: block; font-size: 10px; color: var(--soft); letter-spacing: .04em; font-weight: 600; }
-  .cmx td.metric.col .val { display: block; font-size: 19px; font-weight: 700; color: #333; margin-top: 3px; font-variant-numeric: tabular-nums; }
-  .bg-tp { background: #E7EEF7; } .bg-fn { background: #F4F8FB; }
-  .bg-fp { background: #FCF4E8; } .bg-tn { background: #FAEBDB; }
-  .figwrap { overflow-x: auto; }
-</style>
+        .cmx td.metric.vert {
+            padding: 0;
+        }
+
+        .cmx td.metric.vert .mwrap {
+            writing-mode: vertical-rl;
+            transform: rotate(180deg);
+            display: inline-block;
+            white-space: nowrap;
+            text-align: center;
+        }
+
+        .cmx td.metric.vert .name {
+            display: block;
+            font-size: 10px;
+            color: var(--muted);
+            letter-spacing: .06em;
+        }
+
+        .cmx td.metric.vert .val {
+            display: block;
+            font-size: 16px;
+            font-weight: 700;
+            color: #333;
+            font-variant-numeric: tabular-nums;
+        }
+
+        /* column metrics (PPV, NPV) stay horizontal, beneath their columns */
+        .cmx td.metric.col .name {
+            display: block;
+            font-size: 10px;
+            color: var(--soft);
+            letter-spacing: .04em;
+            font-weight: 600;
+        }
+
+        .cmx td.metric.col .val {
+            display: block;
+            font-size: 19px;
+            font-weight: 700;
+            color: #333;
+            margin-top: 3px;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .bg-tp {
+            background: #E7EEF7;
+        }
+
+        .bg-fn {
+            background: #F4F8FB;
+        }
+
+        .bg-fp {
+            background: #FCF4E8;
+        }
+
+        .bg-tn {
+            background: #FAEBDB;
+        }
+
+        .figwrap {
+            overflow-x: auto;
+        }
+    </style>
 </head>
+
 <body>
-<main>
-  <header class="page">
-    <p class="kicker"><a href="index.html">From p-values to posteriors</a><span class="sep">·</span>Step 2 of 5</p>
-    <h1>What p-values and power can do for you — and what they can't</h1>
-  </header>
+    <main>
+        <header class="page">
+            <p class="kicker"><a href="index.html">Inference: from classical to Bayesian</a><span class="sep">·</span>Step 2 of
+                5</p>
+            <h1>The world <i>vs.</i> the test</h1>
+        </header>
 
-  <section class="prose">
-    <p><a href="01-the-t-test.html">Step 1</a> built the machine that stamps
-    <strong>significant / not significant</strong> on a study. Now run that machine at
-    scale: a thousand studies (or screened patients, or tested hypotheses). In each one,
-    reality either holds an effect (<strong>condition +</strong>) or it doesn't
-    (<strong>condition −</strong>), and the machine ends with a verdict:
-    <strong>predicted +</strong> (“significant!”) or <strong>predicted −</strong>.</p>
+        <section class="prose">
+            <p><a href="01-the-t-test.html">Step 1</a> built the machine that stamps
+                <strong>significant / not significant</strong> on a study. Now run that machine at
+                scale: a thousand studies (or screened patients, or tested hypotheses). In each one,
+                reality either holds an effect (<strong>condition +</strong>) or it doesn't
+                (<strong>condition −</strong>), and the machine ends with a verdict:
+                <strong>predicted +</strong> (“significant!”) or <strong>predicted −</strong>.
+            </p>
 
-    <p>Two famous numbers describe the <em>procedure</em>:</p>
+            <p>Two famous numbers describe the <em>procedure</em>:</p>
 
-    <table class="concept">
-      <tr><th>testing language</th><th>diagnostic language</th><th>the question it answers</th></tr>
-      <tr>
-        <td><strong>1 − α</strong>&ensp;(α = significance level)</td>
-        <td><strong>specificity</strong></td>
-        <td><em>If there is nothing</em>, how often do we correctly stay quiet?</td>
-      </tr>
-      <tr>
-        <td><strong>power</strong>&ensp;(1 − β)</td>
-        <td><strong>sensitivity</strong>, recall</td>
-        <td><em>If there is something</em>, how often do we catch it?</td>
-      </tr>
-    </table>
+            <table class="concept">
+                <tr>
+                    <th>testing language</th>
+                    <th>diagnostic language</th>
+                    <th>the question it answers</th>
+                </tr>
+                <tr>
+                    <td><strong>1 − α</strong>&ensp;(α = significance level)</td>
+                    <td><strong>specificity</strong></td>
+                    <td><em>If there is nothing</em>, how often do we correctly stay quiet?</td>
+                </tr>
+                <tr>
+                    <td><strong>power</strong>&ensp;(1 − β)</td>
+                    <td><strong>sensitivity</strong>, recall</td>
+                    <td><em>If there is something</em>, how often do we catch it?</td>
+                </tr>
+            </table>
 
-    <p>Both questions begin with an <strong><em>if</em> about the truth</strong> — and
-    the truth is precisely what you don't know. The question you actually face after an
-    experiment runs in the opposite direction:</p>
+            <p>Both questions begin with an <strong><em>if</em> about the truth</strong> — and
+                the truth is precisely what you don't know. The question you actually face after an
+                experiment runs in the opposite direction:</p>
 
-    <blockquote>“My result came out <strong>positive</strong>. How likely is it that the
-    effect is <strong>real</strong>?”</blockquote>
+            <blockquote>“My result came out <strong>positive</strong>. How likely is it that the
+                effect is <strong>real</strong>?”</blockquote>
 
-    <p>That number is the <strong>PPV</strong> (positive predictive value, a.k.a.
-    <strong>precision</strong>); its mirror image for negative results is the
-    <strong>NPV</strong>. Neither α nor power can answer it on their own. Play with the
-    demo below to see why.</p>
-  </section>
+            <p>That number is the <strong>PPV</strong> (positive predictive value, a.k.a.
+                <strong>precision</strong>); its mirror image for negative results is the
+                <strong>NPV</strong>. Neither α nor power can answer it on their own. Play with the
+                demo below to see why.
+            </p>
+        </section>
 
-  <section class="demo">
-    <div class="controls">
-      <p class="hint">drag a slider — both views below follow</p>
-      <div id="sliders" class="sliders"></div>
-    </div>
+        <section class="demo">
+            <div class="controls">
+                <p class="hint">drag a slider — both views below follow</p>
+                <div id="sliders" class="sliders"></div>
+            </div>
 
-    <div class="figrow">
-      <figure>
-        <figcaption class="figcap">1 · the 2×2 table</figcaption>
-        <div class="figwrap"><div id="figTable"></div></div>
-      </figure>
-      <figure>
-        <figcaption class="figcap">2 · the garden of forked paths</figcaption>
-        <div class="fig figwrap" id="figRibbon"></div>
-      </figure>
-    </div>
-  </section>
+            <div class="figrow">
+                <figure>
+                    <figcaption class="figcap">1 · the 2×2 table</figcaption>
+                    <div class="figwrap">
+                        <div id="figTable"></div>
+                    </div>
+                </figure>
+                <figure>
+                    <figcaption class="figcap">2 · the garden of forked paths</figcaption>
+                    <div class="fig figwrap" id="figRibbon"></div>
+                </figure>
+            </div>
+        </section>
 
-  <section class="prose">
-    <h2>Try this</h2>
-    <ol>
-      <li><strong>Defaults</strong> (α = 0.05, power = 0.80, base rate 50 %):
-      PPV ≈ 94 %. Positive results can be trusted — this is the comfortable world the
-      textbook numbers implicitly assume.</li>
-      <li><strong>Drag the base rate down to 10 %</strong> — you are now testing
-      riskier, more surprising hypotheses. α and power have not moved, yet PPV falls to
-      ≈ 64 %: one positive in three is false.</li>
-      <li><strong>Down to 2 %</strong> — a long-shot screen. PPV ≈ 25 %: three
-      “discoveries” out of four are wrong, with the very same respectable test.</li>
-      <li>Try to rescue it <strong>without touching the base rate</strong>. Pushing
-      power to 100 % barely helps (PPV ≈ 29 %). What works is specificity: push it to
-      99.5 % (α = 0.005) and watch the false positives melt away.</li>
-      <li>Back at base rate 2 %, <strong>crank the total cases</strong> from 1,000 to
-      1,000,000. Every count grows a thousandfold — and not a single percentage moves.
-      PPV is a property of <em>proportions</em>; more cases of the same mix only
-      estimate the same disappointment more precisely. <strong>Sample size will not
-      save you.</strong></li>
-    </ol>
+        <section class="prose">
+            <h2>Try this</h2>
+            <ol>
+                <li><strong>Defaults</strong> (α = 0.05, power = 0.80, base rate 50 %):
+                    PPV ≈ 94 %. Positive results can be trusted — this is the comfortable world the
+                    textbook numbers implicitly assume.</li>
+                <li><strong>Drag the base rate down to 10 %</strong> — you are now testing
+                    riskier, more surprising hypotheses. α and power have not moved, yet PPV falls to
+                    ≈ 64 %: one positive in three is false.</li>
+                <li><strong>Down to 2 %</strong> — a long-shot screen. PPV ≈ 25 %: three
+                    “discoveries” out of four are wrong, with the very same respectable test.</li>
+                <li>Try to rescue it <strong>without touching the base rate</strong>. Pushing
+                    power to 100 % barely helps (PPV ≈ 29 %). What works is specificity: push it to
+                    99.5 % (α = 0.005) and watch the false positives melt away.</li>
+                <li>Back at base rate 2 %, <strong>crank the total cases</strong> from 1,000 to
+                    1,000,000. Every count grows a thousandfold — and not a single percentage moves.
+                    PPV is a property of <em>proportions</em>; more cases of the same mix only
+                    estimate the same disappointment more precisely. <strong>Sample size will not
+                        save you.</strong></li>
+            </ol>
 
-    <h2>The moral</h2>
-    <div class="moral">
-      <ul>
-        <li><strong>Sensitivity (power)</strong> and <strong>specificity (1 − α)</strong>
-        are properties of the <strong>test</strong>. They condition on the truth:
-        <em>if the effect is real…</em>, <em>if it isn't…</em></li>
-        <li><strong>PPV</strong> and <strong>NPV</strong> are properties of
-        <strong>your result</strong>: they condition on what you actually observed —
-        and they depend, inescapably, on the <strong>base rate</strong>.</li>
-        <li>Same test, different population → a positive means something different.
-        p-value and power are blind to this; that is not a flaw to fix but a question
-        they were never designed to answer. And more data won't fix it either.</li>
-        <li>Getting from (sensitivity, specificity, base rate) to (PPV, NPV) is exactly
-        <strong>Bayes' theorem</strong> — <a href="03-bayesian-t-test.html">where we go
-        next</a>.</li>
-      </ul>
-    </div>
-  </section>
+            <h2>The moral</h2>
+            <div class="moral">
+                <ul>
+                    <li><strong>Sensitivity (power)</strong> and <strong>specificity (1 − α)</strong>
+                        are properties of the <strong>test</strong>. They condition on the truth:
+                        <em>if the effect is real…</em>, <em>if it isn't…</em>
+                    </li>
+                    <li><strong>PPV</strong> and <strong>NPV</strong> are properties of
+                        <strong>your result</strong>: they condition on what you actually observed —
+                        and they depend, inescapably, on the <strong>base rate</strong>.
+                    </li>
+                    <li>Same test, different population → a positive means something different.
+                        p-value and power are blind to this; that is not a flaw to fix but a question
+                        they were never designed to answer. And more data won't fix it either.</li>
+                    <li>Getting from (sensitivity, specificity, base rate) to (PPV, NPV) is exactly
+                        <strong>Bayes' theorem</strong> — <a href="03-bayesian-t-test.html">where we go
+                            next</a>.
+                    </li>
+                </ul>
+            </div>
+        </section>
 
-  <nav class="pager">
-    <a href="01-the-t-test.html"><span class="lbl">Previous</span><span class="title">←&ensp;How a classical test works</span></a>
-    <a class="next" href="03-bayesian-t-test.html"><span class="lbl">Next</span><span class="title">The Bayesian t-test&ensp;→</span></a>
-  </nav>
-</main>
+        <nav class="pager">
+            <a href="01-the-t-test.html"><span class="lbl">Previous</span><span class="title">←&ensp;How a classical test
+                    works</span></a>
+            <a class="next" href="03-bayesian-t-test.html"><span class="lbl">Next</span><span class="title">The Bayesian
+                    t-test&ensp;→</span></a>
+        </nav>
+    </main>
 
-<script src="assets/math.js"></script>
-<script src="assets/stats.js"></script>
-<script src="assets/plots.js"></script>
-<script src="assets/ui.js"></script>
-<script>
-"use strict";
-/* condition positive = blue, condition negative = orange; pale = misclassified */
-const RC   = { TP: "#3D6FB0", FN: "#B6CCE6", FP: "#F2CDA2", TN: "#E0883A" };
-const TCLS = { TP: "bg-tp", FN: "bg-fn", FP: "bg-fp", TN: "bg-tn" };
-const NAMES = { TP: "true positives", FN: "false negatives",
-                FP: "false positives", TN: "true negatives" };
+    <script src="assets/math.js"></script>
+    <script src="assets/stats.js"></script>
+    <script src="assets/plots.js"></script>
+    <script src="assets/ui.js"></script>
+    <script>
+        "use strict";
+        /* condition positive = blue, condition negative = orange; pale = misclassified */
+        const RC = { TP: "#3D6FB0", FN: "#B6CCE6", FP: "#F2CDA2", TN: "#E0883A" };
+        const TCLS = { TP: "bg-tp", FN: "bg-fn", FP: "bg-fp", TN: "bg-tn" };
+        const NAMES = {
+            TP: "true positives", FN: "false negatives",
+            FP: "false positives", TN: "true negatives"
+        };
 
-function split(total, frac) {
-  const a = Math.round(total * frac);
-  return [a, total - a];
-}
+        function split(total, frac) {
+            const a = Math.round(total * frac);
+            return [a, total - a];
+        }
 
-function confusion(prev, sens, spec, total) {
-  const [P, N] = split(total, prev);
-  const [TP, FN] = split(P, sens);
-  const [TN, FP] = split(N, spec);
-  return { P, N, TP, FN, FP, TN, PP: TP + FP, PN: FN + TN };
-}
+        function confusion(prev, sens, spec, total) {
+            const [P, N] = split(total, prev);
+            const [TP, FN] = split(P, sens);
+            const [TN, FP] = split(N, spec);
+            return { P, N, TP, FN, FP, TN, PP: TP + FP, PN: FN + TN };
+        }
 
-const pct = (num, den) => den ? (num / den * 100).toFixed(1) + "%" : "–";
-const fmtN = (n) => n.toLocaleString("en-US");
+        const pct = (num, den) => den ? (num / den * 100).toFixed(1) + "%" : "–";
+        const fmtN = (n) => n.toLocaleString("en-US");
 
-/* ---- view 1: the 2×2 contingency table ---------------------------------- */
+        /* ---- view 1: the 2×2 contingency table ---------------------------------- */
 
-function tableHtml(prev, sens, spec, total) {
-  const c = confusion(prev, sens, spec, total);
-  const count = (k) =>
-    `<td class="count ${TCLS[k]}"><span class="n">${fmtN(c[k])}</span><span class="code">${k}</span></td>`;
-  const metricV = (name, val) =>
-    `<td class="metric vert"><div class="mwrap"><span class="name">${name}</span><span class="val">${val}</span></div></td>`;
-  const metricC = (name, val) =>
-    `<td class="metric col"><span class="name">${name}</span><span class="val">${val}</span></td>`;
-  const vlab = (color, txt) => `<th class="rowlab"><span style="color:${color}">${txt}</span></th>`;
+        function tableHtml(prev, sens, spec, total) {
+            const c = confusion(prev, sens, spec, total);
+            const count = (k) =>
+                `<td class="count ${TCLS[k]}"><span class="n">${fmtN(c[k])}</span><span class="code">${k}</span></td>`;
+            const metricV = (name, val) =>
+                `<td class="metric vert"><div class="mwrap"><span class="name">${name}</span><span class="val">${val}</span></div></td>`;
+            const metricC = (name, val) =>
+                `<td class="metric col"><span class="name">${name}</span><span class="val">${val}</span></td>`;
+            const vlab = (color, txt) => `<th class="rowlab"><span style="color:${color}">${txt}</span></th>`;
 
-  // 5 columns: [row label][predicted +][predicted −][total][row metric].
-  // table-layout fixed + this colgroup makes the two count columns equal, so all
-  // four quadrants are the same size.
-  return `<table class="cmx">
+            // 5 columns: [row label][predicted +][predicted −][total][row metric].
+            // table-layout fixed + this colgroup makes the two count columns equal, so all
+            // four quadrants are the same size.
+            return `<table class="cmx">
     <colgroup><col style="width:34px"><col><col><col style="width:54px"><col style="width:48px"></colgroup>
     <tr><th class="rowlab"></th><th class="colhead">predicted +</th><th class="colhead">predicted −</th><th class="colhead">total</th><th></th></tr>
     <tr>${vlab(RC.TP, "condition + · P")}${count("TP")}${count("FN")}
@@ -195,116 +324,117 @@ function tableHtml(prev, sens, spec, total) {
         <td class="tot">${fmtN(total)}</td><td></td></tr>
     <tr><th class="rowlab"></th>${metricC("PPV", pct(c.TP, c.PP))}${metricC("NPV", pct(c.TN, c.PN))}<td></td><td></td></tr>
   </table>`;
-}
+        }
 
-/* ---- view 2: the garden of forked paths — flow thickness carries the counts.
-        Tails (left) grouped by condition; heads (right) grouped by prediction. */
+        /* ---- view 2: the garden of forked paths — flow thickness carries the counts.
+                Tails (left) grouped by condition; heads (right) grouped by prediction. */
 
-const HEAD_ORDER = ["TP", "FP", "FN", "TN"];
-const PRED = { "+": ["TP", "FP"], "−": ["FN", "TN"] };
+        const HEAD_ORDER = ["TP", "FP", "FN", "TN"];
+        const PRED = { "+": ["TP", "FP"], "−": ["FN", "TN"] };
 
-function swatchLabel(x, yc, k, n) {
-  return `<rect x='${x}' y='${(yc - 5).toFixed(1)}' width='10' height='10' fill='${RC[k]}'/>` +
-         `<text x='${x + 16}' y='${(yc - 1).toFixed(1)}' font-size='11.5' fill='${PAL.ink}'>` +
-         `<tspan font-weight='600'>${k}</tspan><tspan font-weight='600'> · ${fmtN(n)}</tspan></text>` +
-         `<text x='${x + 16}' y='${(yc + 12).toFixed(1)}' font-size='10' fill='${PAL.muted}'>${NAMES[k]}</text>`;
-}
+        function swatchLabel(x, yc, k, n) {
+            return `<rect x='${x}' y='${(yc - 5).toFixed(1)}' width='10' height='10' fill='${RC[k]}'/>` +
+                `<text x='${x + 16}' y='${(yc - 1).toFixed(1)}' font-size='11.5' fill='${PAL.ink}'>` +
+                `<tspan font-weight='600'>${k}</tspan><tspan font-weight='600'> · ${fmtN(n)}</tspan></text>` +
+                `<text x='${x + 16}' y='${(yc + 12).toFixed(1)}' font-size='10' fill='${PAL.muted}'>${NAMES[k]}</text>`;
+        }
 
-function ribbonSvg(prev, sens, spec, total) {
-  const c = confusion(prev, sens, spec, total);
-  const Hin = 320, gap = 18, mt = 24;
-  const gw = 10, gb = 44;            // within-group gap, between-group gap
-  const xl = 104, x1 = 476;          // ribbons run from xl to the arrow tips — wide
-  const width = 560;
+        function ribbonSvg(prev, sens, spec, total) {
+            const c = confusion(prev, sens, spec, total);
+            const Hin = 320, gap = 18, mt = 24;
+            const gw = 10, gb = 44;            // within-group gap, between-group gap
+            const xl = 104, x1 = 476;          // ribbons run from xl to the arrow tips — wide
+            const width = 560;
 
-  const h = {};
-  for (const k of HEAD_ORDER) h[k] = c[k] / total * Hin;
+            const h = {};
+            for (const k of HEAD_ORDER) h[k] = c[k] / total * Hin;
 
-  // left tails — grouped by condition (P: TP,FN / N: FP,TN)
-  const yPtop = mt + gap;
-  const yl = { TP: yPtop + h.TP / 2, FN: yPtop + h.TP + h.FN / 2 };
-  const yNtop = yPtop + h.TP + h.FN + gap;
-  yl.FP = yNtop + h.FP / 2;
-  yl.TN = yNtop + h.FP + h.TN / 2;
-  const leftBottom = yNtop + h.FP + h.TN;
+            // left tails — grouped by condition (P: TP,FN / N: FP,TN)
+            const yPtop = mt + gap;
+            const yl = { TP: yPtop + h.TP / 2, FN: yPtop + h.TP + h.FN / 2 };
+            const yNtop = yPtop + h.TP + h.FN + gap;
+            yl.FP = yNtop + h.FP / 2;
+            yl.TN = yNtop + h.FP + h.TN / 2;
+            const leftBottom = yNtop + h.FP + h.TN;
 
-  // right heads — grouped by prediction (+: TP,FP / −: FN,TN)
-  const ycR = {}, zone = {};
-  let y = mt;
-  for (const grp of ["+", "−"]) {
-    const top = y;
-    PRED[grp].forEach((k, j) => { ycR[k] = y + h[k] / 2; y += h[k] + (j === 0 ? gw : 0); });
-    zone[grp] = [top, y];
-    y += gb;
-  }
-  const rightBottom = zone["−"][1];
+            // right heads — grouped by prediction (+: TP,FP / −: FN,TN)
+            const ycR = {}, zone = {};
+            let y = mt;
+            for (const grp of ["+", "−"]) {
+                const top = y;
+                PRED[grp].forEach((k, j) => { ycR[k] = y + h[k] / 2; y += h[k] + (j === 0 ? gw : 0); });
+                zone[grp] = [top, y];
+                y += gb;
+            }
+            const rightBottom = zone["−"][1];
 
-  const flowBottom = Math.max(leftBottom, rightBottom);
-  const legendY = flowBottom + 44;          // horizontal legend row under the flows
-  const height = legendY + 22;
-  const xm = (xl + x1) / 2;
-  const parts = [];
+            const flowBottom = Math.max(leftBottom, rightBottom);
+            const legendY = flowBottom + 44;          // horizontal legend row under the flows
+            const height = legendY + 22;
+            const xm = (xl + x1) / 2;
+            const parts = [];
 
-  for (const k of HEAD_ORDER) {
-    const t = h[k];
-    if (t < 0.4) continue;
-    const yr = ycR[k];
-    const ahead = Math.min(40, Math.max(10, t * 0.35)); // arrowhead grows with the ribbon
-    const over = Math.min(12, Math.max(2, t * 0.15));
-    const xe = x1 - ahead;
-    parts.push(`<path d='M${xl},${yl[k].toFixed(1)} C${xm},${yl[k].toFixed(1)} ${xm},${yr.toFixed(1)} ` +
-               `${xe},${yr.toFixed(1)}' stroke='${RC[k]}' stroke-width='${t.toFixed(1)}' fill='none'/>`);
-    parts.push(`<polygon points='${xe},${(yr - t / 2 - over).toFixed(1)} ${xe},${(yr + t / 2 + over).toFixed(1)} ` +
-               `${x1 + 2},${yr.toFixed(1)}' fill='${RC[k]}'/>`);
-  }
+            for (const k of HEAD_ORDER) {
+                const t = h[k];
+                if (t < 0.4) continue;
+                const yr = ycR[k];
+                const ahead = Math.min(40, Math.max(10, t * 0.35)); // arrowhead grows with the ribbon
+                const over = Math.min(12, Math.max(2, t * 0.15));
+                const xe = x1 - ahead;
+                parts.push(`<path d='M${xl},${yl[k].toFixed(1)} C${xm},${yl[k].toFixed(1)} ${xm},${yr.toFixed(1)} ` +
+                    `${xe},${yr.toFixed(1)}' stroke='${RC[k]}' stroke-width='${t.toFixed(1)}' fill='none'/>`);
+                parts.push(`<polygon points='${xe},${(yr - t / 2 - over).toFixed(1)} ${xe},${(yr + t / 2 + over).toFixed(1)} ` +
+                    `${x1 + 2},${yr.toFixed(1)}' fill='${RC[k]}'/>`);
+            }
 
-  // left source labels — condition + / condition −
-  const leftLabel = (yc, color, line1, line2) =>
-    `<text x='${xl - 12}' y='${(yc - 2).toFixed(1)}' text-anchor='end' font-size='12.5' font-weight='600' fill='${color}'>${line1}</text>` +
-    `<text x='${xl - 12}' y='${(yc + 12).toFixed(1)}' text-anchor='end' font-size='10.5' fill='${PAL.muted}'>${line2}</text>`;
+            // left source labels — condition + / condition −
+            const leftLabel = (yc, color, line1, line2) =>
+                `<text x='${xl - 12}' y='${(yc - 2).toFixed(1)}' text-anchor='end' font-size='12.5' font-weight='600' fill='${color}'>${line1}</text>` +
+                `<text x='${xl - 12}' y='${(yc + 12).toFixed(1)}' text-anchor='end' font-size='10.5' fill='${PAL.muted}'>${line2}</text>`;
 
-  const hP = h.TP + h.FN, hN = h.FP + h.TN;
-  if (c.P) parts.push(leftLabel(yPtop + hP / 2, RC.TP, `P · ${fmtN(c.P)}`, "condition +"));
-  if (c.N) parts.push(leftLabel(yNtop + hN / 2, RC.TN, `N · ${fmtN(c.N)}`, "condition −"));
+            const hP = h.TP + h.FN, hN = h.FP + h.TN;
+            if (c.P) parts.push(leftLabel(yPtop + hP / 2, RC.TP, `P · ${fmtN(c.P)}`, "condition +"));
+            if (c.N) parts.push(leftLabel(yNtop + hN / 2, RC.TN, `N · ${fmtN(c.N)}`, "condition −"));
 
-  // right prediction-zone brackets + vertical labels, just past the arrow tips
-  const xbr = x1 + 12;
-  for (const [grp, sym] of [["+", "predicted +"], ["−", "predicted −"]]) {
-    let [top, bot] = zone[grp];
-    bot -= gw; // trim trailing within-gap
-    parts.push(`<path d='M${xbr},${top.toFixed(1)} h6 V${bot.toFixed(1)} h-6' fill='none' ` +
-               `stroke='${PAL.muted}' stroke-width='1.2'/>`);
-    const ly = ((top + bot) / 2).toFixed(1), lxv = xbr + 26;
-    parts.push(`<text x='${lxv}' y='${ly}' text-anchor='middle' font-size='12.5' font-weight='600' ` +
-               `fill='${PAL.ink}' transform='rotate(-90 ${lxv} ${ly})'>${sym}</text>`);
-  }
+            // right prediction-zone brackets + vertical labels, just past the arrow tips
+            const xbr = x1 + 12;
+            for (const [grp, sym] of [["+", "predicted +"], ["−", "predicted −"]]) {
+                let [top, bot] = zone[grp];
+                bot -= gw; // trim trailing within-gap
+                parts.push(`<path d='M${xbr},${top.toFixed(1)} h6 V${bot.toFixed(1)} h-6' fill='none' ` +
+                    `stroke='${PAL.muted}' stroke-width='1.2'/>`);
+                const ly = ((top + bot) / 2).toFixed(1), lxv = xbr + 26;
+                parts.push(`<text x='${lxv}' y='${ly}' text-anchor='middle' font-size='12.5' font-weight='600' ` +
+                    `fill='${PAL.ink}' transform='rotate(-90 ${lxv} ${ly})'>${sym}</text>`);
+            }
 
-  // legend — a horizontal row under the flows
-  HEAD_ORDER.forEach((k, i) => {
-    if (c[k]) parts.push(swatchLabel(14 + i * 137, legendY, k, c[k]));
-  });
+            // legend — a horizontal row under the flows
+            HEAD_ORDER.forEach((k, i) => {
+                if (c[k]) parts.push(swatchLabel(14 + i * 137, legendY, k, c[k]));
+            });
 
-  return `<svg viewBox='0 0 ${width} ${height.toFixed(0)}' xmlns='http://www.w3.org/2000/svg'>${parts.join("")}</svg>`;
-}
+            return `<svg viewBox='0 0 ${width} ${height.toFixed(0)}' xmlns='http://www.w3.org/2000/svg'>${parts.join("")}</svg>`;
+        }
 
-/* ---- wiring -------------------------------------------------------------- */
+        /* ---- wiring -------------------------------------------------------------- */
 
-const sliders = document.getElementById("sliders");
-const TOTALS = [1000, 10000, 100000, 1000000];
+        const sliders = document.getElementById("sliders");
+        const TOTALS = [1000, 10000, 100000, 1000000];
 
-// row-major fill → col 1: base rate, total cases   col 2: sensitivity, specificity
-const prevS = makeSlider(sliders, { label: "base rate · P/(P+N)", min: 0.01, max: 0.99, step: 0.01, value: 0.50, fmt: v => (v * 100).toFixed(0) + " %", onInput: refresh });
-const sensS = makeSlider(sliders, { label: "sensitivity · power · tpr · (1−β)", min: 0.05, max: 1.00, step: 0.01, value: 0.80, fmt: v => (v * 100).toFixed(0) + " %", onInput: refresh });
-const totS  = makeSlider(sliders, { label: "total cases · P+N", min: 0, max: 3, step: 1, value: 0, fmt: v => fmtN(TOTALS[v]), onInput: refresh });
-const specS = makeSlider(sliders, { label: "specificity · significance · tnr · (1−α)", min: 0.50, max: 1.00, step: 0.005, value: 0.95, fmt: v => (v * 100).toFixed(1) + " %", onInput: refresh });
+        // row-major fill → col 1: base rate, total cases   col 2: sensitivity, specificity
+        const prevS = makeSlider(sliders, { label: "base rate · P/(P+N)", min: 0.01, max: 0.99, step: 0.01, value: 0.50, fmt: v => (v * 100).toFixed(0) + " %", onInput: refresh });
+        const sensS = makeSlider(sliders, { label: "sensitivity · power · tpr · (1−β)", min: 0.05, max: 1.00, step: 0.01, value: 0.80, fmt: v => (v * 100).toFixed(0) + " %", onInput: refresh });
+        const totS = makeSlider(sliders, { label: "total cases · P+N", min: 0, max: 3, step: 1, value: 0, fmt: v => fmtN(TOTALS[v]), onInput: refresh });
+        const specS = makeSlider(sliders, { label: "specificity · significance · tnr · (1−α)", min: 0.50, max: 1.00, step: 0.005, value: 0.95, fmt: v => (v * 100).toFixed(1) + " %", onInput: refresh });
 
-function refresh() {
-  const args = [prevS.value, sensS.value, specS.value, TOTALS[totS.value]];
-  document.getElementById("figTable").innerHTML = tableHtml(...args);
-  document.getElementById("figRibbon").innerHTML = ribbonSvg(...args);
-}
+        function refresh() {
+            const args = [prevS.value, sensS.value, specS.value, TOTALS[totS.value]];
+            document.getElementById("figTable").innerHTML = tableHtml(...args);
+            document.getElementById("figRibbon").innerHTML = ribbonSvg(...args);
+        }
 
-refresh();
-</script>
+        refresh();
+    </script>
 </body>
+
 </html>

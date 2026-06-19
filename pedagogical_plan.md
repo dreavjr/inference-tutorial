@@ -17,7 +17,7 @@ Take-homes:
 
 ## Current material
 
-Page: `01-the-t-test.html` — "How a classical test works: the t-test"
+Page: `01-the-t-test.html` — "How classical tests work: the t-test"
 
 Intro text (summary): Sets up two unobserved populations (treatment A vs. B), each a full distribution with hidden knobs — the true difference of means Δ and the true variance σ². What we observe is a sample of n points per population. Walks through the classical recipe as a 5-step list: (1) state H₀ (Δ = 0) vs. H₁; (2) condense the sample into the test statistic t = (x̄_B − x̄_A) / (s_p·√(2/n)), the observed difference in units of its own estimation noise; (3) under H₀ the difference wobbles as a Student's t scaled by the standard error, drawn on the same axis as the data so D̂ appears in both panels — the band is far tighter than the populations and tightens like 1/√n; (4) the p-value is the two-sided tail area at least as extreme as D̂; (5) reject H₀ if p ≤ α (fixed at 0.05).
 
@@ -97,7 +97,7 @@ Take-homes:
 
 ## Pedagogical plan
 
-Page: `03-bayesian-t-test.html` — "The Bayesian t-test: from is there an effect? to how big is it?"
+Page: `03-bayesian-t-test.html` — "A Bayesian t-test?: from is there an effect? to how big is it?"
 
 Intro text (summary): Step 1 asked only "if H₀ were true, how surprising is our t?" and answers with a yes/no stamp — never telling us how large the effect is or how sure we are. The Bayesian move needs no new machinery, just a change of reading: take the same t-distribution and re-centre it on the observed difference instead of on 0, letting it describe the whole range of plausible effect sizes (with flat priors this is exactly the posterior for the mean difference — a shifted, scaled t). Both panels share step 1's square scale; the right panel is the distribution over Δ. Because it is a genuine density, a very certain posterior becomes a tall thin spike that fades out at the top of the box. Hovering the Δ curve maps any candidate effect size to the two population means it implies.
 
@@ -135,7 +135,7 @@ Take-homes:
 
 ## Current material
 
-Page: `04-the-prior.html` — "The role of the prior: tight, lax, and honest"
+Page: `04-full-bayesian.html` — "The Bayesian approach in full: tight, lax, and honest"
 
 Intro text (summary): Names step 3's sleight of hand: the flat prior, which declared every effect size (Δ = 0.1, 3, a million) equally believable — not humility but a strong claim. Makes the prior explicit via Bayes as multiplication: posterior ∝ prior × likelihood. The unknowns come as a pair — effect Δ and noise σ² — so the prior is a distribution over that plane; the conjugate choice is the Normal-inverse-gamma: Δ | σ²_d ~ Normal(m₀, σ²_d/κ₀) and σ²_d ~ Inv-Gamma(a₀, b₀). Three panels draw prior (purple), likelihood (terracotta), posterior (dark) as filled equal-volume contours over the (Δ, σ) plane (σ as standard deviation, both axes same scale), with a green cross at the true (Δ, σ). Below: the data and the marginal over Δ as the three 1-D shadows. A simplification keeps the algebra on one screen: the model is fed the n per-pair differences dᵢ = x_{B,i} − x_{A,i}, each Normal(Δ, σ²_d) with σ²_d = 2σ².
 
@@ -165,7 +165,7 @@ The full Bayesian treatment is the logical way to think under uncertainty. In ot
 
 ## Current material
 
-Page: `05-the-decision.html` — "The Bayesian decision: from a posterior to an act"
+Page: `05-the-decision.html` — "Making a decision"
 
 Intro text (summary): Step 4 handed us a posterior — a whole distribution over Δ — but a distribution is not yet a decision; sooner or later you must act (ship the drug, set the dose, choose B over A). Bayesian decision theory closes the gap with one rule: act to maximise expected utility under your posterior. It needs the posterior plus a reward model U(x) = 1 − |Δ − x|^p − c·|Δ − x|: land on the truth and earn a full 1; miss and two penalties bite, a polynomial |Δ − x|^p and a linear c·|Δ − x|. For positive c the reward crosses zero at a break-even error ε (the largest profitable miss); raising p oddly pushes ε outward for small misses; with c = 0, ε = 1. The bottom row poses the sharp question — given my belief, should I bet at all, and on what value? — both readings betting on the peak Δ̂ but deciding whether to bet differently. Left: the honest posterior, where the Bayesian rule averages reward against the whole posterior, E[U] = ∫ reward(Δ − Δ̂)·P(Δ) dΔ, and bets only when that is positive (the gold lens is the overlap). Right: the classical reading, a (1 − α) confidence interval drawn as a flat error bar (MLE Δ̂ centred, margin E either way); with no distribution to average over the rule turns worst-case — bet iff E ≤ ε, so even the interval's worst boundary still pays. Each panel shows an estimated pill (the rule's forecast — posterior's expected reward, or CI's min…max) turning green to bet / grey to fold, and an actual pill (the payoff once hidden Δ is revealed, or zero for a refused bet) green for a win / red for a loss / grey for a no-play. The gap between the pills is the price of not knowing the truth.
 
@@ -201,7 +201,7 @@ Steps 1–5 are the live session (≈1 hour, adult software developers). Step 6 
 sixth live step — it is a take-home coding exercise, deliberately left a little less
 finished than the rest. The reasons we settled on this:
 
-- Step 5 carries the thesis of the whole tutorial (the Bayesian decision apparatus
+- Step 5 carries the thesis of the whole tutorial (Making a decision apparatus
   marginalizes nuisances and maximizes expected reward; classical inference leaves α as a
   free parameter chosen outside the apparatus). It must stay live and must land on the
   continuous model the learner has lived in for four steps — one new idea (decision) on

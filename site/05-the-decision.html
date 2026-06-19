@@ -1,949 +1,992 @@
 <!doctype html>
 <html lang="en">
+
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>5 · The Bayesian decision: from a posterior to an act</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/style.css">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>5 · Making a decision: from a posterior to an act</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="assets/style.css">
 </head>
+
 <body>
-<main>
-  <header class="page">
-    <p class="kicker"><a href="index.html">From p-values to posteriors</a><span class="sep">·</span>Step 5 of 5</p>
-    <h1>The Bayesian decision: from a posterior to an act</h1>
-  </header>
-
-  <section class="prose">
-    <p><a href="04-the-prior.html">Step 4</a> handed us a posterior — a whole
-    distribution over the effect Δ. But a distribution is not yet a decision. Sooner or
-    later you must <em>act</em>: ship the drug, set the dose, choose B over A. A belief is
-    only worth something once it touches a choice.</p>
-
-    <p>Bayesian decision theory closes that last gap with one rule:
-    <strong>act to maximise expected utility under your posterior.</strong> It needs two
-    ingredients — the posterior you already have, and a <strong>reward model</strong> that
-    says how good each outcome is. We use a simple two-parameter family:</p>
-
-    <p class="formula" style="font-style:normal">U(x)&ensp;=&ensp;1&thinsp;−&thinsp;|Δ&thinsp;−&thinsp;x|<sup>p</sup>&thinsp;−&thinsp;c&thinsp;·&thinsp;|Δ&thinsp;−&thinsp;x|</p>
-
-    <p>Read it plainly: if the truth is <strong>Δ</strong> and you commit to the value
-    <strong>x</strong>, you earn the most — a full <em>1</em> — when you land exactly on the
-    truth. Miss, and two penalties bite: a <em>polynomial</em> one, |Δ − x|<sup>p</sup>, and
-    a <em>linear</em> one, c · |Δ − x|. For positive <em>c</em> the reward falls through
-    <em>zero</em> at a break-even error <strong>ε</strong> — the largest miss you can still
-    profit from — and keeps dropping past it. Negative <em>c</em> pushes that crossing
-    outward and can even remove it from view. Raising <em>p</em>, oddly, often pushes ε
-    outward too — for misses under one unit a higher power bites less, so a little more
-    error is forgiven. (With c = 0, only the polynomial remains and ε sits at exactly 1.)</p>
-
-    <table class="concept">
-      <tr><th>knob</th><th>what it does</th><th>here</th></tr>
-      <tr><td><strong>p</strong></td><td>the <em>polynomial degree</em> — how the penalty
-          curves: a gentle bowl at p = 1, a flat top with steep walls as p climbs</td><td>a slider (1…10)</td></tr>
-      <tr><td><strong>c</strong></td><td>the <em>linear penalty</em> — a flat charge per unit
-          of error; raising it tilts the whole reward down, lowering the payoff away from truth</td><td>a slider (−10…10)</td></tr>
-      <tr><td><strong>Δ</strong></td><td>where the reward is centred — the truth itself;
-          we can draw it here only because we simulate</td><td>the green line</td></tr>
-    </table>
-
-    <p>A belief is not yet a decision. To force the issue we ask a sharper question:
-    <strong>given what I believe, should I place the bet at all — and if so, on what
-    value?</strong> The bottom row answers it two ways, both committing to the same kind of
-    bet (the peak of the belief, <strong>Δ̂</strong>) but deciding <em>whether to bet</em>
-    by different rules.</p>
-
-    <p>On the <strong>left</strong>, your honest <strong style="color:#333">posterior</strong>.
-    The Bayesian rule is to <strong>act on expected utility</strong>: average the reward —
-    centred on your bet Δ̂ — against the whole posterior,</p>
-
-    <p class="formula" style="font-style:normal">E[U]&ensp;=&ensp;∫&thinsp;reward(Δ&thinsp;−&thinsp;Δ̂)&thinsp;·&thinsp;P(Δ)&thinsp;dΔ</p>
-
-    <p>and <strong>place the bet only when that expectation is positive</strong>. The shaded
-    gold lens is the overlap the integral measures.</p>
-
-    <p>On the <strong>right</strong>, the classical reading. A
-    <strong style="color:#3D6FB0">(1 − α) confidence interval</strong> is not a distribution,
-    so there's nothing to average against — we draw it honestly as a flat error bar: the
-    <strong>MLE</strong> Δ̂ at its centre, a <strong>margin of error E</strong> (the
-    half-width) reaching either way. With no distribution to take an expectation over, the
-    rule turns <strong>worst-case</strong>. The reward hits zero at a break-even error
-    <strong>ε</strong> (solve 1 − ε<sup>p</sup> − c·ε = 0); compare it to E —
-    <strong>bet iff E ≤ ε</strong>, so that even the interval's worst boundary still pays. The
-    dotted links read the reward you'd score at the MLE (the most, always 1) and at each
-    extreme (the least, 1 − E<sup>p</sup> − c·E).</p>
-
-    <p>Then each panel shows what the decision <em>really</em> earns. The
-    <strong style="color:#A77B2E">estimated</strong> pill is the rule's own forecast — the
-    posterior's expected reward, or the CI's <em>min … max</em> range — turning
-    <strong style="color:#2E7D5B">green</strong> when the rule says place the bet and
-    <strong style="color:#9AA0A6">grey</strong> when it says fold. The
-    <strong style="color:#2E7D5B">actual</strong> pill is the payoff once the hidden truth Δ
-    is revealed: the true reward (the green curve, centred on Δ) read at the point you
-    committed to — the dot, dropped from Δ̂ — or <strong>zero if you refused the bet</strong>.
-    It turns green for a win, <strong style="color:#C0392B">red</strong> for a loss, grey for
-    a no-play. The gap between the two pills is the price of not knowing the truth.</p>
-  </section>
-
-  <section class="demo">
-    <div class="controls">
-      <p class="hint">drag a slider — the truth, the data, your prior, or the reward
-      change; press the button — a new sample is drawn</p>
-      <div id="sliders" class="sliders" style="align-items:start">
-        <div id="grpTruth"><p class="ctl-group-label">the truth &amp; the sample</p></div>
-        <div id="grpPrior"><p class="ctl-group-label">the prior</p></div>
-        <div id="grpDecision"><p class="ctl-group-label">the decision</p></div>
-      </div>
-      <div class="resample-row">
-        <button class="resample" id="resample">↻&ensp;new sample</button>
-        <button class="resample" id="simulate">▶&ensp;simulate</button>
-      </div>
-    </div>
-
-    <div class="sim-area" id="simArea" hidden></div>
-
-    <div class="figrow">
-      <figure>
-        <figcaption class="figcap">1 · two populations, one sample</figcaption>
-        <div class="fig" id="figPop"></div>
-      </figure>
-      <figure>
-        <figcaption class="figcap">2 · the marginal over Δ — prior · likelihood · posterior</figcaption>
-        <div class="fig" id="figMarg"></div>
-      </figure>
-    </div>
-
-    <div class="figrow">
-      <figure>
-        <figcaption class="figcap">3 · the Bayesian decision — posterior × reward</figcaption>
-        <div class="fig" id="figRewPost"></div>
-      </figure>
-      <figure>
-        <figcaption class="figcap">4 · the confidence-interval reading — CI-as-uniform × reward</figcaption>
-        <div class="fig" id="figRewCI"></div>
-      </figure>
-    </div>
-  </section>
-
-  <section class="prose">
-    <h2>Try this</h2>
-    <ol>
-      <li><strong>Defaults.</strong> With c = 0 the only penalty is the polynomial, so the
-      break-even ε sits at exactly 1 — and the confidence interval fits inside it. Both rules
-      bet, and both win: a gentle starting point where the two paradigms agree.</li>
-      <li><strong>Drop n to 3 or 4.</strong> The confidence interval balloons past ε = 1, so
-      its worst-case boundary turns negative and the classical rule <em>refuses</em>, banking
-      0. The posterior stays compact enough to still expect a positive return — it bets, and
-      here wins. The Bayesian's edge is sharpest when data are scarce.</li>
-      <li><strong>Crank n to 100.</strong> Both beliefs sharpen, both bet, and their actual
-      payoffs converge near the peak reward of 1 — with enough data the rules agree again.</li>
-      <li><strong>Raise c, the linear penalty.</strong> Now every miss is charged, so the
-      break-even ε pulls inward below 1. First the wide-interval classical rule folds; push c
-      further and even the posterior's expectation drops below zero, so the Bayesian folds
-      too. High enough stakes make both refuse. (With c &gt; 0, try <strong>p</strong> as
-      well — a higher power now <em>widens</em> ε, nudging both rules back toward betting.)</li>
-      <li><strong>Tighten the prior</strong> (κ₀ ↑) and shift <strong>m₀</strong> off the
-      truth. The posterior's bet — its peak — pulls away from the interval's midpoint, and
-      you can watch a confident-but-wrong prior keep its <em>estimated</em> pill green and
-      betting while the <em>actual</em> pill slides red: overconfidence, made quantitative.</li>
-    </ol>
-
-    <h2>The moral</h2>
-    <div class="moral">
-      <ul>
-        <li>A posterior is an <em>input</em> to a decision, not the decision itself. Pair
-        it with a reward model and act on expected utility — that is the whole of Bayesian
-        decision theory.</li>
-        <li>A confidence interval is <strong>not</strong> a probability distribution. The
-        common habit of reading it as “uniform over the plausible values” is a specific,
-        and usually worse, belief — and a decision made on it earns less.</li>
-        <li>The shape the posterior carries — mass piled near the estimate, thinning into
-        the tails — is precisely what a uniform block discards, and precisely what a reward
-        centred on the truth pays you to keep.</li>
-        <li>Same data, same interval width — yet a different decision, because of how
-        honestly the uncertainty <em>inside</em> the interval is shaped.</li>
-        <li>Two numbers, never one: what a method <em>thinks</em> it will earn and what it
-        <em>actually</em> earns. A trustworthy rule keeps the pair close; a tight wrong
-        prior, or a mis-shaped interval, pries them apart.</li>
-      </ul>
-    </div>
-  </section>
-
-  <nav class="pager">
-    <a href="04-the-prior.html"><span class="lbl">Previous</span><span class="title">←&ensp;The role of the prior</span></a>
-    <a class="next" href="index.html"><span class="lbl">Series</span><span class="title">From p-values to posteriors</span></a>
-  </nav>
-</main>
-
-<script src="assets/math.js"></script>
-<script src="assets/stats.js"></script>
-<script src="assets/plots.js"></script>
-<script src="assets/ui.js"></script>
-<script>
-"use strict";
-/* The voices' colours (PRIOR_C/LIK_C/POST_C), the shared 1-D geometry, the curve
-   helpers, the populations panel and the marginal panel all come from plots.js;
-   the Normal-inverse-gamma model comes from stats.js. This page adds the reward
-   landscape, the decision/reward panels, and the repeated-decision simulation. */
-const REWARD_C = "#A77B2E";                 // the reward landscape
-const GRN_F = "#2E7D5B", RED_F = "#C0392B"; // belief painted by reward sign
-const A0 = 2;                               // variance prior: a₀ fixed and gentle
-
-/* reward panels: a signed vertical axis. Reward 0 rides a mid-line; +1 (the peak,
-   at the truth) climbs to the top, −1 sinks to the baseline, lower rewards clamp.
-   Beliefs (always ≥ 0) rise from the mid-line too, so painting their fill by the
-   sign of the reward beneath each x shows the product directly: green earns, red pays. */
-const RMID = TOP + 0.52 * SH, RUP = RMID - (TOP + 8), RDN = BASE - RMID;
-
-/* The populations panel and the prior·likelihood·posterior marginal panel
-   come from plots.js (curvePath, populationSvg, marginalSvg). */
-
-function rewardRaw(x, ctr, p, c) {
-  const e = Math.abs(x - ctr);
-  return 1 - Math.pow(e, p) - c * e;
-}
-
-function rewardClamped(x, ctr, p, c) {
-  return Math.max(-1, rewardRaw(x, ctr, p, c));
-}
-
-/* ---- panels 3 & 4: a belief scored against the reward model, twice --------
-   Every panel is centred horizontally on the true difference Δ, and all three
-   curves — true reward, estimated reward, and belief — share ONE horizontal
-   scale (xp). The vertical reward scale (yR) is fixed: the peak reward +1 (at
-   the truth) rides at the top, 0 at the mid-line, −1 at the base, with lower
-   rewards clamped to the floor.
-
-     • the ESTIMATED reward (gold, solid) — centred on your decision Δ̂. On the
-       posterior panel the shaded lens is the overlap the expected-reward integral
-       measures; on the CI panel, dotted links drop from the interval's midpoint
-       (the MLE) and its two extremes to this curve — the reward you'd score there.
-     • the TRUE reward (green, dashed) — centred on the hidden truth Δ. A dashed
-       guide marks Δ at the panel centre. The dot
-       sits ON it at your decision Δ̂ — the reward you really collect — joined by a
-       dashed line to the middle of your belief (the posterior peak, or the CI bar). */
-
-/* the posterior belief region of a reward panel: the green/red integrand fill
-   under the curve (green where the reward is +, red where −), the curve outline,
-   and — for the static view — the gold "expected-reward lens", the overlap the
-   E[U] integral measures. The double-click `sweep` easter egg (startRewardEgg)
-   replaces the faint uniform fill with a magnitude-shaded one that grows only out
-   to the sweep centre, and drops the lens. Kept out here so rewardSvg reads as the
-   plain decision view. */
-function posteriorBelief({ dens, rewAt, accent, estMode, xp, yB, beliefH, yR, drawLo, drawHi, sweep }) {
-  let out = "";
-  const fillXs = linspace(drawLo, drawHi, 220);
-  for (let i = 0; i < fillXs.length - 1; i++) {
-    const xL = fillXs[i], xR = fillXs[i + 1], xM = 0.5 * (xL + xR);
-    const y = yB(dens(xM));
-    let rectW = Math.max(0.8, xp(xR) - xp(xL)), opacity = "0.12";
-    if (sweep) {
-      if (xL >= estMode) continue;                       // only the swept-through region is filled
-      if (xR > estMode) rectW = Math.max(0.8, xp(estMode) - xp(xL));
-      const mag = sweep.maxAbs > 0 ? Math.abs(dens(xM) * rewAt(xM)) / sweep.maxAbs : 0;
-      opacity = (0.08 + 0.84 * Math.sqrt(Math.min(1, mag))).toFixed(3);
-    }
-    out += `<rect x='${xp(xL).toFixed(1)}' y='${y.toFixed(1)}' width='${rectW.toFixed(1)}' ` +
-      `height='${Math.max(0.8, RMID - y).toFixed(1)}' fill='${rewAt(xM) >= 0 ? GRN_F : RED_F}' opacity='${opacity}'/>`;
-  }
-  const top = linspace(drawLo, drawHi, 321).map(x => `${xp(x).toFixed(1)},${yB(dens(x)).toFixed(1)}`).join(" ");
-  out += `<polyline points='${top}' fill='none' stroke='${accent}' stroke-width='2'/>`;
-
-  if (!sweep) {   // expected-reward lens: overlap of the belief and the gold reward
-    const oLo = Math.max(drawLo, estMode - 1), oHi = Math.min(drawHi, estMode + 1);
-    if (oHi > oLo) {
-      const xs = linspace(oLo, oHi, Math.max(8, Math.round((oHi - oLo) * 60)));
-      const lt = xs.map(x => { const h = Math.max(0, Math.min(beliefH(x), RMID - yR(rewAt(x)))); return `${xp(x).toFixed(1)},${(RMID - h).toFixed(1)}`; }).join(" ");
-      out += `<polygon points='${xp(oLo).toFixed(1)},${RMID.toFixed(1)} ${lt} ${xp(oHi).toFixed(1)},${RMID.toFixed(1)}' fill='${REWARD_C}' opacity='0.20'/>`;
-    }
-  }
-  return out;
-}
-
-function rewardSvg({ dens, isBox, lo, hi, mode, delta, p, c, BK, estR, estLo, estHi, actR, bet, accent, showEstimatedCurve = true, sweep = null }) {
-  const tag = isBox ? "b" : "a";
-  const estMode = sweep ? sweep.center : mode;          // the gold reward is centred on the bet (or sweep)
-  const rewE = (x) => rewardClamped(x, estMode, p, c);  // estimated reward, centred on the decision
-  const rewA = (x) => rewardClamped(x, delta, p, c);    // true reward, centred on the hidden truth
-  const yR = (r) => r >= 0 ? RMID - r * RUP : RMID - r * RDN;   // fixed scale: reward +1 → top, −1 → base
-  const yRc = (r) => Math.max(TOP + 3, Math.min(BASE, yR(r))); // clamped to the plot area
-  const yB = (d) => RMID - Math.min(d * BK, RUP * 0.96);
-  const beliefH = (x) => RMID - yB(dens(x));          // belief height above the zero-line (px)
-
-  // floats 3 & 4 keep the same horizontal scale, but the visible window is recentered
-  // on the hidden truth Δ so the true-reward peak always sits in the middle.
-  const loX = delta - HALF, hiX = delta + HALF;       // visible window in data units
-  const xp = (x) => X0 + (x - delta) * SC;
-  const clampPX = (px) => Math.min(Math.max(px, ML), ML + S);
-  const out = [];
-
-  const fade = fadeTopMask("rew" + tag, { bottom: RMID, soft: 0.18 });
-  out.push(fade.defs);
-
-  const drawLo = isBox ? Math.max(lo, loX) : loX, drawHi = isBox ? Math.min(hi, hiX) : hiX;
-
-  // the belief -------------------------------------------------------------
-  let belief = "";
-  if (isBox) {
-    // a confidence interval is NOT a density — draw it as a flat error bar at
-    // reward 0.5, with end caps and a midpoint marker at the MLE
-    const barY = yR(0.5);
-    const xlo = clampPX(xp(lo)), xhi = clampPX(xp(hi)), xm = clampPX(xp(mode));
-    belief += `<line x1='${xlo.toFixed(1)}' x2='${xhi.toFixed(1)}' y1='${barY.toFixed(1)}' y2='${barY.toFixed(1)}' stroke='${accent}' stroke-width='3'/>`;
-    for (const xx of [xlo, xhi])
-      belief += `<line x1='${xx.toFixed(1)}' x2='${xx.toFixed(1)}' y1='${(barY - 5).toFixed(1)}' y2='${(barY + 5).toFixed(1)}' stroke='${accent}' stroke-width='2'/>`;
-    belief += `<circle cx='${xm.toFixed(1)}' cy='${barY.toFixed(1)}' r='3.6' fill='${accent}'/>`;
-  } else {
-    belief += posteriorBelief({ dens, rewAt: rewE, accent, estMode, xp, yB, beliefH, yR, drawLo, drawHi, sweep });
-  }
-  out.push(`<g mask='${fade.mask}'>${belief}</g>`);
-
-  // the zero-line of the reward axis
-  out.push(`<line x1='${ML}' x2='${ML + S}' y1='${RMID.toFixed(1)}' y2='${RMID.toFixed(1)}' stroke='${PAL.rule}' stroke-width='1'/>`);
-  out.push(`<line x1='${X0.toFixed(1)}' x2='${X0.toFixed(1)}' y1='${BASE}' y2='${TOP + 18}' stroke='${PAL.green}' stroke-width='1.4' stroke-dasharray='5 4'/>`);
-
-  // the two reward landscapes — estimated (gold, solid), true (green, dashed)
-  const curve = (f, col, dash) =>
-    `<polyline points='${linspace(loX, hiX, 421).map(x => `${xp(x).toFixed(1)},${yRc(f(x)).toFixed(1)}`).join(" ")}' ` +
-    `fill='none' stroke='${col}' stroke-width='1.8'${dash ? ` stroke-dasharray='${dash}'` : ""}/>`;
-  if (showEstimatedCurve || sweep) out.push(curve(rewE, sweep ? MAROON : REWARD_C)); // estimated — centred on the decision
-  out.push(curve(rewA, PAL.green, "6 4")); // true — centred on the truth (dashed)
-
-  // float 4: dotted links from the CI bar (reward 0.5) to the estimated-reward
-  // curve at the MLE and at each interval extreme — the reward you'd score there
-  if (isBox) {
-    const barY = yR(0.5);
-    for (const xx of [lo, mode, hi]) {
-      const px = clampPX(xp(xx)), gy = yRc(rewE(xx));
-      out.push(`<line x1='${px.toFixed(1)}' x2='${px.toFixed(1)}' y1='${barY.toFixed(1)}' y2='${gy.toFixed(1)}' stroke='${REWARD_C}' stroke-width='1.2' stroke-dasharray='1 3' stroke-linecap='round'/>`);
-      out.push(`<circle cx='${px.toFixed(1)}' cy='${gy.toFixed(1)}' r='3' fill='${REWARD_C}'/>`);
-    }
-  }
-
-  // reward magnitude labels at the fixed axis extremes: peak +1, zero, floor −1
-  out.push(`<text x='${ML + S - 4}' y='${(TOP + 13).toFixed(1)}' text-anchor='end' font-size='10' fill='${PAL.muted}'>+1</text>`);
-  out.push(`<text x='${ML + S - 4}' y='${(RMID - 4).toFixed(1)}' text-anchor='end' font-size='10' fill='${PAL.muted}'>0</text>`);
-  out.push(`<text x='${ML + S - 4}' y='${(BASE - 5).toFixed(1)}' text-anchor='end' font-size='10' fill='${PAL.muted}'>−1</text>`);
-
-  // the decision Δ̂ and the reward it really earns: a dot ON the true-reward (green)
-  // curve at Δ̂, joined by a dashed line to the middle of the belief
-  const dvalX = Math.max(loX, Math.min(hiX, mode));
-  const mx = xp(dvalX);
-  const dotY = yRc(rewA(dvalX));
-  const beliefTopY = isBox ? yR(0.5) : yB(dens(dvalX));
-  out.push(`<line x1='${mx.toFixed(1)}' x2='${mx.toFixed(1)}' y1='${beliefTopY.toFixed(1)}' y2='${dotY.toFixed(1)}' stroke='${PAL.ink}' stroke-width='1.1' stroke-dasharray='4 3'/>`);
-  out.push(`<circle cx='${mx.toFixed(1)}' cy='${dotY.toFixed(1)}' r='4.2' fill='${PAL.ink}'/>`);
-
-  // peak labels: Δ̂ (decision) and Δ (truth, the panel centre), splayed so they never collide
-  const left = mode <= delta;
-  out.push(`<text x='${(mx + (left ? -4 : 4)).toFixed(1)}' y='${(TOP + 16).toFixed(1)}' text-anchor='${left ? "end" : "start"}' font-size='12.5' font-weight='600' fill='${PAL.ink}'>Δ̂</text>`);
-  out.push(`<text x='${(X0 + (left ? 4 : -4)).toFixed(1)}' y='${(TOP + 16).toFixed(1)}' text-anchor='${left ? "start" : "end"}' font-size='12.5' font-weight='600' fill='${PAL.green}'>Δ</text>`);
-
-  out.push(`<line x1='${ML}' x2='${ML + S}' y1='${BASE}' y2='${BASE}' stroke='${PAL.rule}' stroke-width='1'/>`);
-
-  // pills: estimated — the rule's verdict (green when it says bet, grey when fold);
-  // actual — what we really earn (green win, red loss, grey no-play / refused).
-  // estimated reward is one expected value (posterior), or the min…max across the
-  // interval (CI) — the centre earns 1, the extremes share the same endpoint value.
-  const estValue = sweep ? sweep.estR : estR;
-  const estDisp = isBox ? `${fmtRewardPill(estLo)}...${fmtRewardPill(estHi)}` : fmtRewardPill(estValue);
-  out.push(pill(ML + 8, TOP + 6, `estimated ${estDisp}`, (sweep ? estValue > 0 : bet) ? GRN_F : GREY));
-  out.push(pill(ML + 8, TOP + 32, `actual ${fmtRewardPill(actR)}`, actR > 0 ? GRN_F : actR < 0 ? RED_F : GREY));
-
-  return `<svg viewBox='0 0 ${FW} ${FH}' xmlns='http://www.w3.org/2000/svg'>${out.join("")}</svg>`;
-}
-
-/* ---- wiring -------------------------------------------------------------- */
-
-const grpTruth = document.getElementById("grpTruth");
-const grpPrior = document.getElementById("grpPrior");
-const grpDecision = document.getElementById("grpDecision");
-const simArea = document.getElementById("simArea");
-const figRewPost = document.getElementById("figRewPost");
-const resampleBtn = document.getElementById("resample");
-const simBtn = document.getElementById("simulate");
-let pool = makePool(15); // one fixed draw — dots don't jitter as you drag
-let currentState = null;
-let simRunning = false;
-let simEntries = [];
-let rewardEggToken = 0;
-let rewardEggFrame = 0;
-
-const deltaS = makeSlider(grpTruth, { label: "true difference · Δ", min: -2, max: 2, step: 0.05, value: 0.8, fmt: v => v.toFixed(2), onInput: onControlChange });
-const varS   = makeSlider(grpTruth, { label: "true variance · σ²", min: 0.25, max: 4, step: 0.05, value: 1.0, fmt: v => v.toFixed(2), onInput: onControlChange });
-const nS     = makeSlider(grpTruth, { label: "sample size · n per group", min: 3, max: 100, step: 1, value: 12, fmt: v => v.toFixed(0), onInput: onControlChange });
-
-const m0S    = makeSlider(grpPrior, { label: "prior centre for Δ · m₀", min: -2, max: 2, step: 0.05, value: 0, fmt: v => v.toFixed(2), onInput: onControlChange });
-const k0S    = makeSlider(grpPrior, { label: "prior weight · κ₀ (pseudo-obs.)", min: -1, max: 2, step: 0.05, value: 0,
-                                      fmt: v => { const k = 10 ** v; return k < 10 ? k.toFixed(1) : k.toFixed(0); }, onInput: onControlChange });
-const s0S    = makeSlider(grpPrior, { label: "prior centre for σ² · σ²₀", min: 0.25, max: 4, step: 0.05, value: 1.0, fmt: v => v.toFixed(2), onInput: onControlChange });
-
-const alphaS = makeSlider(grpDecision, { label: "false-positive rate · α (t-test)", min: 0.005, max: 0.2, step: 0.005, value: 0.05, fmt: v => v.toFixed(3), onInput: onControlChange });
-const pS     = makeSlider(grpDecision, { label: "reward model degree · p", min: 1, max: 10, step: 0.1, value: 2, fmt: v => v.toFixed(1), onInput: onControlChange });
-const cS     = makeSlider(grpDecision, { label: "reward linear penalty · c", min: -10, max: 10, step: 0.1, value: 0, fmt: v => v.toFixed(1), onInput: onControlChange });
-
-const SIMW = 960, SIMH = 176, SML = 46, SMR = 24, SMT = 14, SMB = 18;
-const SIM_WAIT = 300, N_SIM = 40, SIM_COL_W = 10.5, SIM_HEAT_SLICES = 52;
-const SIM_TEXT1Y = SMT + 10, SIM_TEXT2Y = SMT + 22;
-const SIM_PLOT_TOP = SMT + 32, SIM_PLOT_BOT = SIMH - SMB - 12;
-const SIM_MID = (SIM_PLOT_TOP + SIM_PLOT_BOT) / 2;
-const SIM_SPACING = (SIMW - SML - SMR) / N_SIM;
-const SIM_NS = "http://www.w3.org/2000/svg";
-const MAROON = "#8C2F39", GREY = "#9AA0A6";
-const sleep = (ms) => new Promise(r => setTimeout(r, ms));
-
-// ∫ f(x) dx over a wide range by the trapezoid rule. The reward floor is clamped at −1,
-// and the wide finite range captures essentially all of the posterior / CI mass.
-function integrate(f) {
-  const A = -12, B = 12, M = 4000, h = (B - A) / M;
-  let s = 0;
-  for (let i = 0; i <= M; i++) s += ((i === 0 || i === M) ? 0.5 : 1) * f(A + h * i);
-  return s * h;
-}
-
-function buildRewardEggData(state) {
-  const A = -12, B = 12, M = 2400, h = (B - A) / M;
-  const centerPad = 0.9;
-  const centerLo = state.delta - HALF - centerPad;
-  const centerHi = state.delta + HALF + centerPad;
-  let maxAbs = 0;
-  for (let i = 0; i <= M; i++) {
-    const x = A + h * i;
-    if (x < state.delta - HALF || x > state.delta + HALF) continue;
-    for (let j = 0; j <= 72; j++) {
-      const center = centerLo + (centerHi - centerLo) * j / 72;
-      const v = state.post(x) * state.rew(x, center);
-      maxAbs = Math.max(maxAbs, Math.abs(v));
-    }
-  }
-  return { A, B, M, h, maxAbs, centerLo, centerHi };
-}
-
-function rewardEggEstimate(data, state, center) {
-  if (center <= data.A) return 0;
-  let s = 0;
-  let prevX = data.A;
-  let prevV = state.post(prevX) * state.rew(prevX, center);
-  for (let i = 1; i <= data.M; i++) {
-    const x = data.A + data.h * i;
-    const v = state.post(x) * state.rew(x, center);
-    if (x >= center) {
-      const frac = (center - prevX) / (x - prevX);
-      const midV = prevV + frac * (v - prevV);
-      s += 0.5 * (prevV + midV) * (center - prevX);
-      return s;
-    }
-    s += 0.5 * (prevV + v) * data.h;
-    prevX = x;
-    prevV = v;
-  }
-  return s;
-}
-
-function stopRewardEgg(restore = true) {
-  rewardEggToken += 1;
-  if (rewardEggFrame) cancelAnimationFrame(rewardEggFrame);
-  rewardEggFrame = 0;
-  if (restore && currentState) render(currentState);
-}
-
-function onControlChange() {
-  stopRewardEgg(false);
-  dismissSim();
-  render();
-}
-
-function fmtReward(v) {
-  const z = Math.abs(v) < 0.005 ? 0 : v;
-  return z > 0 ? `+${z.toFixed(2)}` : z.toFixed(2);
-}
-
-function fmtRewardLabel(v) {
-  return `${Math.round(Math.abs(v) * 100)}`;
-}
-
-function fmtRewardPill(v) {
-  return `${Math.round(v * 100)}`;
-}
-
-function fmtRewardSum(v) {
-  return `${(v * 100).toFixed(1)}`;
-}
-
-function rewardTextColor(v) {
-  return v > 0 ? GRN_F : v < 0 ? RED_F : GREY;
-}
-
-function svgNode(tag, attrs = {}) {
-  const el = document.createElementNS(SIM_NS, tag);
-  for (const [k, v] of Object.entries(attrs)) el.setAttribute(k, v);
-  return el;
-}
-
-function starPoints(cx, cy, rOuter, rInner) {
-  const pts = [];
-  for (let i = 0; i < 10; i++) {
-    const a = -Math.PI / 2 + i * Math.PI / 5;
-    const r = i % 2 === 0 ? rOuter : rInner;
-    pts.push(`${(cx + r * Math.cos(a)).toFixed(1)},${(cy + r * Math.sin(a)).toFixed(1)}`);
-  }
-  return pts.join(" ");
-}
-
-function setControlsDisabled(disabled) {
-  document.querySelectorAll("#sliders input").forEach(input => { input.disabled = disabled; });
-  resampleBtn.disabled = disabled;
-  simBtn.disabled = disabled;
-}
-
-function dismissSim() {
-  if (simRunning) return;
-  simEntries = [];
-  simArea.hidden = true;
-  simArea.innerHTML = "";
-}
-
-function computeState(samplePool) {
-  const delta = deltaS.value, varr = varS.value, n = nS.value;
-  const m0 = m0S.value, k0 = 10 ** k0S.value, B0 = 2 * s0S.value;
-  const alpha = alphaS.value, p = pS.value, c = cS.value;
-  const sigma = Math.sqrt(varr);
-
-  // one experiment: the sample, its difference summary, the conjugate posterior
-  const { xa, xb, dbar, ssd } = drawSample(samplePool, { delta, sigma, n });
-  const { df: dfC, se } = tTest(xa, xb);
-  const { kn, mn, an, bn } = nigUpdate(m0, k0, A0, B0, n, dbar, ssd);
-
-  // the three readings over Δ — prior, likelihood, posterior (steps 3-4)
-  const pri = nigMarginalDelta(m0, k0, A0, B0);
-  const pos = nigMarginalDelta(mn, kn, an, bn);
-  const prior = locScaleTpdf(pri.loc, pri.scale, pri.df);
-  const post  = locScaleTpdf(pos.loc, pos.scale, pos.df);
-  const lik   = likelihoodProfile(dbar, ssd, n);
-
-  // the (1−α) confidence interval, and the "CI read as a uniform density"
-  const hw = tCrit(alpha, dfC) * se;
-  const ciLo = dbar - hw, ciHi = dbar + hw, boxH = 1 / (2 * hw);
-  const box = (x) => (x >= ciLo && x <= ciHi) ? boxH : 0;
-
-  // each rule bets on the peak of its belief: the posterior mode mₙ, or the MLE d̄
-  const modePost = mn, modeCI = dbar;
-  const rew = (x, ctr) => rewardClamped(x, ctr, p, c);
-
-  // Bayesian rule: bet iff the posterior's expected reward (centred on the bet) > 0
-  const erPost = integrate(x => post(x) * rew(x, modePost));
-  const betPost = erPost > 0;
-
-  // CI rule: worst-case — the reward at the interval edge; bet iff that stays ≥ 0
-  const ciEdgeR = rew(ciLo, modeCI);
-  const erCIlo = Math.min(1, ciEdgeR), erCIhi = Math.max(1, ciEdgeR);
-  const erCI = erCIlo, betCI = erCIlo >= 0;
-
-  // what each rule actually earns once the hidden Δ is revealed (0 if it refused)
-  const actPostRaw = rew(modePost, delta), actCIRaw = rew(modeCI, delta);
-  const actPost = betPost ? actPostRaw : 0;
-  const actCI = betCI ? actCIRaw : 0;
-
-  // drawing scales: belief-height factor, and the posterior's 99% half-width
-  const BK = 0.9 * RUP / Math.max(post(mn), boxH, 0.2);
-  const postHalf = tInv(0.995, pos.df) * pos.scale;
-
-  return {
-    pool: samplePool,
-    delta, varr, n, m0, k0, B0, alpha, p, c, sigma,
-    xa, xb, dbar, ssd, kn, mn, an, bn, se, dfC, hw, ciLo, ciHi, boxH, BK, postHalf,
-    prior, lik, post, box, rew,
-    modePost, modeCI,
-    erPost, betPost,
-    erCI, erCIlo, erCIhi, betCI,
-    actPostRaw, actCIRaw, actPost, actCI,
-  };
-}
-
-function renderRewardPost(state, rewardEgg = null) {
-  figRewPost.innerHTML = rewardSvg({
-    dens: state.post, isBox: false, mode: state.modePost, delta: state.delta, p: state.p, c: state.c, BK: state.BK,
-    estR: state.erPost, actR: state.actPost, bet: state.betPost, accent: POST_C, showEstimatedCurve: false, sweep: rewardEgg });
-}
-
-function render(state = computeState(pool), opts = {}) {
-  currentState = state;
-  pool = state.pool;
-
-  document.getElementById("figPop").innerHTML = populationSvg(state.delta, state.varr, state.n, state.pool);
-  document.getElementById("figMarg").innerHTML = marginalSvg(state.prior, state.lik, state.post, state.delta);
-
-  renderRewardPost(state, opts.rewardEgg || null);
-  document.getElementById("figRewCI").innerHTML = rewardSvg({
-    dens: state.box, isBox: true, lo: state.ciLo, hi: state.ciHi, mode: state.modeCI, delta: state.delta,
-    p: state.p, c: state.c, BK: state.BK, estR: state.erCI, estLo: state.erCIlo, estHi: state.erCIhi,
-    actR: state.actCI, bet: state.betCI, accent: PAL.blue });
-}
-
-function startRewardEgg() {
-  if (simRunning || !currentState) return;
-  stopRewardEgg(false);
-
-  const token = ++rewardEggToken;
-  const state = currentState;
-  const eggData = buildRewardEggData(state);
-  const duration = 1800;
-  const start = performance.now();
-
-  const drawFrame = (center) => {
-    renderRewardPost(state, {
-      center,
-      maxAbs: eggData.maxAbs,
-      estR: rewardEggEstimate(eggData, state, center),
-    });
-  };
-
-  const tick = (now) => {
-    if (token !== rewardEggToken) return;
-    const t = Math.min(1, (now - start) / duration);
-    const center = eggData.centerLo + (eggData.centerHi - eggData.centerLo) * t;
-    drawFrame(center);
-    if (t < 1) rewardEggFrame = requestAnimationFrame(tick);
-    else {
-      rewardEggFrame = 0;
-      if (token === rewardEggToken) render(state);
-    }
-  };
-
-  drawFrame(eggData.centerLo);
-  rewardEggFrame = requestAnimationFrame(tick);
-}
-
-function buildBayesSimSvg() {
-  const x0 = SML, x1 = SIMW - SMR, lgY = SIMH - 6;
-  let lx = x0;
-  const item = (swatch, label) => {
-    const out = swatch + `<text x='${lx + 20}' y='${lgY}' font-size='10.5' fill='${PAL.muted}'>${label}</text>`;
-    lx += 20 + label.length * 5.8 + 26;
-    return out;
-  };
-  return `<svg id='simBayesSvg' viewBox='0 0 ${SIMW} ${SIMH}' xmlns='${SIM_NS}'>` +
-         `<g id='simBayesCols'></g>` +
-         `<line id='simBayesMarker' x1='0' x2='0' y1='${SIM_PLOT_TOP}' y2='${SIM_PLOT_BOT}' stroke='${PAL.ink}' stroke-width='1' stroke-dasharray='3 3' opacity='0'/>` +
-         `<line x1='${x0}' x2='${x1}' y1='${SIM_MID.toFixed(1)}' y2='${SIM_MID.toFixed(1)}' stroke='${PAL.ink}' stroke-width='1.2' stroke-dasharray='4 4' opacity='0.72'/>` +
-         `<text x='${x1}' y='${(SIM_MID - 5).toFixed(1)}' text-anchor='end' font-size='11' fill='${PAL.ink}'>Δ̂</text>` +
-         `<text x='${(SML - 8).toFixed(1)}' y='${SIM_TEXT1Y}' text-anchor='end' font-size='9.5' fill='${PAL.muted}'>est</text>` +
-         `<text x='${(SML - 8).toFixed(1)}' y='${SIM_TEXT2Y}' text-anchor='end' font-size='9.5' fill='${PAL.muted}'>got</text>` +
-         item(`<rect x='${lx}' y='${lgY - 8}' width='12' height='6' rx='2' fill='${GRN_F}' fill-opacity='0.75'/>`, "positive integrand") +
-         item(`<rect x='${lx}' y='${lgY - 8}' width='12' height='6' rx='2' fill='${RED_F}' fill-opacity='0.75'/>`, "negative integrand") +
-         item(`<circle cx='${lx + 6}' cy='${lgY - 4.5}' r='4.5' fill='${MAROON}'/>`, "bet") +
-         item(`<circle cx='${lx + 6}' cy='${lgY - 4.5}' r='4.5' fill='${GREY}'/>`, "skip") +
-         item(`<polygon points='${starPoints(lx + 6, lgY - 4.5, 5, 2.2)}' fill='${PAL.green}'/>`, "true Δ") +
-         `<text id='simBayesSum' x='${x1}' y='${lgY}' text-anchor='end' font-size='10.5' fill='${PAL.muted}' opacity='0'></text>` +
-         `</svg>`;
-}
-
-function buildCISimSvg(delta, span) {
-  const x0 = SML, x1 = SIMW - SMR, lgY = SIMH - 6;
-  const trueY = simCIY(delta, span);
-  let lx = x0;
-  const item = (swatch, label) => {
-    const out = swatch + `<text x='${lx + 22}' y='${lgY}' font-size='10.5' fill='${PAL.muted}'>${label}</text>`;
-    lx += 22 + label.length * 5.8 + 26;
-    return out;
-  };
-  return `<svg id='simCISvg' viewBox='0 0 ${SIMW} ${SIMH}' xmlns='${SIM_NS}'>` +
-         `<g id='simCICols'></g>` +
-         `<line id='simCIMarker' x1='0' x2='0' y1='${SIM_PLOT_TOP}' y2='${SIM_PLOT_BOT}' stroke='${PAL.ink}' stroke-width='1' stroke-dasharray='3 3' opacity='0'/>` +
-         `<line x1='${x0}' x2='${x1}' y1='${SIM_MID.toFixed(1)}' y2='${SIM_MID.toFixed(1)}' stroke='${PAL.ink}' stroke-width='1.2' stroke-dasharray='4 4' opacity='0.72'/>` +
-         `<line x1='${x0}' x2='${x1}' y1='${trueY.toFixed(1)}' y2='${trueY.toFixed(1)}' stroke='${PAL.green}' stroke-width='1.2' stroke-dasharray='4 4' opacity='0.72'/>` +
-         `<text x='${x1}' y='${(SIM_MID - 5).toFixed(1)}' text-anchor='end' font-size='11' fill='${PAL.ink}'>0</text>` +
-         `<text x='${x1}' y='${(trueY - 5).toFixed(1)}' text-anchor='end' font-size='11' fill='${PAL.green}'>true Δ</text>` +
-         `<text x='${(SML - 8).toFixed(1)}' y='${SIM_TEXT1Y}' text-anchor='end' font-size='9.5' fill='${PAL.muted}'>est</text>` +
-         `<text x='${(SML - 8).toFixed(1)}' y='${SIM_TEXT2Y}' text-anchor='end' font-size='9.5' fill='${PAL.muted}'>got</text>` +
-         item(`<line x1='${lx}' x2='${lx + 14}' y1='${lgY - 3}' y2='${lgY - 3}' stroke='${MAROON}' stroke-width='3' stroke-linecap='round'/>`, "accepted CI") +
-         item(`<line x1='${lx}' x2='${lx + 14}' y1='${lgY - 3}' y2='${lgY - 3}' stroke='${GREY}' stroke-width='3' stroke-linecap='round'/>`, "rejected CI") +
-         `<text id='simCISum' x='${x1}' y='${lgY}' text-anchor='end' font-size='10.5' fill='${PAL.muted}' opacity='0'></text>` +
-         `</svg>`;
-}
-
-function simTopY(rel, span) {
-  const halfPx = (SIM_PLOT_BOT - SIM_PLOT_TOP) / 2;
-  const scale = halfPx / Math.max(span, 1e-6);
-  return SIM_MID - Math.max(-halfPx, Math.min(halfPx, rel * scale));
-}
-
-function simCIY(v, span) {
-  const halfPx = (SIM_PLOT_BOT - SIM_PLOT_TOP) / 2;
-  const scale = halfPx / Math.max(span, 1e-6);
-  return SIM_MID - Math.max(-halfPx, Math.min(halfPx, v * scale));
-}
-
-function bayesSampleGroup(state, idx, span, maxAbs) {
-  const x = SML + (idx + 0.5) * SIM_SPACING;
-  const g = svgNode("g", { "data-idx": String(idx) });
-  const frameW = SIM_SPACING * 0.8;
-  const trueY = simTopY(state.delta - state.modePost, span);
-  g.appendChild(svgNode("rect", {
-    x: (x - frameW / 2).toFixed(1), y: SIM_PLOT_TOP.toFixed(1), width: frameW.toFixed(1),
-    height: (SIM_PLOT_BOT - SIM_PLOT_TOP).toFixed(1), rx: "4", fill: PAL.ink, "fill-opacity": "0",
-    stroke: PAL.ink, "stroke-opacity": "0", "stroke-width": "1.1", "data-focus": "1"
-  }));
-
-  for (let i = 0; i < SIM_HEAT_SLICES; i++) {
-    const rel0 = -span + 2 * span * i / SIM_HEAT_SLICES;
-    const rel1 = -span + 2 * span * (i + 1) / SIM_HEAT_SLICES;
-    const relMid = 0.5 * (rel0 + rel1);
-    const xVal = state.modePost + relMid;
-    const val = state.post(xVal) * state.rew(xVal, state.modePost);
-    const mag = maxAbs > 0 ? Math.abs(val) / maxAbs : 0;
-    if (mag < 0.015) continue;
-    const y0 = simTopY(rel0, span), y1 = simTopY(rel1, span);
-    g.appendChild(svgNode("rect", {
-      x: (x - SIM_COL_W / 2).toFixed(1),
-      y: Math.min(y0, y1).toFixed(1),
-      width: SIM_COL_W.toFixed(1),
-      height: Math.max(1.2, Math.abs(y1 - y0) + 0.3).toFixed(1),
-      fill: val >= 0 ? GRN_F : RED_F,
-      "fill-opacity": (0.08 + 0.84 * Math.sqrt(mag)).toFixed(3)
-    }));
-  }
-
-  if (state.betPost) {
-    g.appendChild(svgNode("circle", {
-      cx: x.toFixed(1), cy: SIM_MID.toFixed(1), r: "3.1",
-      fill: MAROON
-    }));
-  } else {
-    g.appendChild(svgNode("circle", {
-      cx: x.toFixed(1), cy: SIM_MID.toFixed(1), r: "3.1",
-      fill: GREY
-    }));
-  }
-  g.appendChild(svgNode("polygon", {
-    points: starPoints(x, trueY, 3.7, 1.7),
-    fill: PAL.green
-  }));
-
-  const expTxt = svgNode("text", {
-    x: x.toFixed(1), y: SIM_TEXT1Y.toFixed(1), "text-anchor": "middle",
-    "font-size": "8.4", "font-weight": "600", fill: rewardTextColor(state.erPost)
-  });
-  expTxt.textContent = fmtRewardLabel(state.erPost);
-  g.appendChild(expTxt);
-
-  const gotTxt = svgNode("text", {
-    x: x.toFixed(1), y: SIM_TEXT2Y.toFixed(1), "text-anchor": "middle",
-    "font-size": "8.4", "font-weight": "600", fill: rewardTextColor(state.actPost)
-  });
-  gotTxt.textContent = fmtRewardLabel(state.actPost);
-  g.appendChild(gotTxt);
-
-  return g;
-}
-
-function ciSampleGroup(state, idx, span) {
-  const x = SML + (idx + 0.5) * SIM_SPACING;
-  const g = svgNode("g", { "data-idx": String(idx) });
-  const frameW = SIM_SPACING * 0.8;
-  const col = state.betCI ? MAROON : GREY;
-  const yLo = simCIY(state.ciLo, span);
-  const yHi = simCIY(state.ciHi, span);
-  const yMid = simCIY(state.modeCI, span);
-
-  g.appendChild(svgNode("rect", {
-    x: (x - frameW / 2).toFixed(1), y: SIM_PLOT_TOP.toFixed(1), width: frameW.toFixed(1),
-    height: (SIM_PLOT_BOT - SIM_PLOT_TOP).toFixed(1), rx: "4", fill: PAL.ink, "fill-opacity": "0",
-    stroke: PAL.ink, "stroke-opacity": "0", "stroke-width": "1.1", "data-focus": "1"
-  }));
-  g.appendChild(svgNode("line", {
-    x1: x.toFixed(1), x2: x.toFixed(1),
-    y1: yHi.toFixed(1), y2: yLo.toFixed(1),
-    stroke: col, "stroke-width": "3", "stroke-linecap": "round", "data-line": "1"
-  }));
-  for (const y of [yHi, yLo]) {
-    g.appendChild(svgNode("line", {
-      x1: (x - 3.8).toFixed(1), x2: (x + 3.8).toFixed(1),
-      y1: y.toFixed(1), y2: y.toFixed(1),
-      stroke: col, "stroke-width": "1.8", "stroke-linecap": "round"
-    }));
-  }
-  g.appendChild(svgNode("circle", {
-    cx: x.toFixed(1), cy: yMid.toFixed(1), r: "2.4",
-    fill: col
-  }));
-
-  const predTxt = svgNode("text", {
-    x: x.toFixed(1), y: SIM_TEXT1Y.toFixed(1), "text-anchor": "middle",
-    "font-size": "8.4", "font-weight": "600", fill: rewardTextColor(state.erCIlo)
-  });
-  predTxt.textContent = fmtRewardLabel(state.erCIlo);
-  g.appendChild(predTxt);
-
-  const gotTxt = svgNode("text", {
-    x: x.toFixed(1), y: SIM_TEXT2Y.toFixed(1), "text-anchor": "middle",
-    "font-size": "8.4", "font-weight": "600", fill: rewardTextColor(state.actCI)
-  });
-  gotTxt.textContent = fmtRewardLabel(state.actCI);
-  g.appendChild(gotTxt);
-
-  return g;
-}
-
-function overbarTspan(label) {
-  return `<tspan style='text-decoration:overline'>${label}</tspan>`;
-}
-
-function setSimSummary(svg, id, leftLabel, leftMean, actMean, rightMean, maxMean) {
-  const text = svg.querySelector(id);
-  text.innerHTML =
-    `${overbarTspan(leftLabel)} ${fmtRewardSum(leftMean)} · ` +
-    `${overbarTspan("act")} ${fmtRewardSum(actMean)} · ` +
-    `${overbarTspan("got")} ${fmtRewardSum(rightMean)} · ` +
-    `${overbarTspan("max")} ${fmtRewardSum(maxMean)}`;
-  text.setAttribute("opacity", "1");
-}
-
-function setSampleFocus(svg, idx, active) {
-  const group = svg.querySelector(`[data-idx='${idx}']`);
-  if (!group) return;
-  const frame = group.querySelector("[data-focus='1']");
-  if (frame) {
-    frame.setAttribute("fill-opacity", active ? "0.045" : "0");
-    frame.setAttribute("stroke-opacity", active ? "0.28" : "0");
-  }
-  const line = group.querySelector("[data-line='1']");
-  if (line) line.setAttribute("stroke-width", active ? "4.8" : "3");
-}
-
-function wireSimHover(bayesSvg, ciSvg) {
-  const bayesMarker = bayesSvg.querySelector("#simBayesMarker");
-  const ciMarker = ciSvg.querySelector("#simCIMarker");
-  let last = -1;
-
-  const activate = (idx) => {
-    if (idx === last || idx < 0 || idx >= simEntries.length) return;
-    if (last >= 0) {
-      setSampleFocus(bayesSvg, last, false);
-      setSampleFocus(ciSvg, last, false);
-    }
-    last = idx;
-    setSampleFocus(bayesSvg, idx, true);
-    setSampleFocus(ciSvg, idx, true);
-    const x = (SML + (idx + 0.5) * SIM_SPACING).toFixed(1);
-    bayesMarker.setAttribute("x1", x); bayesMarker.setAttribute("x2", x); bayesMarker.setAttribute("opacity", "1");
-    ciMarker.setAttribute("x1", x); ciMarker.setAttribute("x2", x); ciMarker.setAttribute("opacity", "1");
-    render(simEntries[idx]);
-  };
-
-  const clear = () => {
-    if (last >= 0) {
-      setSampleFocus(bayesSvg, last, false);
-      setSampleFocus(ciSvg, last, false);
-      last = -1;
-    }
-    bayesMarker.setAttribute("opacity", "0");
-    ciMarker.setAttribute("opacity", "0");
-  };
-
-  for (const svg of [bayesSvg, ciSvg]) {
-    svg.addEventListener("pointermove", (e) => {
-      if (simRunning) return;
-      const idx = Math.floor((svgPoint(svg, e).x - SML) / SIM_SPACING);
-      activate(idx);
-    });
-    svg.addEventListener("pointerleave", clear);
-    svg.style.cursor = "pointer";
-  }
-}
-
-async function runSimulation() {
-  if (simRunning) return;
-  dismissSim();
-  simRunning = true;
-  setControlsDisabled(true);
-
-  const draws = [];
-  for (let i = 0; i < N_SIM; i++) draws.push(computeState(makePool()));
-  simEntries = draws;
-
-  const bayesSpan = Math.max(
-    0.9,
-    ...draws.map(s => Math.max(s.postHalf, Math.abs(s.delta - s.modePost) + 0.25, Math.abs(s.ciLo - s.modePost), Math.abs(s.ciHi - s.modePost)))
-  );
-  const ciSpan = Math.max(
-    0.9,
-    ...draws.map(s => Math.max(Math.abs(s.delta) + 0.25, Math.abs(s.ciLo), Math.abs(s.ciHi), Math.abs(s.modeCI)))
-  );
-
-  let bayesMaxAbs = 0;
-  for (const s of draws) {
-    for (let i = 0; i < SIM_HEAT_SLICES; i++) {
-      const rel = -bayesSpan + 2 * bayesSpan * (i + 0.5) / SIM_HEAT_SLICES;
-      const xVal = s.modePost + rel;
-      bayesMaxAbs = Math.max(bayesMaxAbs, Math.abs(s.post(xVal) * s.rew(xVal, s.modePost)));
-    }
-  }
-
-  simArea.hidden = false;
-  simArea.innerHTML =
-    `<div class='figcap'>5 · repeated decision simulation</div>` +
-    `<div class='sim-stack'>` +
-      `<div class='sim-subcap'>Bayesian rule · posterior × reward integrand around Δ̂</div>` +
-      buildBayesSimSvg() +
-      `<div class='sim-subcap'>Confidence-interval rule · CI around 0</div>` +
-      buildCISimSvg(draws[0].delta, ciSpan) +
-    `</div>`;
-
-  const bayesSvg = simArea.querySelector("#simBayesSvg");
-  const ciSvg = simArea.querySelector("#simCISvg");
-  const bayesCols = bayesSvg.querySelector("#simBayesCols");
-  const ciCols = ciSvg.querySelector("#simCICols");
-
-  let sumExp = 0, sumActPost = 0, sumGotPost = 0, sumPred = 0, sumActCI = 0, sumGotCI = 0;
-  for (let i = 0; i < draws.length; i++) {
-    const state = draws[i];
-    pool = state.pool;
-    render(state);
-
-    bayesCols.appendChild(bayesSampleGroup(state, i, bayesSpan, bayesMaxAbs));
-    ciCols.appendChild(ciSampleGroup(state, i, ciSpan));
-
-    sumExp += state.erPost;
-    sumActPost += state.actPostRaw;
-    sumGotPost += state.actPost;
-    sumPred += state.erCIlo;
-    sumActCI += state.actCIRaw;
-    sumGotCI += state.actCI;
-
-    await sleep(SIM_WAIT);
-  }
-
-  const nDraws = draws.length;
-  const maxMean = 1;
-  setSimSummary(bayesSvg, "#simBayesSum", "est", sumExp / nDraws, sumActPost / nDraws, sumGotPost / nDraws, maxMean);
-  setSimSummary(ciSvg, "#simCISum", "est", sumPred / nDraws, sumActCI / nDraws, sumGotCI / nDraws, maxMean);
-
-  simRunning = false;
-  setControlsDisabled(false);
-  wireSimHover(bayesSvg, ciSvg);
-}
-
-resampleBtn.addEventListener("click", () => {
-  if (simRunning) return;
-  stopRewardEgg(false);
-  dismissSim();
-  pool = makePool(); // only the button re-randomizes
-  render();
-});
-
-simBtn.addEventListener("click", () => {
-  stopRewardEgg(false);
-  runSimulation();
-});
-figRewPost.addEventListener("dblclick", (e) => {
-  e.preventDefault();
-  startRewardEgg();
-});
-
-render();
-</script>
+    <main>
+        <header class="page">
+            <p class="kicker"><a href="index.html">Inference: from classical to Bayesian</a><span class="sep">·</span>Step 5 of
+                5</p>
+            <h1>Making a decision</h1>
+        </header>
+
+        <section class="prose">
+            <p><a href="04-full-bayesian.html">Step 4</a> handed us a posterior — a whole
+                distribution over the effect Δ. But a distribution is not yet a decision. Sooner or
+                later you must <em>act</em>: ship the drug, set the dose, choose B over A. A belief is
+                only worth something once it touches a choice.</p>
+
+            <p>Bayesian decision theory closes that last gap with one rule:
+                <strong>act to maximise expected utility under your posterior.</strong> It needs two
+                ingredients — the posterior you already have, and a <strong>reward model</strong> that
+                says how good each outcome is. We use a simple two-parameter family:
+            </p>
+
+            <p class="formula" style="font-style:normal">
+                U(x)&ensp;=&ensp;1&thinsp;−&thinsp;|Δ&thinsp;−&thinsp;x|<sup>p</sup>&thinsp;−&thinsp;c&thinsp;·&thinsp;|Δ&thinsp;−&thinsp;x|
+            </p>
+
+            <p>Read it plainly: if the truth is <strong>Δ</strong> and you commit to the value
+                <strong>x</strong>, you earn the most — a full <em>1</em> — when you land exactly on the
+                truth. Miss, and two penalties bite: a <em>polynomial</em> one, |Δ − x|<sup>p</sup>, and
+                a <em>linear</em> one, c · |Δ − x|. For positive <em>c</em> the reward falls through
+                <em>zero</em> at a break-even error <strong>ε</strong> — the largest miss you can still
+                profit from — and keeps dropping past it. Negative <em>c</em> pushes that crossing
+                outward and can even remove it from view. Raising <em>p</em>, oddly, often pushes ε
+                outward too — for misses under one unit a higher power bites less, so a little more
+                error is forgiven. (With c = 0, only the polynomial remains and ε sits at exactly 1.)
+            </p>
+
+            <table class="concept">
+                <tr>
+                    <th>knob</th>
+                    <th>what it does</th>
+                    <th>here</th>
+                </tr>
+                <tr>
+                    <td><strong>p</strong></td>
+                    <td>the <em>polynomial degree</em> — how the penalty
+                        curves: a gentle bowl at p = 1, a flat top with steep walls as p climbs</td>
+                    <td>a slider (1…10)</td>
+                </tr>
+                <tr>
+                    <td><strong>c</strong></td>
+                    <td>the <em>linear penalty</em> — a flat charge per unit
+                        of error; raising it tilts the whole reward down, lowering the payoff away from truth</td>
+                    <td>a slider (−10…10)</td>
+                </tr>
+                <tr>
+                    <td><strong>Δ</strong></td>
+                    <td>where the reward is centred — the truth itself;
+                        we can draw it here only because we simulate</td>
+                    <td>the green line</td>
+                </tr>
+            </table>
+
+            <p>A belief is not yet a decision. To force the issue we ask a sharper question:
+                <strong>given what I believe, should I place the bet at all — and if so, on what
+                    value?</strong> The bottom row answers it two ways, both committing to the same kind of
+                bet (the peak of the belief, <strong>Δ̂</strong>) but deciding <em>whether to bet</em>
+                by different rules.
+            </p>
+
+            <p>On the <strong>left</strong>, your honest <strong style="color:#333">posterior</strong>.
+                The Bayesian rule is to <strong>act on expected utility</strong>: average the reward —
+                centred on your bet Δ̂ — against the whole posterior,</p>
+
+            <p class="formula" style="font-style:normal">
+                E[U]&ensp;=&ensp;∫&thinsp;reward(Δ&thinsp;−&thinsp;Δ̂)&thinsp;·&thinsp;P(Δ)&thinsp;dΔ</p>
+
+            <p>and <strong>place the bet only when that expectation is positive</strong>. The shaded
+                gold lens is the overlap the integral measures.</p>
+
+            <p>On the <strong>right</strong>, the classical reading. A
+                <strong style="color:#3D6FB0">(1 − α) confidence interval</strong> is not a distribution,
+                so there's nothing to average against — we draw it honestly as a flat error bar: the
+                <strong>MLE</strong> Δ̂ at its centre, a <strong>margin of error E</strong> (the
+                half-width) reaching either way. With no distribution to take an expectation over, the
+                rule turns <strong>worst-case</strong>. The reward hits zero at a break-even error
+                <strong>ε</strong> (solve 1 − ε<sup>p</sup> − c·ε = 0); compare it to E —
+                <strong>bet iff E ≤ ε</strong>, so that even the interval's worst boundary still pays. The
+                dotted links read the reward you'd score at the MLE (the most, always 1) and at each
+                extreme (the least, 1 − E<sup>p</sup> − c·E).
+            </p>
+
+            <p>Then each panel shows what the decision <em>really</em> earns. The
+                <strong style="color:#A77B2E">estimated</strong> pill is the rule's own forecast — the
+                posterior's expected reward, or the CI's <em>min … max</em> range — turning
+                <strong style="color:#2E7D5B">green</strong> when the rule says place the bet and
+                <strong style="color:#9AA0A6">grey</strong> when it says fold. The
+                <strong style="color:#2E7D5B">actual</strong> pill is the payoff once the hidden truth Δ
+                is revealed: the true reward (the green curve, centred on Δ) read at the point you
+                committed to — the dot, dropped from Δ̂ — or <strong>zero if you refused the bet</strong>.
+                It turns green for a win, <strong style="color:#C0392B">red</strong> for a loss, grey for
+                a no-play. The gap between the two pills is the price of not knowing the truth.
+            </p>
+        </section>
+
+        <section class="demo">
+            <div class="controls">
+                <p class="hint">drag a slider — the truth, the data, your prior, or the reward
+                    change; press the button — a new sample is drawn</p>
+                <div id="sliders" class="sliders" style="align-items:start">
+                    <div id="grpTruth">
+                        <p class="ctl-group-label">the truth &amp; the sample</p>
+                    </div>
+                    <div id="grpPrior">
+                        <p class="ctl-group-label">the prior</p>
+                    </div>
+                    <div id="grpDecision">
+                        <p class="ctl-group-label">the decision</p>
+                    </div>
+                </div>
+                <div class="resample-row">
+                    <button class="resample" id="resample">↻&ensp;new sample</button>
+                    <button class="resample" id="simulate">▶&ensp;simulate</button>
+                </div>
+            </div>
+
+            <div class="sim-area" id="simArea" hidden></div>
+
+            <div class="figrow">
+                <figure>
+                    <figcaption class="figcap">1 · two populations, one sample</figcaption>
+                    <div class="fig" id="figPop"></div>
+                </figure>
+                <figure>
+                    <figcaption class="figcap">2 · the marginal over Δ — prior · likelihood · posterior</figcaption>
+                    <div class="fig" id="figMarg"></div>
+                </figure>
+            </div>
+
+            <div class="figrow">
+                <figure>
+                    <figcaption class="figcap">3 · the Bayesian decision — posterior × reward</figcaption>
+                    <div class="fig" id="figRewPost"></div>
+                </figure>
+                <figure>
+                    <figcaption class="figcap">4 · the confidence-interval reading — CI-as-uniform × reward</figcaption>
+                    <div class="fig" id="figRewCI"></div>
+                </figure>
+            </div>
+        </section>
+
+        <section class="prose">
+            <h2>Try this</h2>
+            <ol>
+                <li><strong>Defaults.</strong> With c = 0 the only penalty is the polynomial, so the
+                    break-even ε sits at exactly 1 — and the confidence interval fits inside it. Both rules
+                    bet, and both win: a gentle starting point where the two paradigms agree.</li>
+                <li><strong>Drop n to 3 or 4.</strong> The confidence interval balloons past ε = 1, so
+                    its worst-case boundary turns negative and the classical rule <em>refuses</em>, banking
+                    0. The posterior stays compact enough to still expect a positive return — it bets, and
+                    here wins. The Bayesian's edge is sharpest when data are scarce.</li>
+                <li><strong>Crank n to 100.</strong> Both beliefs sharpen, both bet, and their actual
+                    payoffs converge near the peak reward of 1 — with enough data the rules agree again.</li>
+                <li><strong>Raise c, the linear penalty.</strong> Now every miss is charged, so the
+                    break-even ε pulls inward below 1. First the wide-interval classical rule folds; push c
+                    further and even the posterior's expectation drops below zero, so the Bayesian folds
+                    too. High enough stakes make both refuse. (With c &gt; 0, try <strong>p</strong> as
+                    well — a higher power now <em>widens</em> ε, nudging both rules back toward betting.)</li>
+                <li><strong>Tighten the prior</strong> (κ₀ ↑) and shift <strong>m₀</strong> off the
+                    truth. The posterior's bet — its peak — pulls away from the interval's midpoint, and
+                    you can watch a confident-but-wrong prior keep its <em>estimated</em> pill green and
+                    betting while the <em>actual</em> pill slides red: overconfidence, made quantitative.</li>
+            </ol>
+
+            <h2>The moral</h2>
+            <div class="moral">
+                <ul>
+                    <li>A posterior is an <em>input</em> to a decision, not the decision itself. Pair
+                        it with a reward model and act on expected utility — that is the whole of Bayesian
+                        decision theory.</li>
+                    <li>A confidence interval is <strong>not</strong> a probability distribution. The
+                        common habit of reading it as “uniform over the plausible values” is a specific,
+                        and usually worse, belief — and a decision made on it earns less.</li>
+                    <li>The shape the posterior carries — mass piled near the estimate, thinning into
+                        the tails — is precisely what a uniform block discards, and precisely what a reward
+                        centred on the truth pays you to keep.</li>
+                    <li>Same data, same interval width — yet a different decision, because of how
+                        honestly the uncertainty <em>inside</em> the interval is shaped.</li>
+                    <li>Two numbers, never one: what a method <em>thinks</em> it will earn and what it
+                        <em>actually</em> earns. A trustworthy rule keeps the pair close; a tight wrong
+                        prior, or a mis-shaped interval, pries them apart.
+                    </li>
+                </ul>
+            </div>
+        </section>
+
+        <nav class="pager">
+            <a href="04-full-bayesian.html"><span class="lbl">Previous</span><span class="title">←&ensp;The role of the
+                    prior</span></a>
+            <a class="next" href="index.html"><span class="lbl">Series</span><span class="title">Inference: from classical to
+                    Bayesian</span></a>
+        </nav>
+    </main>
+
+    <script src="assets/math.js"></script>
+    <script src="assets/stats.js"></script>
+    <script src="assets/plots.js"></script>
+    <script src="assets/ui.js"></script>
+    <script>
+        "use strict";
+        /* The voices' colours (PRIOR_C/LIK_C/POST_C), the shared 1-D geometry, the curve
+           helpers, the populations panel and the marginal panel all come from plots.js;
+           the Normal-inverse-gamma model comes from stats.js. This page adds the reward
+           landscape, the decision/reward panels, and the repeated-decision simulation. */
+        const REWARD_C = "#A77B2E";                 // the reward landscape
+        const GRN_F = "#2E7D5B", RED_F = "#C0392B"; // belief painted by reward sign
+        const A0 = 2;                               // variance prior: a₀ fixed and gentle
+
+        /* reward panels: a signed vertical axis. Reward 0 rides a mid-line; +1 (the peak,
+           at the truth) climbs to the top, −1 sinks to the baseline, lower rewards clamp.
+           Beliefs (always ≥ 0) rise from the mid-line too, so painting their fill by the
+           sign of the reward beneath each x shows the product directly: green earns, red pays. */
+        const RMID = TOP + 0.52 * SH, RUP = RMID - (TOP + 8), RDN = BASE - RMID;
+
+        /* The populations panel and the prior·likelihood·posterior marginal panel
+           come from plots.js (curvePath, populationSvg, marginalSvg). */
+
+        function rewardRaw(x, ctr, p, c) {
+            const e = Math.abs(x - ctr);
+            return 1 - Math.pow(e, p) - c * e;
+        }
+
+        function rewardClamped(x, ctr, p, c) {
+            return Math.max(-1, rewardRaw(x, ctr, p, c));
+        }
+
+        /* ---- panels 3 & 4: a belief scored against the reward model, twice --------
+           Every panel is centred horizontally on the true difference Δ, and all three
+           curves — true reward, estimated reward, and belief — share ONE horizontal
+           scale (xp). The vertical reward scale (yR) is fixed: the peak reward +1 (at
+           the truth) rides at the top, 0 at the mid-line, −1 at the base, with lower
+           rewards clamped to the floor.
+
+             • the ESTIMATED reward (gold, solid) — centred on your decision Δ̂. On the
+               posterior panel the shaded lens is the overlap the expected-reward integral
+               measures; on the CI panel, dotted links drop from the interval's midpoint
+               (the MLE) and its two extremes to this curve — the reward you'd score there.
+             • the TRUE reward (green, dashed) — centred on the hidden truth Δ. A dashed
+               guide marks Δ at the panel centre. The dot
+               sits ON it at your decision Δ̂ — the reward you really collect — joined by a
+               dashed line to the middle of your belief (the posterior peak, or the CI bar). */
+
+        /* the posterior belief region of a reward panel: the green/red integrand fill
+           under the curve (green where the reward is +, red where −), the curve outline,
+           and — for the static view — the gold "expected-reward lens", the overlap the
+           E[U] integral measures. The double-click `sweep` easter egg (startRewardEgg)
+           replaces the faint uniform fill with a magnitude-shaded one that grows only out
+           to the sweep centre, and drops the lens. Kept out here so rewardSvg reads as the
+           plain decision view. */
+        function posteriorBelief({ dens, rewAt, accent, estMode, xp, yB, beliefH, yR, drawLo, drawHi, sweep }) {
+            let out = "";
+            const fillXs = linspace(drawLo, drawHi, 220);
+            for (let i = 0; i < fillXs.length - 1; i++) {
+                const xL = fillXs[i], xR = fillXs[i + 1], xM = 0.5 * (xL + xR);
+                const y = yB(dens(xM));
+                let rectW = Math.max(0.8, xp(xR) - xp(xL)), opacity = "0.12";
+                if (sweep) {
+                    if (xL >= estMode) continue;                       // only the swept-through region is filled
+                    if (xR > estMode) rectW = Math.max(0.8, xp(estMode) - xp(xL));
+                    const mag = sweep.maxAbs > 0 ? Math.abs(dens(xM) * rewAt(xM)) / sweep.maxAbs : 0;
+                    opacity = (0.08 + 0.84 * Math.sqrt(Math.min(1, mag))).toFixed(3);
+                }
+                out += `<rect x='${xp(xL).toFixed(1)}' y='${y.toFixed(1)}' width='${rectW.toFixed(1)}' ` +
+                    `height='${Math.max(0.8, RMID - y).toFixed(1)}' fill='${rewAt(xM) >= 0 ? GRN_F : RED_F}' opacity='${opacity}'/>`;
+            }
+            const top = linspace(drawLo, drawHi, 321).map(x => `${xp(x).toFixed(1)},${yB(dens(x)).toFixed(1)}`).join(" ");
+            out += `<polyline points='${top}' fill='none' stroke='${accent}' stroke-width='2'/>`;
+
+            if (!sweep) {   // expected-reward lens: overlap of the belief and the gold reward
+                const oLo = Math.max(drawLo, estMode - 1), oHi = Math.min(drawHi, estMode + 1);
+                if (oHi > oLo) {
+                    const xs = linspace(oLo, oHi, Math.max(8, Math.round((oHi - oLo) * 60)));
+                    const lt = xs.map(x => { const h = Math.max(0, Math.min(beliefH(x), RMID - yR(rewAt(x)))); return `${xp(x).toFixed(1)},${(RMID - h).toFixed(1)}`; }).join(" ");
+                    out += `<polygon points='${xp(oLo).toFixed(1)},${RMID.toFixed(1)} ${lt} ${xp(oHi).toFixed(1)},${RMID.toFixed(1)}' fill='${REWARD_C}' opacity='0.20'/>`;
+                }
+            }
+            return out;
+        }
+
+        function rewardSvg({ dens, isBox, lo, hi, mode, delta, p, c, BK, estR, estLo, estHi, actR, bet, accent, showEstimatedCurve = true, sweep = null }) {
+            const tag = isBox ? "b" : "a";
+            const estMode = sweep ? sweep.center : mode;          // the gold reward is centred on the bet (or sweep)
+            const rewE = (x) => rewardClamped(x, estMode, p, c);  // estimated reward, centred on the decision
+            const rewA = (x) => rewardClamped(x, delta, p, c);    // true reward, centred on the hidden truth
+            const yR = (r) => r >= 0 ? RMID - r * RUP : RMID - r * RDN;   // fixed scale: reward +1 → top, −1 → base
+            const yRc = (r) => Math.max(TOP + 3, Math.min(BASE, yR(r))); // clamped to the plot area
+            const yB = (d) => RMID - Math.min(d * BK, RUP * 0.96);
+            const beliefH = (x) => RMID - yB(dens(x));          // belief height above the zero-line (px)
+
+            // floats 3 & 4 keep the same horizontal scale, but the visible window is recentered
+            // on the hidden truth Δ so the true-reward peak always sits in the middle.
+            const loX = delta - HALF, hiX = delta + HALF;       // visible window in data units
+            const xp = (x) => X0 + (x - delta) * SC;
+            const clampPX = (px) => Math.min(Math.max(px, ML), ML + S);
+            const out = [];
+
+            const fade = fadeTopMask("rew" + tag, { bottom: RMID, soft: 0.18 });
+            out.push(fade.defs);
+
+            const drawLo = isBox ? Math.max(lo, loX) : loX, drawHi = isBox ? Math.min(hi, hiX) : hiX;
+
+            // the belief -------------------------------------------------------------
+            let belief = "";
+            if (isBox) {
+                // a confidence interval is NOT a density — draw it as a flat error bar at
+                // reward 0.5, with end caps and a midpoint marker at the MLE
+                const barY = yR(0.5);
+                const xlo = clampPX(xp(lo)), xhi = clampPX(xp(hi)), xm = clampPX(xp(mode));
+                belief += `<line x1='${xlo.toFixed(1)}' x2='${xhi.toFixed(1)}' y1='${barY.toFixed(1)}' y2='${barY.toFixed(1)}' stroke='${accent}' stroke-width='3'/>`;
+                for (const xx of [xlo, xhi])
+                    belief += `<line x1='${xx.toFixed(1)}' x2='${xx.toFixed(1)}' y1='${(barY - 5).toFixed(1)}' y2='${(barY + 5).toFixed(1)}' stroke='${accent}' stroke-width='2'/>`;
+                belief += `<circle cx='${xm.toFixed(1)}' cy='${barY.toFixed(1)}' r='3.6' fill='${accent}'/>`;
+            } else {
+                belief += posteriorBelief({ dens, rewAt: rewE, accent, estMode, xp, yB, beliefH, yR, drawLo, drawHi, sweep });
+            }
+            out.push(`<g mask='${fade.mask}'>${belief}</g>`);
+
+            // the zero-line of the reward axis
+            out.push(`<line x1='${ML}' x2='${ML + S}' y1='${RMID.toFixed(1)}' y2='${RMID.toFixed(1)}' stroke='${PAL.rule}' stroke-width='1'/>`);
+            out.push(`<line x1='${X0.toFixed(1)}' x2='${X0.toFixed(1)}' y1='${BASE}' y2='${TOP + 18}' stroke='${PAL.green}' stroke-width='1.4' stroke-dasharray='5 4'/>`);
+
+            // the two reward landscapes — estimated (gold, solid), true (green, dashed)
+            const curve = (f, col, dash) =>
+                `<polyline points='${linspace(loX, hiX, 421).map(x => `${xp(x).toFixed(1)},${yRc(f(x)).toFixed(1)}`).join(" ")}' ` +
+                `fill='none' stroke='${col}' stroke-width='1.8'${dash ? ` stroke-dasharray='${dash}'` : ""}/>`;
+            if (showEstimatedCurve || sweep) out.push(curve(rewE, sweep ? MAROON : REWARD_C)); // estimated — centred on the decision
+            out.push(curve(rewA, PAL.green, "6 4")); // true — centred on the truth (dashed)
+
+            // float 4: dotted links from the CI bar (reward 0.5) to the estimated-reward
+            // curve at the MLE and at each interval extreme — the reward you'd score there
+            if (isBox) {
+                const barY = yR(0.5);
+                for (const xx of [lo, mode, hi]) {
+                    const px = clampPX(xp(xx)), gy = yRc(rewE(xx));
+                    out.push(`<line x1='${px.toFixed(1)}' x2='${px.toFixed(1)}' y1='${barY.toFixed(1)}' y2='${gy.toFixed(1)}' stroke='${REWARD_C}' stroke-width='1.2' stroke-dasharray='1 3' stroke-linecap='round'/>`);
+                    out.push(`<circle cx='${px.toFixed(1)}' cy='${gy.toFixed(1)}' r='3' fill='${REWARD_C}'/>`);
+                }
+            }
+
+            // reward magnitude labels at the fixed axis extremes: peak +1, zero, floor −1
+            out.push(`<text x='${ML + S - 4}' y='${(TOP + 13).toFixed(1)}' text-anchor='end' font-size='10' fill='${PAL.muted}'>+1</text>`);
+            out.push(`<text x='${ML + S - 4}' y='${(RMID - 4).toFixed(1)}' text-anchor='end' font-size='10' fill='${PAL.muted}'>0</text>`);
+            out.push(`<text x='${ML + S - 4}' y='${(BASE - 5).toFixed(1)}' text-anchor='end' font-size='10' fill='${PAL.muted}'>−1</text>`);
+
+            // the decision Δ̂ and the reward it really earns: a dot ON the true-reward (green)
+            // curve at Δ̂, joined by a dashed line to the middle of the belief
+            const dvalX = Math.max(loX, Math.min(hiX, mode));
+            const mx = xp(dvalX);
+            const dotY = yRc(rewA(dvalX));
+            const beliefTopY = isBox ? yR(0.5) : yB(dens(dvalX));
+            out.push(`<line x1='${mx.toFixed(1)}' x2='${mx.toFixed(1)}' y1='${beliefTopY.toFixed(1)}' y2='${dotY.toFixed(1)}' stroke='${PAL.ink}' stroke-width='1.1' stroke-dasharray='4 3'/>`);
+            out.push(`<circle cx='${mx.toFixed(1)}' cy='${dotY.toFixed(1)}' r='4.2' fill='${PAL.ink}'/>`);
+
+            // peak labels: Δ̂ (decision) and Δ (truth, the panel centre), splayed so they never collide
+            const left = mode <= delta;
+            out.push(`<text x='${(mx + (left ? -4 : 4)).toFixed(1)}' y='${(TOP + 16).toFixed(1)}' text-anchor='${left ? "end" : "start"}' font-size='12.5' font-weight='600' fill='${PAL.ink}'>Δ̂</text>`);
+            out.push(`<text x='${(X0 + (left ? 4 : -4)).toFixed(1)}' y='${(TOP + 16).toFixed(1)}' text-anchor='${left ? "start" : "end"}' font-size='12.5' font-weight='600' fill='${PAL.green}'>Δ</text>`);
+
+            out.push(`<line x1='${ML}' x2='${ML + S}' y1='${BASE}' y2='${BASE}' stroke='${PAL.rule}' stroke-width='1'/>`);
+
+            // pills: estimated — the rule's verdict (green when it says bet, grey when fold);
+            // actual — what we really earn (green win, red loss, grey no-play / refused).
+            // estimated reward is one expected value (posterior), or the min…max across the
+            // interval (CI) — the centre earns 1, the extremes share the same endpoint value.
+            const estValue = sweep ? sweep.estR : estR;
+            const estDisp = isBox ? `${fmtRewardPill(estLo)}...${fmtRewardPill(estHi)}` : fmtRewardPill(estValue);
+            out.push(pill(ML + 8, TOP + 6, `estimated ${estDisp}`, (sweep ? estValue > 0 : bet) ? GRN_F : GREY));
+            out.push(pill(ML + 8, TOP + 32, `actual ${fmtRewardPill(actR)}`, actR > 0 ? GRN_F : actR < 0 ? RED_F : GREY));
+
+            return `<svg viewBox='0 0 ${FW} ${FH}' xmlns='http://www.w3.org/2000/svg'>${out.join("")}</svg>`;
+        }
+
+        /* ---- wiring -------------------------------------------------------------- */
+
+        const grpTruth = document.getElementById("grpTruth");
+        const grpPrior = document.getElementById("grpPrior");
+        const grpDecision = document.getElementById("grpDecision");
+        const simArea = document.getElementById("simArea");
+        const figRewPost = document.getElementById("figRewPost");
+        const resampleBtn = document.getElementById("resample");
+        const simBtn = document.getElementById("simulate");
+        let pool = makePool(15); // one fixed draw — dots don't jitter as you drag
+        let currentState = null;
+        let simRunning = false;
+        let simEntries = [];
+        let rewardEggToken = 0;
+        let rewardEggFrame = 0;
+
+        const deltaS = makeSlider(grpTruth, { label: "true difference · Δ", min: -2, max: 2, step: 0.05, value: 0.8, fmt: v => v.toFixed(2), onInput: onControlChange });
+        const varS = makeSlider(grpTruth, { label: "true variance · σ²", min: 0.25, max: 4, step: 0.05, value: 1.0, fmt: v => v.toFixed(2), onInput: onControlChange });
+        const nS = makeSlider(grpTruth, { label: "sample size · n per group", min: 3, max: 100, step: 1, value: 12, fmt: v => v.toFixed(0), onInput: onControlChange });
+
+        const m0S = makeSlider(grpPrior, { label: "prior centre for Δ · m₀", min: -2, max: 2, step: 0.05, value: 0, fmt: v => v.toFixed(2), onInput: onControlChange });
+        const k0S = makeSlider(grpPrior, {
+            label: "prior weight · κ₀ (pseudo-obs.)", min: -1, max: 2, step: 0.05, value: 0,
+            fmt: v => { const k = 10 ** v; return k < 10 ? k.toFixed(1) : k.toFixed(0); }, onInput: onControlChange
+        });
+        const s0S = makeSlider(grpPrior, { label: "prior centre for σ² · σ²₀", min: 0.25, max: 4, step: 0.05, value: 1.0, fmt: v => v.toFixed(2), onInput: onControlChange });
+
+        const alphaS = makeSlider(grpDecision, { label: "false-positive rate · α (t-test)", min: 0.005, max: 0.2, step: 0.005, value: 0.05, fmt: v => v.toFixed(3), onInput: onControlChange });
+        const pS = makeSlider(grpDecision, { label: "reward model degree · p", min: 1, max: 10, step: 0.1, value: 2, fmt: v => v.toFixed(1), onInput: onControlChange });
+        const cS = makeSlider(grpDecision, { label: "reward linear penalty · c", min: -10, max: 10, step: 0.1, value: 0, fmt: v => v.toFixed(1), onInput: onControlChange });
+
+        const SIMW = 960, SIMH = 176, SML = 46, SMR = 24, SMT = 14, SMB = 18;
+        const SIM_WAIT = 300, N_SIM = 40, SIM_COL_W = 10.5, SIM_HEAT_SLICES = 52;
+        const SIM_TEXT1Y = SMT + 10, SIM_TEXT2Y = SMT + 22;
+        const SIM_PLOT_TOP = SMT + 32, SIM_PLOT_BOT = SIMH - SMB - 12;
+        const SIM_MID = (SIM_PLOT_TOP + SIM_PLOT_BOT) / 2;
+        const SIM_SPACING = (SIMW - SML - SMR) / N_SIM;
+        const SIM_NS = "http://www.w3.org/2000/svg";
+        const MAROON = "#8C2F39", GREY = "#9AA0A6";
+        const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+
+        // ∫ f(x) dx over a wide range by the trapezoid rule. The reward floor is clamped at −1,
+        // and the wide finite range captures essentially all of the posterior / CI mass.
+        function integrate(f) {
+            const A = -12, B = 12, M = 4000, h = (B - A) / M;
+            let s = 0;
+            for (let i = 0; i <= M; i++) s += ((i === 0 || i === M) ? 0.5 : 1) * f(A + h * i);
+            return s * h;
+        }
+
+        function buildRewardEggData(state) {
+            const A = -12, B = 12, M = 2400, h = (B - A) / M;
+            const centerPad = 0.9;
+            const centerLo = state.delta - HALF - centerPad;
+            const centerHi = state.delta + HALF + centerPad;
+            let maxAbs = 0;
+            for (let i = 0; i <= M; i++) {
+                const x = A + h * i;
+                if (x < state.delta - HALF || x > state.delta + HALF) continue;
+                for (let j = 0; j <= 72; j++) {
+                    const center = centerLo + (centerHi - centerLo) * j / 72;
+                    const v = state.post(x) * state.rew(x, center);
+                    maxAbs = Math.max(maxAbs, Math.abs(v));
+                }
+            }
+            return { A, B, M, h, maxAbs, centerLo, centerHi };
+        }
+
+        function rewardEggEstimate(data, state, center) {
+            if (center <= data.A) return 0;
+            let s = 0;
+            let prevX = data.A;
+            let prevV = state.post(prevX) * state.rew(prevX, center);
+            for (let i = 1; i <= data.M; i++) {
+                const x = data.A + data.h * i;
+                const v = state.post(x) * state.rew(x, center);
+                if (x >= center) {
+                    const frac = (center - prevX) / (x - prevX);
+                    const midV = prevV + frac * (v - prevV);
+                    s += 0.5 * (prevV + midV) * (center - prevX);
+                    return s;
+                }
+                s += 0.5 * (prevV + v) * data.h;
+                prevX = x;
+                prevV = v;
+            }
+            return s;
+        }
+
+        function stopRewardEgg(restore = true) {
+            rewardEggToken += 1;
+            if (rewardEggFrame) cancelAnimationFrame(rewardEggFrame);
+            rewardEggFrame = 0;
+            if (restore && currentState) render(currentState);
+        }
+
+        function onControlChange() {
+            stopRewardEgg(false);
+            dismissSim();
+            render();
+        }
+
+        function fmtReward(v) {
+            const z = Math.abs(v) < 0.005 ? 0 : v;
+            return z > 0 ? `+${z.toFixed(2)}` : z.toFixed(2);
+        }
+
+        function fmtRewardLabel(v) {
+            return `${Math.round(Math.abs(v) * 100)}`;
+        }
+
+        function fmtRewardPill(v) {
+            return `${Math.round(v * 100)}`;
+        }
+
+        function fmtRewardSum(v) {
+            return `${(v * 100).toFixed(1)}`;
+        }
+
+        function rewardTextColor(v) {
+            return v > 0 ? GRN_F : v < 0 ? RED_F : GREY;
+        }
+
+        function svgNode(tag, attrs = {}) {
+            const el = document.createElementNS(SIM_NS, tag);
+            for (const [k, v] of Object.entries(attrs)) el.setAttribute(k, v);
+            return el;
+        }
+
+        function starPoints(cx, cy, rOuter, rInner) {
+            const pts = [];
+            for (let i = 0; i < 10; i++) {
+                const a = -Math.PI / 2 + i * Math.PI / 5;
+                const r = i % 2 === 0 ? rOuter : rInner;
+                pts.push(`${(cx + r * Math.cos(a)).toFixed(1)},${(cy + r * Math.sin(a)).toFixed(1)}`);
+            }
+            return pts.join(" ");
+        }
+
+        function setControlsDisabled(disabled) {
+            document.querySelectorAll("#sliders input").forEach(input => { input.disabled = disabled; });
+            resampleBtn.disabled = disabled;
+            simBtn.disabled = disabled;
+        }
+
+        function dismissSim() {
+            if (simRunning) return;
+            simEntries = [];
+            simArea.hidden = true;
+            simArea.innerHTML = "";
+        }
+
+        function computeState(samplePool) {
+            const delta = deltaS.value, varr = varS.value, n = nS.value;
+            const m0 = m0S.value, k0 = 10 ** k0S.value, B0 = 2 * s0S.value;
+            const alpha = alphaS.value, p = pS.value, c = cS.value;
+            const sigma = Math.sqrt(varr);
+
+            // one experiment: the sample, its difference summary, the conjugate posterior
+            const { xa, xb, dbar, ssd } = drawSample(samplePool, { delta, sigma, n });
+            const { df: dfC, se } = tTest(xa, xb);
+            const { kn, mn, an, bn } = nigUpdate(m0, k0, A0, B0, n, dbar, ssd);
+
+            // the three readings over Δ — prior, likelihood, posterior (steps 3-4)
+            const pri = nigMarginalDelta(m0, k0, A0, B0);
+            const pos = nigMarginalDelta(mn, kn, an, bn);
+            const prior = locScaleTpdf(pri.loc, pri.scale, pri.df);
+            const post = locScaleTpdf(pos.loc, pos.scale, pos.df);
+            const lik = likelihoodProfile(dbar, ssd, n);
+
+            // the (1−α) confidence interval, and the "CI read as a uniform density"
+            const hw = tCrit(alpha, dfC) * se;
+            const ciLo = dbar - hw, ciHi = dbar + hw, boxH = 1 / (2 * hw);
+            const box = (x) => (x >= ciLo && x <= ciHi) ? boxH : 0;
+
+            // each rule bets on the peak of its belief: the posterior mode mₙ, or the MLE d̄
+            const modePost = mn, modeCI = dbar;
+            const rew = (x, ctr) => rewardClamped(x, ctr, p, c);
+
+            // Bayesian rule: bet iff the posterior's expected reward (centred on the bet) > 0
+            const erPost = integrate(x => post(x) * rew(x, modePost));
+            const betPost = erPost > 0;
+
+            // CI rule: worst-case — the reward at the interval edge; bet iff that stays ≥ 0
+            const ciEdgeR = rew(ciLo, modeCI);
+            const erCIlo = Math.min(1, ciEdgeR), erCIhi = Math.max(1, ciEdgeR);
+            const erCI = erCIlo, betCI = erCIlo >= 0;
+
+            // what each rule actually earns once the hidden Δ is revealed (0 if it refused)
+            const actPostRaw = rew(modePost, delta), actCIRaw = rew(modeCI, delta);
+            const actPost = betPost ? actPostRaw : 0;
+            const actCI = betCI ? actCIRaw : 0;
+
+            // drawing scales: belief-height factor, and the posterior's 99% half-width
+            const BK = 0.9 * RUP / Math.max(post(mn), boxH, 0.2);
+            const postHalf = tInv(0.995, pos.df) * pos.scale;
+
+            return {
+                pool: samplePool,
+                delta, varr, n, m0, k0, B0, alpha, p, c, sigma,
+                xa, xb, dbar, ssd, kn, mn, an, bn, se, dfC, hw, ciLo, ciHi, boxH, BK, postHalf,
+                prior, lik, post, box, rew,
+                modePost, modeCI,
+                erPost, betPost,
+                erCI, erCIlo, erCIhi, betCI,
+                actPostRaw, actCIRaw, actPost, actCI,
+            };
+        }
+
+        function renderRewardPost(state, rewardEgg = null) {
+            figRewPost.innerHTML = rewardSvg({
+                dens: state.post, isBox: false, mode: state.modePost, delta: state.delta, p: state.p, c: state.c, BK: state.BK,
+                estR: state.erPost, actR: state.actPost, bet: state.betPost, accent: POST_C, showEstimatedCurve: false, sweep: rewardEgg
+            });
+        }
+
+        function render(state = computeState(pool), opts = {}) {
+            currentState = state;
+            pool = state.pool;
+
+            document.getElementById("figPop").innerHTML = populationSvg(state.delta, state.varr, state.n, state.pool);
+            document.getElementById("figMarg").innerHTML = marginalSvg(state.prior, state.lik, state.post, state.delta);
+
+            renderRewardPost(state, opts.rewardEgg || null);
+            document.getElementById("figRewCI").innerHTML = rewardSvg({
+                dens: state.box, isBox: true, lo: state.ciLo, hi: state.ciHi, mode: state.modeCI, delta: state.delta,
+                p: state.p, c: state.c, BK: state.BK, estR: state.erCI, estLo: state.erCIlo, estHi: state.erCIhi,
+                actR: state.actCI, bet: state.betCI, accent: PAL.blue
+            });
+        }
+
+        function startRewardEgg() {
+            if (simRunning || !currentState) return;
+            stopRewardEgg(false);
+
+            const token = ++rewardEggToken;
+            const state = currentState;
+            const eggData = buildRewardEggData(state);
+            const duration = 1800;
+            const start = performance.now();
+
+            const drawFrame = (center) => {
+                renderRewardPost(state, {
+                    center,
+                    maxAbs: eggData.maxAbs,
+                    estR: rewardEggEstimate(eggData, state, center),
+                });
+            };
+
+            const tick = (now) => {
+                if (token !== rewardEggToken) return;
+                const t = Math.min(1, (now - start) / duration);
+                const center = eggData.centerLo + (eggData.centerHi - eggData.centerLo) * t;
+                drawFrame(center);
+                if (t < 1) rewardEggFrame = requestAnimationFrame(tick);
+                else {
+                    rewardEggFrame = 0;
+                    if (token === rewardEggToken) render(state);
+                }
+            };
+
+            drawFrame(eggData.centerLo);
+            rewardEggFrame = requestAnimationFrame(tick);
+        }
+
+        function buildBayesSimSvg() {
+            const x0 = SML, x1 = SIMW - SMR, lgY = SIMH - 6;
+            let lx = x0;
+            const item = (swatch, label) => {
+                const out = swatch + `<text x='${lx + 20}' y='${lgY}' font-size='10.5' fill='${PAL.muted}'>${label}</text>`;
+                lx += 20 + label.length * 5.8 + 26;
+                return out;
+            };
+            return `<svg id='simBayesSvg' viewBox='0 0 ${SIMW} ${SIMH}' xmlns='${SIM_NS}'>` +
+                `<g id='simBayesCols'></g>` +
+                `<line id='simBayesMarker' x1='0' x2='0' y1='${SIM_PLOT_TOP}' y2='${SIM_PLOT_BOT}' stroke='${PAL.ink}' stroke-width='1' stroke-dasharray='3 3' opacity='0'/>` +
+                `<line x1='${x0}' x2='${x1}' y1='${SIM_MID.toFixed(1)}' y2='${SIM_MID.toFixed(1)}' stroke='${PAL.ink}' stroke-width='1.2' stroke-dasharray='4 4' opacity='0.72'/>` +
+                `<text x='${x1}' y='${(SIM_MID - 5).toFixed(1)}' text-anchor='end' font-size='11' fill='${PAL.ink}'>Δ̂</text>` +
+                `<text x='${(SML - 8).toFixed(1)}' y='${SIM_TEXT1Y}' text-anchor='end' font-size='9.5' fill='${PAL.muted}'>est</text>` +
+                `<text x='${(SML - 8).toFixed(1)}' y='${SIM_TEXT2Y}' text-anchor='end' font-size='9.5' fill='${PAL.muted}'>got</text>` +
+                item(`<rect x='${lx}' y='${lgY - 8}' width='12' height='6' rx='2' fill='${GRN_F}' fill-opacity='0.75'/>`, "positive integrand") +
+                item(`<rect x='${lx}' y='${lgY - 8}' width='12' height='6' rx='2' fill='${RED_F}' fill-opacity='0.75'/>`, "negative integrand") +
+                item(`<circle cx='${lx + 6}' cy='${lgY - 4.5}' r='4.5' fill='${MAROON}'/>`, "bet") +
+                item(`<circle cx='${lx + 6}' cy='${lgY - 4.5}' r='4.5' fill='${GREY}'/>`, "skip") +
+                item(`<polygon points='${starPoints(lx + 6, lgY - 4.5, 5, 2.2)}' fill='${PAL.green}'/>`, "true Δ") +
+                `<text id='simBayesSum' x='${x1}' y='${lgY}' text-anchor='end' font-size='10.5' fill='${PAL.muted}' opacity='0'></text>` +
+                `</svg>`;
+        }
+
+        function buildCISimSvg(delta, span) {
+            const x0 = SML, x1 = SIMW - SMR, lgY = SIMH - 6;
+            const trueY = simCIY(delta, span);
+            let lx = x0;
+            const item = (swatch, label) => {
+                const out = swatch + `<text x='${lx + 22}' y='${lgY}' font-size='10.5' fill='${PAL.muted}'>${label}</text>`;
+                lx += 22 + label.length * 5.8 + 26;
+                return out;
+            };
+            return `<svg id='simCISvg' viewBox='0 0 ${SIMW} ${SIMH}' xmlns='${SIM_NS}'>` +
+                `<g id='simCICols'></g>` +
+                `<line id='simCIMarker' x1='0' x2='0' y1='${SIM_PLOT_TOP}' y2='${SIM_PLOT_BOT}' stroke='${PAL.ink}' stroke-width='1' stroke-dasharray='3 3' opacity='0'/>` +
+                `<line x1='${x0}' x2='${x1}' y1='${SIM_MID.toFixed(1)}' y2='${SIM_MID.toFixed(1)}' stroke='${PAL.ink}' stroke-width='1.2' stroke-dasharray='4 4' opacity='0.72'/>` +
+                `<line x1='${x0}' x2='${x1}' y1='${trueY.toFixed(1)}' y2='${trueY.toFixed(1)}' stroke='${PAL.green}' stroke-width='1.2' stroke-dasharray='4 4' opacity='0.72'/>` +
+                `<text x='${x1}' y='${(SIM_MID - 5).toFixed(1)}' text-anchor='end' font-size='11' fill='${PAL.ink}'>0</text>` +
+                `<text x='${x1}' y='${(trueY - 5).toFixed(1)}' text-anchor='end' font-size='11' fill='${PAL.green}'>true Δ</text>` +
+                `<text x='${(SML - 8).toFixed(1)}' y='${SIM_TEXT1Y}' text-anchor='end' font-size='9.5' fill='${PAL.muted}'>est</text>` +
+                `<text x='${(SML - 8).toFixed(1)}' y='${SIM_TEXT2Y}' text-anchor='end' font-size='9.5' fill='${PAL.muted}'>got</text>` +
+                item(`<line x1='${lx}' x2='${lx + 14}' y1='${lgY - 3}' y2='${lgY - 3}' stroke='${MAROON}' stroke-width='3' stroke-linecap='round'/>`, "accepted CI") +
+                item(`<line x1='${lx}' x2='${lx + 14}' y1='${lgY - 3}' y2='${lgY - 3}' stroke='${GREY}' stroke-width='3' stroke-linecap='round'/>`, "rejected CI") +
+                `<text id='simCISum' x='${x1}' y='${lgY}' text-anchor='end' font-size='10.5' fill='${PAL.muted}' opacity='0'></text>` +
+                `</svg>`;
+        }
+
+        function simTopY(rel, span) {
+            const halfPx = (SIM_PLOT_BOT - SIM_PLOT_TOP) / 2;
+            const scale = halfPx / Math.max(span, 1e-6);
+            return SIM_MID - Math.max(-halfPx, Math.min(halfPx, rel * scale));
+        }
+
+        function simCIY(v, span) {
+            const halfPx = (SIM_PLOT_BOT - SIM_PLOT_TOP) / 2;
+            const scale = halfPx / Math.max(span, 1e-6);
+            return SIM_MID - Math.max(-halfPx, Math.min(halfPx, v * scale));
+        }
+
+        function bayesSampleGroup(state, idx, span, maxAbs) {
+            const x = SML + (idx + 0.5) * SIM_SPACING;
+            const g = svgNode("g", { "data-idx": String(idx) });
+            const frameW = SIM_SPACING * 0.8;
+            const trueY = simTopY(state.delta - state.modePost, span);
+            g.appendChild(svgNode("rect", {
+                x: (x - frameW / 2).toFixed(1), y: SIM_PLOT_TOP.toFixed(1), width: frameW.toFixed(1),
+                height: (SIM_PLOT_BOT - SIM_PLOT_TOP).toFixed(1), rx: "4", fill: PAL.ink, "fill-opacity": "0",
+                stroke: PAL.ink, "stroke-opacity": "0", "stroke-width": "1.1", "data-focus": "1"
+            }));
+
+            for (let i = 0; i < SIM_HEAT_SLICES; i++) {
+                const rel0 = -span + 2 * span * i / SIM_HEAT_SLICES;
+                const rel1 = -span + 2 * span * (i + 1) / SIM_HEAT_SLICES;
+                const relMid = 0.5 * (rel0 + rel1);
+                const xVal = state.modePost + relMid;
+                const val = state.post(xVal) * state.rew(xVal, state.modePost);
+                const mag = maxAbs > 0 ? Math.abs(val) / maxAbs : 0;
+                if (mag < 0.015) continue;
+                const y0 = simTopY(rel0, span), y1 = simTopY(rel1, span);
+                g.appendChild(svgNode("rect", {
+                    x: (x - SIM_COL_W / 2).toFixed(1),
+                    y: Math.min(y0, y1).toFixed(1),
+                    width: SIM_COL_W.toFixed(1),
+                    height: Math.max(1.2, Math.abs(y1 - y0) + 0.3).toFixed(1),
+                    fill: val >= 0 ? GRN_F : RED_F,
+                    "fill-opacity": (0.08 + 0.84 * Math.sqrt(mag)).toFixed(3)
+                }));
+            }
+
+            if (state.betPost) {
+                g.appendChild(svgNode("circle", {
+                    cx: x.toFixed(1), cy: SIM_MID.toFixed(1), r: "3.1",
+                    fill: MAROON
+                }));
+            } else {
+                g.appendChild(svgNode("circle", {
+                    cx: x.toFixed(1), cy: SIM_MID.toFixed(1), r: "3.1",
+                    fill: GREY
+                }));
+            }
+            g.appendChild(svgNode("polygon", {
+                points: starPoints(x, trueY, 3.7, 1.7),
+                fill: PAL.green
+            }));
+
+            const expTxt = svgNode("text", {
+                x: x.toFixed(1), y: SIM_TEXT1Y.toFixed(1), "text-anchor": "middle",
+                "font-size": "8.4", "font-weight": "600", fill: rewardTextColor(state.erPost)
+            });
+            expTxt.textContent = fmtRewardLabel(state.erPost);
+            g.appendChild(expTxt);
+
+            const gotTxt = svgNode("text", {
+                x: x.toFixed(1), y: SIM_TEXT2Y.toFixed(1), "text-anchor": "middle",
+                "font-size": "8.4", "font-weight": "600", fill: rewardTextColor(state.actPost)
+            });
+            gotTxt.textContent = fmtRewardLabel(state.actPost);
+            g.appendChild(gotTxt);
+
+            return g;
+        }
+
+        function ciSampleGroup(state, idx, span) {
+            const x = SML + (idx + 0.5) * SIM_SPACING;
+            const g = svgNode("g", { "data-idx": String(idx) });
+            const frameW = SIM_SPACING * 0.8;
+            const col = state.betCI ? MAROON : GREY;
+            const yLo = simCIY(state.ciLo, span);
+            const yHi = simCIY(state.ciHi, span);
+            const yMid = simCIY(state.modeCI, span);
+
+            g.appendChild(svgNode("rect", {
+                x: (x - frameW / 2).toFixed(1), y: SIM_PLOT_TOP.toFixed(1), width: frameW.toFixed(1),
+                height: (SIM_PLOT_BOT - SIM_PLOT_TOP).toFixed(1), rx: "4", fill: PAL.ink, "fill-opacity": "0",
+                stroke: PAL.ink, "stroke-opacity": "0", "stroke-width": "1.1", "data-focus": "1"
+            }));
+            g.appendChild(svgNode("line", {
+                x1: x.toFixed(1), x2: x.toFixed(1),
+                y1: yHi.toFixed(1), y2: yLo.toFixed(1),
+                stroke: col, "stroke-width": "3", "stroke-linecap": "round", "data-line": "1"
+            }));
+            for (const y of [yHi, yLo]) {
+                g.appendChild(svgNode("line", {
+                    x1: (x - 3.8).toFixed(1), x2: (x + 3.8).toFixed(1),
+                    y1: y.toFixed(1), y2: y.toFixed(1),
+                    stroke: col, "stroke-width": "1.8", "stroke-linecap": "round"
+                }));
+            }
+            g.appendChild(svgNode("circle", {
+                cx: x.toFixed(1), cy: yMid.toFixed(1), r: "2.4",
+                fill: col
+            }));
+
+            const predTxt = svgNode("text", {
+                x: x.toFixed(1), y: SIM_TEXT1Y.toFixed(1), "text-anchor": "middle",
+                "font-size": "8.4", "font-weight": "600", fill: rewardTextColor(state.erCIlo)
+            });
+            predTxt.textContent = fmtRewardLabel(state.erCIlo);
+            g.appendChild(predTxt);
+
+            const gotTxt = svgNode("text", {
+                x: x.toFixed(1), y: SIM_TEXT2Y.toFixed(1), "text-anchor": "middle",
+                "font-size": "8.4", "font-weight": "600", fill: rewardTextColor(state.actCI)
+            });
+            gotTxt.textContent = fmtRewardLabel(state.actCI);
+            g.appendChild(gotTxt);
+
+            return g;
+        }
+
+        function overbarTspan(label) {
+            return `<tspan style='text-decoration:overline'>${label}</tspan>`;
+        }
+
+        function setSimSummary(svg, id, leftLabel, leftMean, actMean, rightMean, maxMean) {
+            const text = svg.querySelector(id);
+            text.innerHTML =
+                `${overbarTspan(leftLabel)} ${fmtRewardSum(leftMean)} · ` +
+                `${overbarTspan("act")} ${fmtRewardSum(actMean)} · ` +
+                `${overbarTspan("got")} ${fmtRewardSum(rightMean)} · ` +
+                `${overbarTspan("max")} ${fmtRewardSum(maxMean)}`;
+            text.setAttribute("opacity", "1");
+        }
+
+        function setSampleFocus(svg, idx, active) {
+            const group = svg.querySelector(`[data-idx='${idx}']`);
+            if (!group) return;
+            const frame = group.querySelector("[data-focus='1']");
+            if (frame) {
+                frame.setAttribute("fill-opacity", active ? "0.045" : "0");
+                frame.setAttribute("stroke-opacity", active ? "0.28" : "0");
+            }
+            const line = group.querySelector("[data-line='1']");
+            if (line) line.setAttribute("stroke-width", active ? "4.8" : "3");
+        }
+
+        function wireSimHover(bayesSvg, ciSvg) {
+            const bayesMarker = bayesSvg.querySelector("#simBayesMarker");
+            const ciMarker = ciSvg.querySelector("#simCIMarker");
+            let last = -1;
+
+            const activate = (idx) => {
+                if (idx === last || idx < 0 || idx >= simEntries.length) return;
+                if (last >= 0) {
+                    setSampleFocus(bayesSvg, last, false);
+                    setSampleFocus(ciSvg, last, false);
+                }
+                last = idx;
+                setSampleFocus(bayesSvg, idx, true);
+                setSampleFocus(ciSvg, idx, true);
+                const x = (SML + (idx + 0.5) * SIM_SPACING).toFixed(1);
+                bayesMarker.setAttribute("x1", x); bayesMarker.setAttribute("x2", x); bayesMarker.setAttribute("opacity", "1");
+                ciMarker.setAttribute("x1", x); ciMarker.setAttribute("x2", x); ciMarker.setAttribute("opacity", "1");
+                render(simEntries[idx]);
+            };
+
+            const clear = () => {
+                if (last >= 0) {
+                    setSampleFocus(bayesSvg, last, false);
+                    setSampleFocus(ciSvg, last, false);
+                    last = -1;
+                }
+                bayesMarker.setAttribute("opacity", "0");
+                ciMarker.setAttribute("opacity", "0");
+            };
+
+            for (const svg of [bayesSvg, ciSvg]) {
+                svg.addEventListener("pointermove", (e) => {
+                    if (simRunning) return;
+                    const idx = Math.floor((svgPoint(svg, e).x - SML) / SIM_SPACING);
+                    activate(idx);
+                });
+                svg.addEventListener("pointerleave", clear);
+                svg.style.cursor = "pointer";
+            }
+        }
+
+        async function runSimulation() {
+            if (simRunning) return;
+            dismissSim();
+            simRunning = true;
+            setControlsDisabled(true);
+
+            const draws = [];
+            for (let i = 0; i < N_SIM; i++) draws.push(computeState(makePool()));
+            simEntries = draws;
+
+            const bayesSpan = Math.max(
+                0.9,
+                ...draws.map(s => Math.max(s.postHalf, Math.abs(s.delta - s.modePost) + 0.25, Math.abs(s.ciLo - s.modePost), Math.abs(s.ciHi - s.modePost)))
+            );
+            const ciSpan = Math.max(
+                0.9,
+                ...draws.map(s => Math.max(Math.abs(s.delta) + 0.25, Math.abs(s.ciLo), Math.abs(s.ciHi), Math.abs(s.modeCI)))
+            );
+
+            let bayesMaxAbs = 0;
+            for (const s of draws) {
+                for (let i = 0; i < SIM_HEAT_SLICES; i++) {
+                    const rel = -bayesSpan + 2 * bayesSpan * (i + 0.5) / SIM_HEAT_SLICES;
+                    const xVal = s.modePost + rel;
+                    bayesMaxAbs = Math.max(bayesMaxAbs, Math.abs(s.post(xVal) * s.rew(xVal, s.modePost)));
+                }
+            }
+
+            simArea.hidden = false;
+            simArea.innerHTML =
+                `<div class='figcap'>5 · repeated decision simulation</div>` +
+                `<div class='sim-stack'>` +
+                `<div class='sim-subcap'>Bayesian rule · posterior × reward integrand around Δ̂</div>` +
+                buildBayesSimSvg() +
+                `<div class='sim-subcap'>Confidence-interval rule · CI around 0</div>` +
+                buildCISimSvg(draws[0].delta, ciSpan) +
+                `</div>`;
+
+            const bayesSvg = simArea.querySelector("#simBayesSvg");
+            const ciSvg = simArea.querySelector("#simCISvg");
+            const bayesCols = bayesSvg.querySelector("#simBayesCols");
+            const ciCols = ciSvg.querySelector("#simCICols");
+
+            let sumExp = 0, sumActPost = 0, sumGotPost = 0, sumPred = 0, sumActCI = 0, sumGotCI = 0;
+            for (let i = 0; i < draws.length; i++) {
+                const state = draws[i];
+                pool = state.pool;
+                render(state);
+
+                bayesCols.appendChild(bayesSampleGroup(state, i, bayesSpan, bayesMaxAbs));
+                ciCols.appendChild(ciSampleGroup(state, i, ciSpan));
+
+                sumExp += state.erPost;
+                sumActPost += state.actPostRaw;
+                sumGotPost += state.actPost;
+                sumPred += state.erCIlo;
+                sumActCI += state.actCIRaw;
+                sumGotCI += state.actCI;
+
+                await sleep(SIM_WAIT);
+            }
+
+            const nDraws = draws.length;
+            const maxMean = 1;
+            setSimSummary(bayesSvg, "#simBayesSum", "est", sumExp / nDraws, sumActPost / nDraws, sumGotPost / nDraws, maxMean);
+            setSimSummary(ciSvg, "#simCISum", "est", sumPred / nDraws, sumActCI / nDraws, sumGotCI / nDraws, maxMean);
+
+            simRunning = false;
+            setControlsDisabled(false);
+            wireSimHover(bayesSvg, ciSvg);
+        }
+
+        resampleBtn.addEventListener("click", () => {
+            if (simRunning) return;
+            stopRewardEgg(false);
+            dismissSim();
+            pool = makePool(); // only the button re-randomizes
+            render();
+        });
+
+        simBtn.addEventListener("click", () => {
+            stopRewardEgg(false);
+            runSimulation();
+        });
+        figRewPost.addEventListener("dblclick", (e) => {
+            e.preventDefault();
+            startRewardEgg();
+        });
+
+        render();
+    </script>
 </body>
+
 </html>
