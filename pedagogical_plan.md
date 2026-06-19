@@ -60,14 +60,27 @@ return { t, df, p: 2 * (1 - tCdf(Math.abs(t), df)), dObs, se, sp: Math.sqrt(sp2)
 
 ### Inference 2 — Power / Type-II error at the true Δ
 
-- **Short description:** computing the power (1 − β) of the above test at a hypothesized true effect Δ, via the normal approximation to the noncentral t.
-- **Mathematical model:** frequentist; no prior/posterior. We reject when `|D̂| > t_crit·se_true`, so power is the mass of the null distribution shifted to the true Δ that falls beyond ±t_crit (noncentrality `ncp = Δ/se_true`).
+- **Short description:** computing the power (1 − β) of the above test at a hypothesized true effect Δ, via the exact noncentral-t distribution of the statistic under H₁.
+- **Mathematical model:** frequentist; no prior/posterior. Under the true Δ the statistic is a noncentral t, `t = Z/√(W/df)` with `Z ~ Normal(ncp, 1)`, noncentrality `ncp = Δ/se_true`, and `W ~ χ²_df` the independent scale from the pooled-variance estimate. We reject when `|t| > t_crit`, so power is the conditional normal tail `Φ(ncp − t_c·s) + Φ(−ncp − t_c·s)` (with `s = √(W/df)`) **averaged over the χ² spread of the estimated SD** — not pretending the SD is known, which is the error a plain normal approximation makes (badly so at small n).
+- **How computed:** numerically — Simpson's rule over the χ² bulk of W (`~1e-4` accurate). *(Upgraded from the earlier plain-normal approximation `Φ(ncp − t_c) + Φ(−ncp − t_c)`.)*
 - **Critical code** (`assets/stats.js`, `tTestPower`):
 
 ```js
 const seTrue = sigma * Math.sqrt(2 / n);
 const tc = tCrit(alpha, df), ncp = delta / seTrue;
-const power = normCdf(ncp - tc) + normCdf(-ncp - tc);
+const sd = Math.sqrt(2 * df);                 // χ²_df sd; integrate over its bulk
+const lo = Math.max(1e-6, df - 10 * sd), hi = df + 12 * sd;
+const M = 400, h = (hi - lo) / M;
+const logK = -(df / 2) * Math.log(2) - logGamma(df / 2);
+const chi2pdf = (w) => Math.exp(logK + (df / 2 - 1) * Math.log(w) - w / 2);
+let power = 0;
+for (let i = 0; i <= M; i++) {
+  const w = lo + h * i, s = Math.sqrt(w / df);
+  const tail = normCdf(ncp - tc * s) + normCdf(-ncp - tc * s);
+  const wt = (i === 0 || i === M) ? 1 : (i % 2 ? 4 : 2);   // Simpson weights
+  power += wt * tail * chi2pdf(w);
+}
+power = Math.min(1, power * h / 3);
 return { power, beta: 1 - power };
 ```
 
