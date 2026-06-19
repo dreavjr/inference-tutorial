@@ -128,72 +128,7 @@ function confusion(prev, sens, spec, total) {
 // posterior (predictive values): PPV = pct(c.TP, c.PP), NPV = pct(c.TN, c.PN)
 ```
 
-# Step 3: A difference in style?
-
-## Pedagogical plan
-
-Bayesian probabilities are not tied to frequencies: they represent what you must conclude when you are reasoning under uncertainty. A probability distribution represent how much you can locate the value of a random variable given all that you know. This small change changes everything, because now parameters don't have to be fixed: their distribution represent what you know about them, not frequencies that depend on repetition.
-
-Concepts:
-- Bayesian probabilities break the asymmetry between parameters and data: everything is a random variable with a distribution
-- Inference by Bayes' rule: posterior is proportional to prior x likelihood. The posterior represents how much I expect the parameter's value to be in certain regions of the parameter space
-- Priors don't have to be informative
-
-Myths to dismiss:
-- Bayesian probability is all about priors => you can often use non-informative or little-informative priors (although that is not necessarily a good idea for most problems)
-- I can use Bayesian inference to mimick hard-threshold classical tests and still reap the benefits => if you don't add informative priors ("let the data speak for itself" zealousness) and force sharp decisions instead of exploit the uncertainty, Bayesian inference can give exactly the same results as classical inference
-
-Take-homes:
-- This is not the full Bayesian treatment: (1) I'm using maximum a posteriori with an uninformative prior = same as maximum likelihood. Credible intervals force a binarization of the decision that goes against the Bayesian ethos.
-
-## Current material
-
-## Pedagogical plan
-
-Page: `03-bayesian-t-test.html` — "A Bayesian t-test?: from is there an effect? to how big is it?"
-
-Intro text (summary): Step 1 asked only "if H₀ were true, how surprising is our t?" and answers with a yes/no stamp — never telling us how large the effect is or how sure we are. The Bayesian move needs no new machinery, just a change of reading: take the same t-distribution and re-centre it on the observed difference instead of on 0, letting it describe the whole range of plausible effect sizes (with flat priors this is exactly the posterior for the mean difference — a shifted, scaled t). Both panels share step 1's square scale; the right panel is the distribution over Δ. Because it is a genuine density, a very certain posterior becomes a tall thin spike that fades out at the top of the box. Hovering the Δ curve maps any candidate effect size to the two population means it implies.
-
-Concept table (you see → it means):
-- the curve's peak → the observed difference Δ̂ = x̄₂ − x̄₁, our best estimate
-- the curve's width → our uncertainty, wide when data are few or noisy
-- the curve's height → it's a real density (area = 1), so concentrating ⇒ taller
-- the dashed line at 0 → the null; if it sits out in the tail, the data doubt it
-- the green dashed Δ → the real effect, unknown in life, shown here because we simulate
-
-Try this:
-1. Hover slowly across the Δ curve: the two implied means slide apart and back — the curve shows which separations the data consider plausible.
-2. Is 0 under the curve? With defaults, barely (the Bayesian echo of "significant"); drag Δ toward 0 and the curve drifts until it straddles 0 and "no effect" becomes most plausible.
-3. Raise n: the curve concentrates (taller, narrower) around the truth — certainty about size, not just a smaller p; far enough and the spike fades out the top. This is power from the inside.
-4. Raise σ²: the curve fattens and sinks — noise widens the band of indistinguishable effect sizes.
-5. "New sample" a few times: the curve jumps (its centre Δ̂ is the noisy observed effect) but usually keeps true Δ in its bulk; each study hands you one curve and you never see the green line.
-
-The moral:
-- A p-value returns a verdict; this returns an estimate with honest error bars — same t-distribution read the other way round.
-- The shape is the message: "significant" can hide a curve spanning trivial to enormous effects; "not significant" can hide a curve tight around zero. The stamp throws that away; the distribution keeps it.
-- One sleight of hand remains — "with flat priors" was itself a choice, made explicit in the next step.
-
-## Inferences
-
-### Inference — Bayesian posterior over the mean difference Δ, with flat priors
-
-- **Short description:** estimating the effect size Δ = μ_B − μ_A as a full posterior distribution under flat (non-informative) priors — which yields a shifted, scaled Student-t, i.e. step 1's t-distribution re-centred on the observed difference.
-- **Mathematical model:**
-  - *Likelihood:* Gaussian, as in step 1 (`dᵢ ~ Normal(Δ, σ²_d)`).
-  - *Prior:* flat (improper) on Δ and on log σ — "let the data speak."
-  - *Posterior over Δ* (σ² marginalized out): a located-scaled Student-t centred at `Δ̂ = x̄_B − x̄_A`, scale = the t-test's standard error `se`, `df = n + m − 2`.
-- **How the posterior was computed:** *analytic* — the flat-prior result coincides with the classical sampling object, so the page re-uses `tTest`'s `(dObs, se, df)`; no numerical integration. The (1−α) HDI is exactly the equal-tailed band `Δ̂ ± t·se`.
-- **Critical code** (`03-bayesian-t-test.html`, `render` + `posteriorSvg`):
-
-```js
-const { df, dObs, se } = tTest(xa, xb);
-...
-const dens = ds.map(d => tPdf((d - dObs) / se, df) / se);   // posterior density over Δ
-const tc = tCrit(alpha, df);
-const hdiLo = Math.max(dObs - tc * se, -HALF), hdiHi = Math.min(dObs + tc * se, HALF);
-```
-
-# Step 4: Bayesian inference's pipeline: prior -> lihelihood -> posterior -> da capo
+# Step 3: Bayesian inference's pipeline: prior -> lihelihood -> posterior -> da capo
 
 ## Pedagogical plan
 
@@ -208,7 +143,7 @@ Take-homes:
 
 ## Current material
 
-Page: `04-full-bayesian.html` — "The full Bayesian approach"
+Page: `03-full-bayesian.html` — "The full Bayesian approach"
 
 Intro text (summary): Names step 3's sleight of hand: the flat prior, which declared every effect size (Δ = 0.1, 3, a million) equally believable — not humility but a strong claim. Makes the prior explicit via Bayes as multiplication: posterior ~ prior × likelihood. The unknowns come as a pair — effect Δ and noise σ² — so the prior is a distribution over that plane; the conjugate choice is the Normal-inverse-gamma: Δ | σ²_d ~ Normal(m₀, σ²_d/κ₀) and σ²_d ~ Inv-Gamma(a₀, b₀). Three panels draw prior (purple), likelihood (terracotta), posterior (dark) as filled equal-volume contours over the (Δ, σ) plane (σ as standard deviation, both axes same scale), with a green cross at the true (Δ, σ). Below: the data and the marginal over Δ as the three 1-D shadows. A simplification keeps the algebra on one screen: the model is fed the n per-pair differences dᵢ = x_{B,i} − x_{A,i}, each Normal(Δ, σ²_d) with σ²_d = 2σ².
 
@@ -240,7 +175,7 @@ The moral:
   - *Likelihood:* the n per-pair differences `dᵢ ~ Normal(Δ, σ²_d)`.
   - *Posterior:* Normal-inverse-gamma with updated `(mₙ, κₙ, aₙ, bₙ)`; the *marginal over Δ* is a located-scaled Student-t with `df = 2aₙ`, `loc = mₙ`, `scale = √(bₙ/(aₙ·κₙ))`.
 - **How the posterior was computed:** *conjugate prior–likelihood → closed-form (analytic) update* (`nigUpdate`). The 2-D (Δ, σ) surfaces are evaluated on a grid only for the equal-volume heatmap drawing (with a Jacobian for the σ² → σ reparametrization); the inference itself is the analytic conjugate update, and the Δ marginal is the analytic Student-t.
-- **Critical code** (`04-full-bayesian.html`, `render`):
+- **Critical code** (`03-full-bayesian.html`, `render`):
 
 ```js
 const { dbar, ssd } = drawSample(pool, { delta, sigma, n });
@@ -265,7 +200,7 @@ function nigMarginalDelta(m, k, a, b) {
 }
 ```
 
-# Step 5: Everyone is entitled to their opinion (but they'll lose money if they disagree with me)
+# Step 4: Everyone is entitled to their opinion (but they'll lose money if they disagree with me)
 
 ## Pedagogical plan
 
@@ -273,7 +208,7 @@ The full Bayesian treatment is the logical way to think under uncertainty. In ot
 
 ## Current material
 
-Page: `05-the-decision.html` — "Making a decision"
+Page: `04-the-decision.html` — "Making a decision"
 
 Intro text (summary): Step 4 handed us a posterior — a whole distribution over Δ — but a distribution is not yet a decision; sooner or later you must act (ship the drug, set the dose, choose B over A). Bayesian decision theory closes the gap with one rule: act to maximise expected utility under your posterior. It needs the posterior plus a reward model U(x) = 1 − |Δ − x|^p − c·|Δ − x|: land on the truth and earn a full 1; miss and two penalties bite, a polynomial |Δ − x|^p and a linear c·|Δ − x|. For positive c the reward crosses zero at a break-even error ε (the largest profitable miss); raising p oddly pushes ε outward for small misses; with c = 0, ε = 1. The bottom row poses the sharp question — given my belief, should I bet at all, and on what value? — both readings betting on the peak Δ̂ but deciding whether to bet differently. Left: the honest posterior, where the Bayesian rule averages reward against the whole posterior, E[U] = ∫ reward(Δ − Δ̂)·P(Δ) dΔ, and bets only when that is positive (the gold lens is the overlap). Right: the classical reading, a (1 − α) confidence interval drawn as a flat error bar (MLE Δ̂ centred, margin E either way); with no distribution to average over the rule turns worst-case — bet iff E ≤ ε, so even the interval's worst boundary still pays. Each panel shows an estimated pill (the rule's forecast — posterior's expected reward, or CI's min…max) turning green to bet / grey to fold, and an actual pill (the payoff once hidden Δ is revealed, or zero for a refused bet) green for a win / red for a loss / grey for a no-play. The gap between the pills is the price of not knowing the truth.
 
@@ -312,7 +247,7 @@ The moral:
   - *Bayesian rule:* bet iff `E[U] > 0`, betting on the posterior mode mₙ.
   - *Classical rule:* take the (1−α) CI `d̄ ± t·se`; with no distribution to average over, act worst-case — bet iff the reward at the interval edge stays ≥ 0.
 - **How computed:** the posterior is the same analytic conjugate update (`nigUpdate` / `nigMarginalDelta`); the *decision* expectation is then obtained by **numerical integration** (trapezoid rule, M = 4000 over [−12, 12]) of posterior × reward — not a closed form, since the reward is non-conjugate.
-- **Critical code** (`05-the-decision.html`, `computeState` + helpers):
+- **Critical code** (`04-the-decision.html`, `computeState` + helpers):
 
 ```js
 const { kn, mn, an, bn } = nigUpdate(m0, k0, A0, B0, n, dbar, ssd);
@@ -338,6 +273,71 @@ function integrate(f) {                 // ∫f dx by the trapezoid rule
   for (let i = 0; i <= M; i++) s += ((i === 0 || i === M) ? 0.5 : 1) * f(A + h * i);
   return s * h;
 }
+```
+
+# Step 5: A difference in style?
+
+## Pedagogical plan
+
+Bayesian probabilities are not tied to frequencies: they represent what you must conclude when you are reasoning under uncertainty. A probability distribution represent how much you can locate the value of a random variable given all that you know. This small change changes everything, because now parameters don't have to be fixed: their distribution represent what you know about them, not frequencies that depend on repetition.
+
+Concepts:
+- Bayesian probabilities break the asymmetry between parameters and data: everything is a random variable with a distribution
+- Inference by Bayes' rule: posterior is proportional to prior x likelihood. The posterior represents how much I expect the parameter's value to be in certain regions of the parameter space
+- Priors don't have to be informative
+
+Myths to dismiss:
+- Bayesian probability is all about priors => you can often use non-informative or little-informative priors (although that is not necessarily a good idea for most problems)
+- I can use Bayesian inference to mimick hard-threshold classical tests and still reap the benefits => if you don't add informative priors ("let the data speak for itself" zealousness) and force sharp decisions instead of exploit the uncertainty, Bayesian inference can give exactly the same results as classical inference
+
+Take-homes:
+- This is not the full Bayesian treatment: (1) I'm using maximum a posteriori with an uninformative prior = same as maximum likelihood. Credible intervals force a binarization of the decision that goes against the Bayesian ethos.
+
+## Current material
+
+## Pedagogical plan
+
+Page: `05-bayesian-t-test.html` — "A Bayesian t-test?: from is there an effect? to how big is it?"
+
+Intro text (summary): Step 1 asked only "if H₀ were true, how surprising is our t?" and answers with a yes/no stamp — never telling us how large the effect is or how sure we are. The Bayesian move needs no new machinery, just a change of reading: take the same t-distribution and re-centre it on the observed difference instead of on 0, letting it describe the whole range of plausible effect sizes (with flat priors this is exactly the posterior for the mean difference — a shifted, scaled t). Both panels share step 1's square scale; the right panel is the distribution over Δ. Because it is a genuine density, a very certain posterior becomes a tall thin spike that fades out at the top of the box. Hovering the Δ curve maps any candidate effect size to the two population means it implies.
+
+Concept table (you see → it means):
+- the curve's peak → the observed difference Δ̂ = x̄₂ − x̄₁, our best estimate
+- the curve's width → our uncertainty, wide when data are few or noisy
+- the curve's height → it's a real density (area = 1), so concentrating ⇒ taller
+- the dashed line at 0 → the null; if it sits out in the tail, the data doubt it
+- the green dashed Δ → the real effect, unknown in life, shown here because we simulate
+
+Try this:
+1. Hover slowly across the Δ curve: the two implied means slide apart and back — the curve shows which separations the data consider plausible.
+2. Is 0 under the curve? With defaults, barely (the Bayesian echo of "significant"); drag Δ toward 0 and the curve drifts until it straddles 0 and "no effect" becomes most plausible.
+3. Raise n: the curve concentrates (taller, narrower) around the truth — certainty about size, not just a smaller p; far enough and the spike fades out the top. This is power from the inside.
+4. Raise σ²: the curve fattens and sinks — noise widens the band of indistinguishable effect sizes.
+5. "New sample" a few times: the curve jumps (its centre Δ̂ is the noisy observed effect) but usually keeps true Δ in its bulk; each study hands you one curve and you never see the green line.
+
+The moral:
+- A p-value returns a verdict; this returns an estimate with honest error bars — same t-distribution read the other way round.
+- The shape is the message: "significant" can hide a curve spanning trivial to enormous effects; "not significant" can hide a curve tight around zero. The stamp throws that away; the distribution keeps it.
+- One sleight of hand remains — "with flat priors" was itself a choice, made explicit in the next step.
+
+## Inferences
+
+### Inference — Bayesian posterior over the mean difference Δ, with flat priors
+
+- **Short description:** estimating the effect size Δ = μ_B − μ_A as a full posterior distribution under flat (non-informative) priors — which yields a shifted, scaled Student-t, i.e. step 1's t-distribution re-centred on the observed difference.
+- **Mathematical model:**
+  - *Likelihood:* Gaussian, as in step 1 (`dᵢ ~ Normal(Δ, σ²_d)`).
+  - *Prior:* flat (improper) on Δ and on log σ — "let the data speak."
+  - *Posterior over Δ* (σ² marginalized out): a located-scaled Student-t centred at `Δ̂ = x̄_B − x̄_A`, scale = the t-test's standard error `se`, `df = n + m − 2`.
+- **How the posterior was computed:** *analytic* — the flat-prior result coincides with the classical sampling object, so the page re-uses `tTest`'s `(dObs, se, df)`; no numerical integration. The (1−α) HDI is exactly the equal-tailed band `Δ̂ ± t·se`.
+- **Critical code** (`05-bayesian-t-test.html`, `render` + `posteriorSvg`):
+
+```js
+const { df, dObs, se } = tTest(xa, xb);
+...
+const dens = ds.map(d => tPdf((d - dObs) / se, df) / se);   // posterior density over Δ
+const tc = tCrit(alpha, df);
+const hdiLo = Math.max(dObs - tc * se, -HALF), hdiHi = Math.min(dObs + tc * se, HALF);
 ```
 
 # Step 6 (do-it-yourself appendix): Bayes on binary data
