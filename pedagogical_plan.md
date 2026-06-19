@@ -1,6 +1,3 @@
-The sequence of demonstrations is done, the code is refactored. Now we must revise all text on the pages to make a coherent whole. This is the conceptual parcours:
-
-
 # Step 1: Classical statistical test
 
 ## Pedagogical plan
@@ -196,11 +193,123 @@ The moral:
 - Practical materials and tools
 - Academic material
 
-# Step 6: Another decision, on binary data
+# Step 6 (do-it-yourself appendix): Bayes on binary data
 
-Beta-Binomial model for a binary classifier
+## Role and framing
 
+Steps 1–5 are the live session (≈1 hour, adult software developers). Step 6 is **not** a
+sixth live step — it is a take-home coding exercise, deliberately left a little less
+finished than the rest. The reasons we settled on this:
+
+- Step 5 carries the thesis of the whole tutorial (the Bayesian decision apparatus
+  marginalizes nuisances and maximizes expected reward; classical inference leaves α as a
+  free parameter chosen outside the apparatus). It must stay live and must land on the
+  continuous model the learner has lived in for four steps — one new idea (decision) on
+  established ground, not two new ideas at once. So we do **not** cut Step 5 to make room.
+- The continuous thread (1→3→4→5) is a complete spine. Step 2 is the only binary step and
+  the only one that never gets a Bayesian answer; its closing line even promises "Bayes'
+  theorem — where we go next" and then the thread is dropped. Step 6 is that owed answer.
+- For this audience the strongest capstone is an **inversion**: for five steps they dragged
+  sliders on a machine someone else built; here they build the machine behind the slider.
+  "You've been playing with the posterior — now compute one."
+- The deliberate incompleteness *is* the assignment: the scaffold and the questions are
+  fully built, but the morals and part of the concept table are left as prompts the learner
+  fills in. Transfer (apply the pipeline to new data) is exactly the move that consolidates
+  it.
+
+## Pedagogical plan
+
+The exercise re-runs the entire pipeline — prior → likelihood → posterior → expected
+utility → act — on a binary classifier with a single unknown: its success rate *p*. It is a
+Jupyter-style notebook (an in-browser, client-side Python engine to be wired in later;
+the current page is a non-functional mock-up so we can settle the design first).
+
+Why binary data is the right place to *code* this rather than slider it:
+
+- *p* is a probability, so its entire universe is [0, 1] — the prior, likelihood and
+  posterior are just arrays over a fine grid. No tails to truncate, no axis bounds to guess
+  (the thing that made Step 4's (Δ, σ) plane fiddly). The finite fixed support makes this
+  the *most* concrete of the six, not the least.
+- Beta is conjugate to the Binomial, so the exact posterior `Beta(α+k, β+n−k)` is known on
+  paper. The grid is a *numerical* answer to a problem that also has an *analytic* one —
+  which is not busywork but the only honest way to learn a numerical method: practise it
+  where the answer key exists, then carry it where it doesn't (cf. learning numerical
+  integration on ∫x² dx first).
+
+Concepts (each a callback, made tactile by code):
+- The prior **is** Step 2's base rate, written as `Beta(α, β)` — a few imaginary cases,
+  priced in pseudo-observations (the pseudo-count α + β echoes Step 4's κ₀).
+- Normalization is "the main challenge of Bayesian inference" (Step 4) shrunk to one
+  Riemann sum: divide the curve by its own area.
+- The decision is Step 5's rule on new data: pair the posterior with a reward, act on
+  expected utility.
+
+Take-homes:
+- The same four boxes (prior, likelihood, posterior, decision) are, on binary data, ten
+  lines of array arithmetic.
+- Marginalization vs expectation: there is only one unknown, so what the learner codes in
+  the decision step is an **expectation** over *p*, not a marginalization of a nuisance.
+- The grid that solves this in one line is hopeless in higher dimensions (N cells per axis →
+  Nᵈ cells); that wall is the whole reason MCMC and variational inference exist — the
+  forward-pointer past the course.
+
+Decisions about the model (where we deviated from first sketches):
+- **Notation:** `Beta(alpha, beta)` for the prior; `n, p` for the Binomial (so the rate is
+  `p`, gridded over [0, 1]); data is `(n, k)`.
+- **No frequentist component on this page** (no Wald interval, no CI-vs-posterior contrast).
+  The only backward link to Step 2 is the conceptual base-rate→prior bridge.
+- **Reward simplified to a bet/fold** with a `GAIN` on a true positive and a `COST` on a
+  false positive; folding is a guaranteed 0. We chose an FP cost rather than the originally
+  suggested FN penalty because with FP = TN = 0 the decision degenerates ("always act,"
+  no interior threshold). Consequence to keep honest in the text: this reward is linear in
+  *p*, so the decision *also* has a closed form (`GAIN·E[p] − COST·(1−E[p])`, with
+  `E[p] = (α+k)/(α+β+n)`). That reverses the earlier "the decision needs the grid" beat — so
+  the page now frames the grid sum as the *general* recipe (works for any reward) and uses
+  the closed form as a *second* answer-key check. The "hard part" message rests on
+  normalization (cell 3) and the curse of dimensionality (cell 7).
+  - *Open question still on the table:* keep the FP-cost version (clean interior threshold,
+    closed-form decision), honor the literal FN penalty (decision degenerates to "always
+    bet"), or go to the full three-cell model (TP +, FP −, FN −) for a richer threshold.
 
 ## Current material
 
-Not created yet
+Page: `06-do-it-yourself.html` — "Do it yourself: Bayes on binary data"
+
+A notebook mock-up (page-local CSS for the cell vocabulary, to be promoted to shared CSS
+once the design settles and the engine is wired). Cells alternate **provided** (read-only
+scaffolding / answer keys) and **your code** (signature + docstring contract + `# TODO`);
+the **Run** buttons are intentionally inert. A callout at the top states plainly that the
+page is deliberately unfinished and the engine is not connected yet.
+
+Intro text (summary): Frames Step 6 as the Bayesian answer Step 2 never got, and as the
+capstone inversion (build the machine, don't drag its sliders). States the pipeline on new
+data and the two reasons binary data is the right place to code it (finite support [0, 1];
+Beta-Binomial conjugacy as an answer key).
+
+The seven cells:
+0. **Setup** (provided): the grid `p = linspace(0,1,N)`, `dp`; the data `n, k`; the prior
+   `alpha, beta`.
+1. **Prior** (you code): `prior_kernel(p, alpha, beta)` → un-normalized Beta kernel.
+2. **Likelihood** (you code): `likelihood(p, n, k)` → `p**k * (1-p)**(n-k)`, the
+   n-choose-k constant dropped (washes out in normalization).
+3. **Normalize** (you code): `normalize(density, dp)` — the one hard line — then
+   `posterior = normalize(prior_kernel * likelihood, dp)`.
+4. **Conjugate check** (provided): overlay `Beta(α+k, β+n−k)`; numeric must match analytic
+   (if not, the bug is in `normalize`).
+5. **Belief → act** (you code): `GAIN`/`COST`, `expected_utility_act(p, posterior, dp)` as a
+   weighted sum, `decide(...)` returning bet/fold; output checks against the closed form.
+6. **Why this was a toy** (read-me): the curse-of-dimensionality thought experiment.
+
+Closing prose:
+- "Questions to answer (once it runs)" — morals-as-questions: the flat prior `(1,1)` and its
+  hidden bet; a tight wrong prior `(40,4)` vs more data; a rare-success low-mean prior
+  `(2,40)`; raising `COST` until `decide` folds and tying break-even to `COST/(GAIN+COST)`
+  and Step 5.
+- "The moral (write your own)" — three `TODO` prompts for the learner.
+- Concept table mapping `prior_kernel`→Step 4 (κ₀), `normalize`→Step 4, `expected_utility_act`/
+  `decide`→Step 5, with a deliberate `TODO` row.
+
+Not yet done: wire the in-browser Python engine and the plot helpers (`plot_three`,
+`plot_overlay`, the E[U]/bet-fold output); promote the notebook CSS to shared; decide whether
+to link the page from `index.html` (currently unlinked so it doesn't read as a sixth live
+step); resolve the reward-model open question above.
