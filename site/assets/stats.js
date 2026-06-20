@@ -140,10 +140,12 @@ function likelihoodProfile(dbar, ssd, n) {
   return (x) => Math.exp(-0.5 * ((x - dbar) / sd) ** 2);
 }
 
-/* ---- where the (Δ, σ) surfaces peak, as the group std dev σ (steps 4-5) --
-   At Δ = m the σ²_d slice of the NIG is Inv-Gamma(a+½, b) — the extra ½ comes from
-   the Normal factor's σ⁻¹ — with mode b/(a+3/2); then σ = √(mode/2). */
-const nigSigmaMode = (a, b) => Math.sqrt(b / (a + 1.5) / 2);
+/* ---- where the (Δ, σ) surface peaks, as the group std dev σ (step 3) ----------
+   The heatmap is drawn in (Δ, σ) WITH the σ²_d→σ Jacobian (∝σ), so at Δ = m the
+   rendered slice is p(σ) ∝ σ^−(2a+2)·exp(−b/2σ²), peaking at σ = √(b/(a+1)/2). This
+   is the ridge the eye sees — NOT the (Δ, σ²) NIG mode √(b/(a+3/2)/2), which the
+   Jacobian shifts off the visible peak. */
+const nigSigmaMode = (a, b) => Math.sqrt(b / (a + 1) / 2);
 
 /* the MLE of the group std dev from the differences: σ̂²_d = ssd/n, σ = √(σ̂²_d/2). */
 const mleSigma = (ssd, n) => Math.sqrt(ssd / n / 2);

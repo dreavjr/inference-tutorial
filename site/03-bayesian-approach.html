@@ -200,9 +200,10 @@
         const PRIOR_RGB = [142, 111, 174], LIK_RGB = [201, 106, 94], POST_RGB = [74, 74, 74];
         const BG = "#FBFAF7";   // page background — used as a halo to break lines under labels
 
-        /* ---- variance prior: a₀ fixed and gentle; b₀ follows the σ²₀ slider so the
-           prior expects σ²_d ≈ 2σ²₀ (i.e. σ² ≈ σ²₀). E[σ²_d] = b₀/(a₀−1) = b₀. -------- */
-        const A0 = 2;
+        /* ---- variance prior: a₀ = κ₀/2 so the variance carries the SAME κ₀ pseudo-
+           observations as the mean (one "prior weight" governs both). b₀ pins the
+           Inv-Gamma mode to 2σ²₀ (mode = b₀/(a₀+1)), so the σ²₀ slider keeps its meaning
+           for any κ₀ — see render(). -------------------------------------------------- */
 
         /* ---- geometry: contour panels --------------------------------------------
            Wider than tall, and EQUAL pixels-per-unit on both axes (60 px / data-unit).
@@ -306,7 +307,7 @@
             p.push(`<text x='${ML2 + S2W + 3}' y='${BASE2 + 15}' font-size='10.5' font-style='italic' fill='${PAL.muted}'>Δ</text>`);
             p.push(`<text x='${ML2 + 5}' y='${TOP2 + 12}' font-size='10.5' font-style='italic' fill='${PAL.muted}'>σ</text>`);
 
-            // the mode of this surface — the dot Wikipedia draws (mode = [Δ, σ])
+            // peak of this rendered (Δ, σ) surface (Jacobian included) — see nigSigmaMode
             if (mode) {
                 const [md, ms] = mode;
                 if (Math.abs(md) < HALF2 && ms > 0 && ms < SY)
@@ -425,7 +426,8 @@
         function render() {
             const delta = deltaS.value, varr = varS.value, n = nS.value;
             const m0 = m0S.value, k0 = 10 ** k0S.value;
-            const B0 = 2 * s0S.value;        // b₀ so the prior expects σ²_d ≈ 2σ²₀
+            const A0 = k0 / 2;                       // variance pseudo-count tracks κ₀
+            const B0 = (A0 + 1) * 2 * s0S.value;     // pins Inv-Gamma mode to 2σ²₀ for any κ₀
             const sigma = Math.sqrt(varr);
 
             // the n per-pair differences dᵢ ~ Normal(Δ, 2σ²), and the conjugate update

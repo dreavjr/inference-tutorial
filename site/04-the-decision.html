@@ -229,7 +229,6 @@
            landscape, the decision/reward panels, and the repeated-decision simulation. */
         const REWARD_C = "#A77B2E";                 // the reward landscape
         const GRN_F = "#2E7D5B", RED_F = "#C0392B"; // belief painted by reward sign
-        const A0 = 2;                               // variance prior: a₀ fixed and gentle
 
         /* reward panels: a signed vertical axis. Reward 0 rides a mid-line; +1 (the peak,
            at the truth) climbs to the top, −1 sinks to the baseline, lower rewards clamp.
@@ -549,7 +548,9 @@
 
         function computeState(samplePool) {
             const delta = deltaS.value, varr = varS.value, n = nS.value;
-            const m0 = m0S.value, k0 = 10 ** k0S.value, B0 = 2 * s0S.value;
+            const m0 = m0S.value, k0 = 10 ** k0S.value;
+            const A0 = k0 / 2;                       // variance pseudo-count tracks κ₀
+            const B0 = (A0 + 1) * 2 * s0S.value;     // pins Inv-Gamma mode to 2σ²₀ for any κ₀
             const alpha = alphaS.value, p = pS.value, c = cS.value;
             const sigma = Math.sqrt(varr);
 
