@@ -664,8 +664,8 @@
             const x0 = SML, x1 = SIMW - SMR, lgY = SIMH - 6;
             let lx = x0;
             const item = (swatch, label) => {
-                const out = swatch + `<text x='${lx + 20}' y='${lgY}' font-size='10.5' fill='${PAL.muted}'>${label}</text>`;
-                lx += 20 + label.length * 5.8 + 26;
+                const out = swatch + `<text x='${lx + 18}' y='${lgY}' font-size='10.5' fill='${PAL.muted}'>${label}</text>`;
+                lx += 18 + label.length * 5.8 + 12;
                 return out;
             };
             return `<svg id='simBayesSvg' viewBox='0 0 ${SIMW} ${SIMH}' xmlns='${SIM_NS}'>` +
@@ -678,7 +678,7 @@
                 item(`<rect x='${lx}' y='${lgY - 8}' width='12' height='6' rx='2' fill='${GRN_F}' fill-opacity='0.75'/>`, "positive integrand") +
                 item(`<rect x='${lx}' y='${lgY - 8}' width='12' height='6' rx='2' fill='${RED_F}' fill-opacity='0.75'/>`, "negative integrand") +
                 item(`<circle cx='${lx + 6}' cy='${lgY - 4.5}' r='4.5' fill='${MAROON}'/>`, "bet") +
-                item(`<circle cx='${lx + 6}' cy='${lgY - 4.5}' r='4.5' fill='${GREY}'/>`, "skip") +
+                item(`<circle cx='${lx + 6}' cy='${lgY - 4.5}' r='4.5' fill='${GREY}'/>`, "fold") +
                 item(`<polygon points='${starPoints(lx + 6, lgY - 4.5, 5, 2.2)}' fill='${PAL.green}'/>`, "true Δ") +
                 `<text id='simBayesSum' x='${x1}' y='${lgY}' text-anchor='end' font-size='10.5' fill='${PAL.muted}' opacity='0'></text>` +
                 `</svg>`;
@@ -702,8 +702,8 @@
                 `<text x='${x1}' y='${(trueY - 5).toFixed(1)}' text-anchor='end' font-size='11' fill='${PAL.green}'>true Δ</text>` +
                 `<text x='${(SML - 8).toFixed(1)}' y='${SIM_TEXT1Y}' text-anchor='end' font-size='9.5' fill='${PAL.muted}'>est</text>` +
                 `<text x='${(SML - 8).toFixed(1)}' y='${SIM_TEXT2Y}' text-anchor='end' font-size='9.5' fill='${PAL.muted}'>got</text>` +
-                item(`<line x1='${lx}' x2='${lx + 14}' y1='${lgY - 3}' y2='${lgY - 3}' stroke='${MAROON}' stroke-width='3' stroke-linecap='round'/>`, "accepted CI") +
-                item(`<line x1='${lx}' x2='${lx + 14}' y1='${lgY - 3}' y2='${lgY - 3}' stroke='${GREY}' stroke-width='3' stroke-linecap='round'/>`, "rejected CI") +
+                item(`<line x1='${lx}' x2='${lx + 14}' y1='${lgY - 3}' y2='${lgY - 3}' stroke='${MAROON}' stroke-width='3' stroke-linecap='round'/>`, "bet") +
+                item(`<line x1='${lx}' x2='${lx + 14}' y1='${lgY - 3}' y2='${lgY - 3}' stroke='${GREY}' stroke-width='3' stroke-linecap='round'/>`, "fold") +
                 `<text id='simCISum' x='${x1}' y='${lgY}' text-anchor='end' font-size='10.5' fill='${PAL.muted}' opacity='0'></text>` +
                 `</svg>`;
         }
@@ -831,17 +831,13 @@
             return g;
         }
 
-        function overbarTspan(label) {
-            return `<tspan style='text-decoration:overline'>${label}</tspan>`;
-        }
-
-        function setSimSummary(svg, id, leftLabel, leftMean, actMean, rightMean, maxMean) {
+        function setSimSummary(svg, id, estMean, earnedMean, ifAlwaysMean, ceilingMean) {
             const text = svg.querySelector(id);
             text.innerHTML =
-                `${overbarTspan(leftLabel)} ${fmtRewardSum(leftMean)} · ` +
-                `${overbarTspan("act")} ${fmtRewardSum(actMean)} · ` +
-                `${overbarTspan("got")} ${fmtRewardSum(rightMean)} · ` +
-                `${overbarTspan("max")} ${fmtRewardSum(maxMean)}`;
+                `estimated ${fmtRewardSum(estMean)} · ` +
+                `earned ${fmtRewardSum(earnedMean)} · ` +
+                `earned if always bet ${fmtRewardSum(ifAlwaysMean)} · ` +
+                `earning ceiling ${fmtRewardSum(ceilingMean)}`;
             text.setAttribute("opacity", "1");
         }
 
@@ -962,8 +958,8 @@
 
             const nDraws = draws.length;
             const maxMean = 1;
-            setSimSummary(bayesSvg, "#simBayesSum", "est", sumExp / nDraws, sumActPost / nDraws, sumGotPost / nDraws, maxMean);
-            setSimSummary(ciSvg, "#simCISum", "est", sumPred / nDraws, sumActCI / nDraws, sumGotCI / nDraws, maxMean);
+            setSimSummary(bayesSvg, "#simBayesSum", sumExp / nDraws, sumGotPost / nDraws, sumActPost / nDraws, maxMean);
+            setSimSummary(ciSvg, "#simCISum", sumPred / nDraws, sumGotCI / nDraws, sumActCI / nDraws, maxMean);
 
             simRunning = false;
             setControlsDisabled(false);

@@ -211,9 +211,9 @@
 
         /* ---- geometry: contour panels --------------------------------------------
            The y axis shows the variance σ² (the parameter the prior is a belief about),
-           NOT the standard deviation. σ² is not commensurable with Δ, so the panel is
-           just wider than tall — no shared-units aspect to preserve. */
-        const S2W = 360, S2H = 180, ML2 = 32, MR2 = 14, BH2 = 22;
+           NOT the standard deviation. The Δ and σ² axes share the same pixels-per-unit
+           scale here (both span 6 units), so the drawing area is square. */
+        const S2W = 360, S2H = 360, ML2 = 32, MR2 = 14, BH2 = 22;
         const FW2 = ML2 + S2W + MR2, TOP2 = 12, BASE2 = TOP2 + S2H, FH2 = BASE2 + BH2;
         const HALF2 = 3.0;                 // Δ axis: ±3
         const SY2 = 6.0;                   // σ² axis (group variance): 0..6
@@ -231,7 +231,7 @@
            in colour value (each panel self-normalises, so both reach full opacity at
            their own peak). */
 
-        const GRID_W = 220, GRID_H = 110;
+        const GRID_W = 220, GRID_H = 220;
         const NBANDS = 7, MASS_OUTER = 0.98;
         // the k-th contour (innermost → outermost) encloses this fraction of the volume
         const MASS_LEVELS = Array.from({ length: NBANDS }, (_, k) => MASS_OUTER * (k + 1) / NBANDS);
