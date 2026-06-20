@@ -201,11 +201,10 @@ Names step 3's sleight of hand: the flat prior, which declared every effect size
 2. Reset the sliders to default values.
 3. Slide the prior weight all the way down. How does the posterior respond to changes on reality? Or about resampling?
 3. Slide the prior weight all the way up. How does the posterior now respond to reality changes and resampling?
-4. Do changes in prior cause changes in the likelihood?
-5. Set the prior center very wrong (Δ and σ² very different than the prior center for them).
-6. Slide the prior weight all the way down and play with resampling and sample sizes. How does the posterior respond? Set the prior weight all the way up and try the same.
-7. Suppose you had to bet with a colleague doing this same exercise in this same page on the parameters of their populations. They will show you their samples, but not the true distributions. How should you set your prior to maximize your winning chances?
-8. Can you see marginalization in action? What are the parameters used in the estimation? Which do you and which don't you care about.
+4. Set the prior center very wrong (Δ and σ² very different than the prior center for them).
+5. Slide the prior weight all the way down and play with resampling and sample sizes. How does the posterior respond? Set the prior weight all the way up and try the same.
+6. Suppose you had to bet with a colleague doing this same exercise in this same page on the parameters of their populations. They will show you their samples, but not the true distributions. How should you set your prior to maximize your winning chances?
+7. Can you see marginalization in action? What are the parameters used in the estimation? Which do you and which don't you care about.
 
 ### Take-homes
 - Conceptually, the prior flatness should reflect the knowledge you have about the parameters. If you look at a flat prior and think "well, the parameter could _never_ be in this range", you are not exploiting all the knowledge you have.
