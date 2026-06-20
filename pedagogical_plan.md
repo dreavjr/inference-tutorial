@@ -1,4 +1,4 @@
-# Step 1: Classical statistical test
+# Step 1: How classical tests work
 
 ## Pedagogical plan
 
@@ -10,25 +10,29 @@ Classical inference doesn't accept parameters as random variables because that w
 - Statistical tests and confidence intervals
 
 ### Try this
-1. Reset the position of the sliders to their initial values by refreshing the page or clicking on the "reset" button.
-2. Drag Δ to 0: you just made H₀ true! Resample a few dozen times or press "simulate": D̂ and p bounce; ~1 in 20 dips below 0.05 — that is α, the false-positive rate.
-3. Δ = 0.5, a real but modest effect: H₀ is now false, but will rarely be rejected. The test is underpowered
-); raise n to 100 and it's significant almost always — the band tightens like 1/√n while D̂ stays put. Significance measures evidence, not importance.
-4. Crank σ² up: null band widens, significance melts away — a tug of war between signal (D̂) and noise (band width se = s_p√(2/n)).
-5. Drop n to 3–4: band turns squat and wide, ±t·se critical ticks slide far out; raise n and the band grows so tall and tight it fades out at the top.
+1. Play with the sliders. Note what happens with reality (plot 1) and the test (plot 2) in different scenarios.
+2. For a fixed reality, how does the test respond to different sample sizes and significances (α)?
+3. Run a simulation. Do the observed mismatched significances (dotted lines) correspond to the expected rates α and β shown in plot 2?
+4. Reset the position of the sliders to their initial values by refreshing the page or clicking on the "reset" button.
+5. Drag Δ to 0: you just made H₀ true! Resample a few dozen times or simulate: D̂ and p bounce; ~1 in 20 dips below 0.05 — that is α, the false-positive rate.
+6. Set Δ = 0.5, a real but very modest effect: H₀ is now false, but will rarely be rejected. The test is underpowered.
+7. Raise n to 100 and it's significant almost always. Significance measures evidence for the difference, not its magnitude.
+7. Crank σ² up: the null-hypothesis band widens, significance melts away — a tug of war between signal and noise.
+8. Drop n to 3–4: band turns squat and wide, ±t·se critical ticks slide far out; raise n and the band grows so tall and tight it fades out at the top.
 
 ### Take-homes
 - The p-value answers one question: "If there were truly no difference, how surprising would my test statistic be?"
 - It is *not* the (unconditional) probability that H₀ is true — classical inference doesn't have language for that
 - A classical hypothesis is either true or false, our ignorance doesn't make it probabilistic
 
+### Dialog
  "What's the chance that these samples come from different means?" you ask.
 
  "That question is nonsense," classical inference says. "Either the means are the same or they are different, there's no chance involved."
 
  "But how do I know which is which?"
 
- "You don't, but tell you what: if they're the same, I'll only say they're different a small fraction (alpha) of the times you ask me."
+ "You don't, but I'll tell you what: *if* they're the same, I'll only say they're different a small fraction α of the times you ask me."
 
  "But right now, for *these samples* right here, are the means different?""
 
@@ -36,11 +40,18 @@ Classical inference doesn't accept parameters as random variables because that w
 
 "What is the chance you're pulling my leg?""
 
-"This is again nonsense. Either I'm lying or I'm saying the truth, it's not a matter of chance."
+"That is again nonsense. Either I'm lying or I'm saying the truth, it's not a matter of chance."
 
 "But how do I know if, right now, you're lying?""
 
 "You don't."
+
+### Links
+https://en.wikipedia.org/wiki/Null_hypothesis_significance_testing
+https://en.wikipedia.org/wiki/Statistical_significance
+https://en.wikipedia.org/wiki/Power_(statistics)
+https://en.wikipedia.org/wiki/P-value
+https://en.wikipedia.org/wiki/Student%27s_t-test
 
 ## Inferences
 
@@ -86,26 +97,61 @@ power = Math.min(1, power * h / 3);
 return { power, beta: 1 - power };
 ```
 
+## TODO
+
+- Add the MLE estimator on the plot?
+- change \hat(D) -> \hat(Δ)
+
 # Step 2: What we want vs. can control
 
 ## Pedagogical plan
 
-The ideas of power and significance appear with different names: sensitivity and specificity, true positive rate and true negative rate, etc. They are formal properties of the test but do not correspond to the challenges we will face in reality. PPV and NPV correspond much more to real-life concerns ("the test tagged this as positive/negative: how often can I expect it to be right?") while power and significance answer "the sample is positive/negative: how often can I expect the test to tag it right" (which is not as useful, because the true labels are, of course, unknown: if I had them I wouldn't need a test!).
+The ideas of power and significance appear with different names: sensitivity and specificity, true positive rate and true negative rate, etc. They are formal properties of the test but do not necessarily correspond to the challenges we will face in reality. PPV and NPV correspond much more to real-life concerns.
 
-### Take-homes
-- Test-bound knobs are easy (change the test).
-- Reality-bound knobs are hard (changing the reality is much harder).
-- Sensitivity (1 - beta) and specificity (1 − α) are properties of the test, conditioned on what is true in the world.
-- PPV and NPV are properties of the real world, conditioned on the test answer. They is useful because a test is always observable, while latent reality seldom is.
-- Sensitivity and specificity don't bound false positives and negatives, not even asymptotically, unless I make assumptions on the base rate.
+Frequentist and classical analysis very often converge to the same answers for a large number of samples, but on this particular issue, increasing sampling size won't work: the four metrics are proportions and insensitive (in expectation) to sample size.
 
 ### Try this
-1. Reset the sliders to default. This is the comfortable zone textbooks describe. PPV is not exactly specificity and NPV is not exactly sensitivity, but the match is close enough to be useful.
-2. Base rate down to 10%: α and power unchanged, yet PPV falls to ≈ 64% (one positive in three is false).
-3. Down to 2%: PPV ≈ 25% — three "discoveries" in four are wrong, same respectable test.
-4. Try to rescue PPV without touching the base rate. Does it respond more to sensitivity or specificity? Do you get why? (Hint: look at the change in the arrows!)
-5. Crank total cases up to 1,000,000: every count grows 1000×, none of the four metrics budge. Sample size will not save you.
+1. Play with the sliders and observe how the contingency table (plot 1) and the fork arrows (plot 2) change.
+2. Reset the sliders to default. This is the "textbook zone" (significance=95%, power=80%). PPV and NPV do not match sensitivity and specificity exactly, but the difference is moderate enough to be still useful.
+3. Slide base rate down to 10%. Significance and power are unchanged, but PPV falls to ≈ 64% (one positive in three is false).
+4. Slide base rate up to 90%. PPV is great, but now NPV falls to ≈ 34% (two negatives in three are false).
+5. Play with the base rates. Can you find one that makes PPV ≈ Significance and NPV ≈ Specificity? What about vice-versa? Is there something special about those base rates?
+6. Reset the sliders and bring base rate down to 2%. Try to rescue PPV without touching the base rate. Does it respond more to sensitivity or specificity? Do you get why? (Hint: look at the change in the arrows!)
+7. Pick any base rate and crank total cases up to 1,000,000. Every count grows 1000×, but the four metrics don't budge. Sample size will not save you this time.
 
+### Take-homes
+- Sensitivity and speicifity are properties of the test, while PPV and NPV are properties of both the test and the reality.
+- Sensitivity (1 - beta) and specificity (1 − α) are conditioned on what is true in the world.
+- PPV and NPV are conditioned on the test answer. They are more useful because test results are observable, while the latent truth often isn't.
+- Sensitivity and specificity don't bound false positives and negatives, not even asymptotically, unless you make assumptions about the base rate.
+
+### Dialog
+
+"I can't afford too many false positives right now," you say. "Can you keep those reasonable?"
+
+"Well," hesitates the test, "I can promise that if the sample is negative I'll rarely say it's positive."
+
+"What's the catch? Will you give me lots of false negatives?"
+
+"Not necessarily. I can also promise that if the sample is positive I'll rarely say it's negative."
+
+"Good! That means I can rely on you, right?"
+
+"That depends. What's the base rate? I mean, how many positive cases are there for each negative?"
+
+"I have no idea, that's exactly why I need you."
+
+"If you can't give me the base rate, I can't guarantee being reliable. But at least you can rely on me when I say something is positive. Or maybe when I say something is negative."
+
+"How do I know which is which?""
+
+"You don't, that depends on the base rate."
+
+### Links
+https://en.wikipedia.org/wiki/Confusion_matrix#Table_of_confusion
+https://en.wikipedia.org/wiki/Sensitivity_and_specificity
+https://en.wikipedia.org/wiki/Positive_and_negative_predictive_values
+https://en.wikipedia.org/wiki/Base_rate_fallacy
 
 ## Inferences
 
@@ -129,11 +175,14 @@ function confusion(prev, sens, spec, total) {
 // posterior (predictive values): PPV = pct(c.TP, c.PP), NPV = pct(c.TN, c.PN)
 ```
 
-# Step 3: Bayesian inference's pipeline: prior -> lihelihood -> posterior -> da capo
+# Step 3: The Bayesian approach
 
 ## Pedagogical plan
 
-Full Bayeasian treatment: representation of uncertainty, marginalization of nuisance variables (the variance, in this case). Conclusion is not a single value or hard interval: the posterior _is_ the conclusion.
+Bayesian inference brings a profound conceptual change: probabilities are no longer just about repeatable measurements, they are about degrees of ignorance. Now, both data *and parameters* can be random variables with probability distributions.
+
+This brings a huge conceptual simplification. I no longer need to conceive a different test statistic for every kind of hypothesis I want to test. I only need a generative model of the data from the parameters (that's the likelihood) and whatever prior reflects my opinion on the parameters before seeing the data. In the domain of the parameters I multiply the prior by the likelihood to get the unnormalized posterior. Then I marginalize (integrate) all the parameters I don't care about.
+
 
 ### Concepts
 - Prior, likelihood, posterior
@@ -147,23 +196,23 @@ Full Bayeasian treatment: representation of uncertainty, marginalization of nuis
 ### Intro text
 Names step 3's sleight of hand: the flat prior, which declared every effect size (Δ = 0.1, 3, a million) equally believable — not humility but a strong claim. Makes the prior explicit via Bayes as multiplication: posterior ~ prior × likelihood. The unknowns come as a pair — effect Δ and noise σ² — so the prior is a distribution over that plane; the conjugate choice is the Normal-inverse-gamma: Δ | σ²_d ~ Normal(m₀, σ²_d/κ₀) and σ²_d ~ Inv-Gamma(a₀, b₀). Three panels draw prior (purple), likelihood (terracotta), posterior (dark) as filled equal-volume contours over the (Δ, σ) plane (σ as standard deviation, both axes same scale), with a green cross at the true (Δ, σ). Below: the data and the marginal over Δ as the three 1-D shadows. A simplification keeps the algebra on one screen: the model is fed the n per-pair differences dᵢ = x_{B,i} − x_{A,i}, each Normal(Δ, σ²_d) with σ²_d = 2σ².
 
-### Concept table
-- m₀ → where you expect Δ to be, before data → a slider
-- κ₀ → how strongly, in pseudo-observations: your hunch is worth κ₀ imaginary data points → a slider (try the extremes)
-- a₀, b₀ → the same two roles, for the variance σ² → b₀ is a slider (where you expect σ²); a₀ held fixed and gentle
-
 ### Try this
-1. Defaults (m₀ = 0, κ₀ = 1, n = 12): posterior teardrop sits between prior and likelihood, much closer to the likelihood (12 real obs outvote 1 imaginary); the marginal's dark curve peaks just short of the terracotta — a whisper of skepticism.
-2. Go lax: κ₀ → 0.1 — prior flattens to a vast sheet, posterior becomes the likelihood (you've rebuilt step 3); resample at n = 12 and the posterior chases noise across the plane.
-3. Skeptical but fair: m₀ = 0, κ₀ ≈ 10 — posterior pulled toward 0 (slightly biased when truth is 0.8) but resampling barely moves it; with small n, trading bias for stability is a bargain — what a prior buys.
-4. Tight and wrong: m₀ = −1, κ₀ = 100 — 100 imaginary obs outvote 12 real, posterior parks near −1, green cross far outside the teardrop; raise n to 100 and the data claw back. Tight priors are loud.
-5. Crank n to 100 and sweep κ₀ from 0.1 to 10: posterior barely budges — enough data washes out any reasonable prior. Priors matter when data are scarce, exactly when "non-informative" is most dangerous.
+1. Play with the sliders. Which plots respond to changes on the samples and which respond to changes on the prior.
+2. Reset the sliders to default values.
+3. Slide the prior weight all the way down. How does the posterior respond to changes on reality? Or about resampling?
+3. Slide the prior weight all the way up. How does the posterior now respond to reality changes and resampling?
+4. Do changes in prior cause changes in the likelihood?
+5. Set the prior center very wrong (Δ and σ² very different than the prior center for them).
+6. Slide the prior weight all the way down and play with resampling and sample sizes. How does the posterior respond? Set the prior weight all the way up and try the same.
+7. Suppose you had to bet with a colleague doing this same exercise in this same page on the parameters of their populations. They will show you their samples, but not the true distributions. How should you set your prior to maximize your winning chances?
+8. Can you see marginalization in action? What are the parameters used in the estimation? Which do you and which don't you care about.
 
 ### Take-homes
-- A flat prior is not absence of opinion; it is the opinion that preposterous effect sizes are as credible as modest ones — and with little data that leaks into the posterior as width and wobble.
-- κ₀ prices your conviction in the only honest currency: data. Ask "how many observations is my hunch worth?" — both 0.1 (abandons to noise) and 100 (deaf to evidence) can be wrong.
-- When n is small, weakly-informative beats non-informative; when n is large the argument dissolves on its own — so the cases where a lax prior "plays it safe" are precisely the cases where it doesn't.
-- The prior is a dial to disclose, not a sin to hide: state it, vary it, show the posterior barely moves — that is what a robust claim looks like.
+- Conceptually, the prior flatness should reflect the knowledge you have about the parameters. If you look at a flat prior and think "well, the parameter could _never_ be in this range", you are not exploiting all the knowledge you have.
+- In practice, the influence of the prior is small, provided you have enough data or your prior is not at once assertive and wrong.
+- Conjugate priors measure the strength of the prior as pseudo-counts, i.e., as the equivalent "convincing power" of that number of data samples.
+- The likelihood is the part where usually everyone agrees (including classical inference), because it's relatively easier to establish how data comes from the parameters than vice-versa.
+- Bayesian inference is often called subjective, but that is true only in the sense that different actors may have different knowledge about the problem, and be exposed to different data. Two Bayesian actors starting from the same "state of ignorance" and seeing exactly the same data must reach _exactly_ the same conclusions, now matter how they organize the inference computation.
 
 ## Inferences
 
@@ -200,21 +249,11 @@ function nigMarginalDelta(m, k, a, b) {
 }
 ```
 
-# Step 4: Everyone is entitled to their opinion (but they'll lose money if they disagree with me)
+# Step 4: Making a decision
 
 ## Pedagogical plan
 
-The Bayesian treatment is the logical way to think under uncertainty. In other words, given what you know, the probabilities it outputs are the  unique fully-coherent conclusion. Even with the cost model known by both, a decision based on classical inference has a free parameter (alpha) that must be chosen externally to the decision apparatus, while the Bayesian decision apparatus can marginalize over all nuisances to make a decision that maximizes expected reward. The consequence is that under a system of bets, the Bayesian decision procedure will inevitably make better bets (in expectation), provided that you don't start from too wrong _and_ too strong assumptions.
-
-## Current material
-
-### Intro text
-Step 4 handed us a posterior — a whole distribution over Δ — but a distribution is not yet a decision; sooner or later you must act (ship the drug, set the dose, choose B over A). Bayesian decision theory closes the gap with one rule: act to maximise expected utility under your posterior. It needs the posterior plus a reward model U(x) = 1 − |Δ − x|^p − c·|Δ − x|: land on the truth and earn a full 1; miss and two penalties bite, a polynomial |Δ − x|^p and a linear c·|Δ − x|. For positive c the reward crosses zero at a break-even error ε (the largest profitable miss); raising p oddly pushes ε outward for small misses; with c = 0, ε = 1. The bottom row poses the sharp question — given my belief, should I bet at all, and on what value? — both readings betting on the peak Δ̂ but deciding whether to bet differently. Left: the honest posterior, where the Bayesian rule averages reward against the whole posterior, E[U] = ∫ reward(Δ − Δ̂)·P(Δ) dΔ, and bets only when that is positive (the gold lens is the overlap). Right: the classical reading, a (1 − α) confidence interval drawn as a flat error bar (MLE Δ̂ centred, margin E either way); with no distribution to average over the rule turns worst-case — bet iff E ≤ ε, so even the interval's worst boundary still pays. Each panel shows an estimated pill (the rule's forecast — posterior's expected reward, or CI's min…max) turning green to bet / grey to fold, and an actual pill (the payoff once hidden Δ is revealed, or zero for a refused bet) green for a win / red for a loss / grey for a no-play. The gap between the pills is the price of not knowing the truth.
-
-### Concept table
-- p → the polynomial degree, how the penalty curves: a gentle bowl at p = 1, a flat top with steep walls as p climbs → a slider (1…10)
-- c → the linear penalty, a flat charge per unit of error; raising it tilts the whole reward down → a slider (−10…10)
-- Δ → where the reward is centred (the truth itself), drawn only because we simulate → the green line
+The Bayesian treatment is the logical way to think under uncertainty. In other words, given what you know, the probabilities it outputs are the unique fully-coherent conclusion. Even with the cost model known by both, a decision based on classical inference has a free parameter (alpha) that must be chosen externally to the decision apparatus, while the Bayesian decision apparatus can marginalize (integrate) over all nuisances to make a decision that maximizes expected reward. The consequence is that under a system of bets, the Bayesian decision procedure will inevitably make better bets (in expectation), provided that you don't start from too wrong _and_ too strong assumptions.
 
 ### Try this
 1. Defaults: with c = 0 the only penalty is polynomial, so break-even ε = 1 and the CI fits inside it; both rules bet and win — the paradigms agree.
@@ -225,15 +264,8 @@ Step 4 handed us a posterior — a whole distribution over Δ — but a distribu
 
 ### Take-homes
 - A posterior is an input to a decision, not the decision itself; pair it with a reward model and act on expected utility — the whole of Bayesian decision theory.
-- A confidence interval is not a probability distribution; reading it as "uniform over plausible values" is a specific, usually worse, belief — and a decision made on it earns less.
-- The shape the posterior carries (mass near the estimate, thinning into the tails) is what a uniform block discards and what a reward centred on the truth pays you to keep.
-- Same data, same interval width — yet a different decision, because of how honestly the uncertainty inside the interval is shaped.
-- Two numbers, never one: what a method thinks it will earn and what it actually earns. A trustworthy rule keeps the pair close; a tight wrong prior, or a mis-shaped interval, pries them apart.
+- A confidence interval allows bounding the likely rewards but using only the best and worst case to guide the decision underperforms the Bayesian framework.
 
-=> Bibliography
-- Accessible resources
-- Practical materials and tools
-- Academic material
 
 ## Inferences
 
@@ -507,3 +539,6 @@ def decide(p, posterior, dp):
 E_p         = (alpha + k) / (alpha + beta + n)         # closed-form check
 closed_form = GAIN * E_p - COST * (1 - E_p)
 ```
+
+# General TODO
+- Make the simulation twice as fast
