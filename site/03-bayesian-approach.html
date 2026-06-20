@@ -66,20 +66,29 @@
                 <tr>
                     <td><strong>a₀, b₀</strong></td>
                     <td>the same two roles, for the variance σ²</td>
-                    <td>b₀ is a slider (where you expect σ²); a₀ held fixed and gentle</td>
+                    <td>σ²₀ is a slider — the variance you expect <em>on average</em> (it pins
+                        the mean); a₀ = ½κ₀ ties the variance's weight to κ₀</td>
                 </tr>
             </table>
 
-            <p>The three panels below are drawn the way Wikipedia draws this distribution:
-                filled contours over the <strong>(Δ, σ)</strong> plane — a teardrop of belief — with
-                σ the <em>standard deviation</em>, so both axes carry the same units at the same
-                scale and a circular blob really is circular. All three use the same equal-volume
-                contours — each band encloses a further seventh of that panel's belief, out to
-                98% — so a lax prior spreads into a broad, shallow teardrop next to the tight,
-                compact posterior. On the left, the <strong style="color:#8E6FAE">prior</strong>;
+            <p>The three panels below are filled contours over the <strong>(Δ, σ²)</strong>
+                plane — a teardrop of belief — with the vertical axis the <em>variance</em>
+                σ², the model's own parameter, plotted on its natural scale (no change of
+                variable). All three use the same equal-volume contours — each band encloses
+                a further seventh of that panel's belief, out to 98% — so a lax prior spreads
+                into a broad, shallow teardrop next to the tight, compact posterior. Because
+                σ² is bounded below at 0 with a long upper tail, the teardrops lean upward.
+                On the left, the <strong style="color:#8E6FAE">prior</strong>;
                 on the right, the <strong>posterior</strong>; and between them, where it belongs in
                 the multiplication, the <strong style="color:#C96A5E">Gaussian likelihood</strong> of
-                the observed sample. The small green cross is the simulation's true (Δ, σ) — in real
+                the observed sample. The <strong style="color:#8E6FAE">prior</strong> and
+                <strong>posterior</strong> each carry two markers in their own colour — a dot at
+                the <em>mode</em> (the peak the eye sees) and an ✕ at the <em>mean</em>, which the
+                upward skew pulls above it; since σ²₀ now sets the prior's expected variance, that
+                ✕ sits exactly at σ²₀. The likelihood, not being a distribution, gets only its peak
+                — there is no centre of mass to mark — and the prior's ✕ vanishes when the belief
+                is too diffuse to have a mean at all. The small green cross is the simulation's
+                true (Δ, σ²) — in real
                 life, the one thing you never get to see. Below the triptych, the data and the
                 <strong>marginal over Δ</strong>: the three curves are the 1-D shadows of the three
                 panels, on the same square scale as steps 1 and 3.
@@ -202,20 +211,20 @@
 
         /* ---- variance prior: a₀ = κ₀/2 so the variance carries the SAME κ₀ pseudo-
            observations as the mean (one "prior weight" governs both). b₀ pins the
-           Inv-Gamma mode to 2σ²₀ (mode = b₀/(a₀+1)), so the σ²₀ slider keeps its meaning
-           for any κ₀ — see render(). -------------------------------------------------- */
+           EXPECTED variance E[σ²] to σ²₀ (= b₀/(a₀−1)/2), which exists only for a₀ > 1
+           (κ₀ > 2); below that the mean diverges, so b₀ falls back to pinning the mode
+           and the mean ✕ is hidden — see render(). ------------------------------------ */
 
         /* ---- geometry: contour panels --------------------------------------------
-           Wider than tall, and EQUAL pixels-per-unit on both axes (60 px / data-unit).
-           The y axis shows the standard deviation σ (not the variance) so it is
-           commensurable with Δ: a step of 1 along Δ is the same length as a step of 1
-           along σ. S2W/(2·HALF2) === S2H/SY by construction. */
+           The y axis shows the variance σ² (the parameter the prior is a belief about),
+           NOT the standard deviation. σ² is not commensurable with Δ, so the panel is
+           just wider than tall — no shared-units aspect to preserve. */
         const S2W = 360, S2H = 180, ML2 = 32, MR2 = 14, BH2 = 22;
         const FW2 = ML2 + S2W + MR2, TOP2 = 12, BASE2 = TOP2 + S2H, FH2 = BASE2 + BH2;
         const HALF2 = 3.0;                 // Δ axis: ±3
-        const SY = 3.0;                    // σ axis (group std dev): 0..3
+        const SY2 = 6.0;                   // σ² axis (group variance): 0..6
         const X2 = (d) => ML2 + (d + HALF2) / (2 * HALF2) * S2W;
-        const Y2 = (s) => BASE2 - s / SY * S2H;
+        const Y2 = (v) => BASE2 - v / SY2 * S2H;
 
         /* The log-density fields over (Δ, σ²_d) — logNIG and logLik — live in stats.js. */
 
@@ -236,8 +245,8 @@
         function computeField(logf) {
             const vals = new Float64Array(GRID_W * GRID_H);
             for (let j = 0; j < GRID_H; j++) {
-                const sigma = SY * (1 - (j + 0.5) / GRID_H);     // σ (group std), top → bottom
-                const s2 = 2 * sigma * sigma;                     // σ²_d = 2σ²
+                const sig2 = SY2 * (1 - (j + 0.5) / GRID_H);     // σ² (group var), top → bottom
+                const s2 = 2 * sig2;                              // σ²_d = 2σ²
                 for (let i = 0; i < GRID_W; i++) {
                     const d = -HALF2 + 2 * HALF2 * (i + 0.5) / GRID_W;
                     vals[j * GRID_W + i] = logf(d, s2);             // raw log-density on the grid
@@ -249,19 +258,17 @@
         function fieldURI(vals, rgb) {
             const N = GRID_W * GRID_H;
 
-            // displayed density ~ p(Δ,σ) = p(Δ,σ²_d)·(dσ²_d/dσ) = p·4σ. On a uniform (Δ,σ)
-            // grid the per-cell probability mass is ~ this same quantity, so ordering pixels
-            // by it and accumulating gives the enclosed-volume fraction directly.
+            // we plot in σ², the model's own variance scale (σ²_d = 2σ², a constant
+            // factor), so there is no Jacobian: on a uniform σ² grid the per-cell
+            // probability mass is just the density, and accumulating it gives the
+            // enclosed-volume fraction directly.
             let mx = -Infinity;
             for (let i = 0; i < N; i++) if (vals[i] > mx) mx = vals[i];
             const pd = new Float64Array(N);
             let total = 0;
-            for (let j = 0; j < GRID_H; j++) {
-                const J = 4 * SY * (1 - (j + 0.5) / GRID_H);     // Jacobian 4σ
-                for (let i = 0; i < GRID_W; i++) {
-                    const v = Math.exp(vals[j * GRID_W + i] - mx) * J;
-                    pd[j * GRID_W + i] = v; total += v;
-                }
+            for (let i = 0; i < N; i++) {
+                const v = Math.exp(vals[i] - mx);
+                pd[i] = v; total += v;
             }
 
             // density threshold for each enclosed-mass level (highest-density region):
@@ -292,31 +299,42 @@
             return cv.toDataURL("image/png");
         }
 
-        // shared chrome for every (Δ, σ) panel: frame, ticks, axis letters, mode dot, cross
-        function panelFrame(p, rgb, mode, truth) {
+        // shared chrome for every (Δ, σ²) panel: frame, ticks, axis letters, mode dot,
+        // barycentre ✕, truth +
+        function panelFrame(p, rgb, mode, bary, truth) {
             p.push(`<line x1='${ML2}' x2='${ML2 + S2W}' y1='${BASE2}' y2='${BASE2}' stroke='${PAL.rule}' stroke-width='1'/>`);
             p.push(`<line x1='${ML2}' x2='${ML2}' y1='${TOP2}' y2='${BASE2}' stroke='${PAL.rule}' stroke-width='1'/>`);
-            for (let s = 1; s <= 3; s++) {
-                p.push(`<line x1='${ML2 - 4}' x2='${ML2}' y1='${Y2(s).toFixed(1)}' y2='${Y2(s).toFixed(1)}' stroke='${PAL.muted}' stroke-width='1'/>`);
-                p.push(`<text x='${ML2 - 7}' y='${(Y2(s) + 3.5).toFixed(1)}' text-anchor='end' font-size='9.5' fill='${PAL.muted}'>${s}</text>`);
+            for (let v = 1; v <= SY2; v++) {
+                p.push(`<line x1='${ML2 - 4}' x2='${ML2}' y1='${Y2(v).toFixed(1)}' y2='${Y2(v).toFixed(1)}' stroke='${PAL.muted}' stroke-width='1'/>`);
+                p.push(`<text x='${ML2 - 7}' y='${(Y2(v) + 3.5).toFixed(1)}' text-anchor='end' font-size='9.5' fill='${PAL.muted}'>${v}</text>`);
             }
             for (let d = -2; d <= 2; d++) {
                 p.push(`<line x1='${X2(d).toFixed(1)}' x2='${X2(d).toFixed(1)}' y1='${BASE2}' y2='${BASE2 + 4}' stroke='${PAL.muted}' stroke-width='1'/>`);
                 p.push(`<text x='${X2(d).toFixed(1)}' y='${BASE2 + 15}' text-anchor='middle' font-size='9.5' fill='${PAL.muted}'>${d}</text>`);
             }
             p.push(`<text x='${ML2 + S2W + 3}' y='${BASE2 + 15}' font-size='10.5' font-style='italic' fill='${PAL.muted}'>Δ</text>`);
-            p.push(`<text x='${ML2 + 5}' y='${TOP2 + 12}' font-size='10.5' font-style='italic' fill='${PAL.muted}'>σ</text>`);
+            p.push(`<text x='${ML2 + 5}' y='${TOP2 + 12}' font-size='10.5' font-style='italic' fill='${PAL.muted}'>σ²</text>`);
 
-            // peak of this rendered (Δ, σ) surface (Jacobian included) — see nigSigmaMode
+            // peak of this (Δ, σ²) surface — the joint NIG mode, no Jacobian — see nigVarMode
             if (mode) {
                 const [md, ms] = mode;
-                if (Math.abs(md) < HALF2 && ms > 0 && ms < SY)
+                if (Math.abs(md) < HALF2 && ms > 0 && ms < SY2)
                     p.push(`<circle cx='${X2(md).toFixed(1)}' cy='${Y2(ms).toFixed(1)}' r='2.6' fill='rgb(${rgb.join(",")})'/>`);
             }
 
-            // the simulation's true (Δ, σ) — a small green cross
+            // the centre of mass of this panel — a small ✕ in the panel's colour
+            if (bary) {
+                const [bd, bv] = bary;
+                if (Math.abs(bd) < HALF2 && bv > 0 && bv < SY2) {
+                    const cx = X2(bd), cy = Y2(bv);
+                    p.push(`<path d='M${(cx - 3.5).toFixed(1)},${(cy - 3.5).toFixed(1)} l7,7 M${(cx - 3.5).toFixed(1)},${(cy + 3.5).toFixed(1)} l7,-7' ` +
+                        `stroke='rgb(${rgb.join(",")})' stroke-width='1.8' opacity='0.95'/>`);
+                }
+            }
+
+            // the simulation's true (Δ, σ²) — a small green cross
             const [td, ts] = truth;
-            if (Math.abs(td) < HALF2 && ts > 0 && ts < SY) {
+            if (Math.abs(td) < HALF2 && ts > 0 && ts < SY2) {
                 const cx = X2(td), cy = Y2(ts);
                 p.push(`<path d='M${(cx - 5).toFixed(1)},${cy.toFixed(1)} h10 M${cx.toFixed(1)},${(cy - 5).toFixed(1)} v10' ` +
                     `stroke='${PAL.green}' stroke-width='1.8' opacity='0.95'/>`);
@@ -324,10 +342,10 @@
         }
 
         // prior & posterior: filled equal-volume heatmap behind the shared chrome
-        function contourSvg(uri, rgb, mode, truth) {
+        function contourSvg(uri, rgb, mode, bary, truth) {
             const p = [];
             p.push(`<image href='${uri}' x='${ML2}' y='${TOP2}' width='${S2W}' height='${S2H}' preserveAspectRatio='none'/>`);
-            panelFrame(p, rgb, mode, truth);
+            panelFrame(p, rgb, mode, bary, truth);
             return `<svg viewBox='0 0 ${FW2} ${FH2}' xmlns='http://www.w3.org/2000/svg'>${p.join("")}</svg>`;
         }
 
@@ -340,7 +358,7 @@
         const LIK_LEVELS = [0.8, 0.5, 0.3, 0.15, 0.05];
 
         const gridPx = (i, j) =>
-            [X2(-HALF2 + 2 * HALF2 * (i + 0.5) / GRID_W), Y2(SY * (1 - (j + 0.5) / GRID_H))];
+            [X2(-HALF2 + 2 * HALF2 * (i + 0.5) / GRID_W), Y2(SY2 * (1 - (j + 0.5) / GRID_H))];
 
         // marching squares: line segments where the log-field crosses threshold T.
         // Each cell contributes 0, 1 (2 edge crossings), or 2 (saddle) segments.
@@ -366,7 +384,7 @@
             return segs;
         }
 
-        function likelihoodContourSvg(vals, rgb, mode, truth) {
+        function likelihoodContourSvg(vals, rgb, mode, bary, truth) {
             const p = [], labels = [];
             const col = `rgb(${rgb.join(",")})`;
             let mx = -Infinity;
@@ -400,7 +418,7 @@
             });
 
             p.push(...labels);              // labels (with bg halo) over the lines
-            panelFrame(p, rgb, mode, truth); // axes, mode dot, cross on top
+            panelFrame(p, rgb, mode, bary, truth); // axes, mode dot, barycentre, cross on top
             return `<svg viewBox='0 0 ${FW2} ${FH2}' xmlns='http://www.w3.org/2000/svg'>${p.join("")}</svg>`;
         }
 
@@ -418,38 +436,45 @@
 
         const m0S = makeSlider(grpPrior, { label: "prior centre for Δ · m₀", min: -2, max: 2, step: 0.05, value: 0, fmt: v => v.toFixed(2), onInput: render });
         const k0S = makeSlider(grpPrior, {
-            label: "prior weight · κ₀ (pseudo-obs.)", min: -1, max: 2, step: 0.05, value: 0,
+            label: "prior weight · κ₀ (pseudo-obs.)", min: -1, max: 2, step: 0.05, value: 0.70,
             fmt: v => { const k = 10 ** v; return k < 10 ? k.toFixed(1) : k.toFixed(0); }, onInput: render
         });
-        const s0S = makeSlider(grpPrior, { label: "prior centre for σ² · σ²₀", min: 0.25, max: 4, step: 0.05, value: 1.0, fmt: v => v.toFixed(2), onInput: render });
+        const s0S = makeSlider(grpPrior, { label: "prior expected σ² · σ²₀", min: 0.25, max: 4, step: 0.05, value: 1.0, fmt: v => v.toFixed(2), onInput: render });
 
         function render() {
             const delta = deltaS.value, varr = varS.value, n = nS.value;
             const m0 = m0S.value, k0 = 10 ** k0S.value;
             const A0 = k0 / 2;                       // variance pseudo-count tracks κ₀
-            const B0 = (A0 + 1) * 2 * s0S.value;     // pins Inv-Gamma mode to 2σ²₀ for any κ₀
+            // σ²₀ pins the EXPECTED variance: E[σ²] = b₀/(a₀−1)/2 = σ²₀, valid for a₀ > 1.
+            // Below that (κ₀ ≤ 2) the mean diverges, so we fall back to pinning the mode
+            // and hide the ✕ — the prior is then too diffuse to have an expected value.
+            const B0 = A0 > 1 ? (A0 - 1) * 2 * s0S.value : (A0 + 1) * 2 * s0S.value;
             const sigma = Math.sqrt(varr);
 
             // the n per-pair differences dᵢ ~ Normal(Δ, 2σ²), and the conjugate update
             const { dbar, ssd } = drawSample(pool, { delta, sigma, n });
             const { kn, mn, an, bn } = nigUpdate(m0, k0, A0, B0, n, dbar, ssd);
 
-            // truth in (Δ, σ) — σ is the group standard deviation, the y axis of the panels
-            const truth = [delta, sigma];
+            // truth in (Δ, σ²) — σ² is the group variance, the y axis of the panels
+            const truth = [delta, varr];
 
-            // 2-D panels: each draws its own equal-volume contours (no shared scale). The mode
-            // dot is the (Δ, σ) surface peak — the NIG mode for prior/posterior, the MLE for
-            // the likelihood.
+            // 2-D panels: each draws its own equal-volume contours (no shared scale). The
+            // dot is the (Δ, σ²) surface peak (NIG mode for prior/posterior, MLE for the
+            // likelihood). The ✕ marks the mean — prior and posterior only, and only when it
+            // exists (a > 1); the likelihood is not a distribution, so it has no centre of mass.
             const fPrior = computeField((dd, s2) => logNIG(dd, s2, m0, k0, A0, B0));
             const fLik = computeField((dd, s2) => logLik(dd, s2, n, dbar, ssd));
             const fPost = computeField((dd, s2) => logNIG(dd, s2, mn, kn, an, bn));
 
+            const priorMean = A0 > 1 ? [m0, nigVarMean(A0, B0)] : null;
+            const postMean = an > 1 ? [mn, nigVarMean(an, bn)] : null;
+
             document.getElementById("figPrior").innerHTML =
-                contourSvg(fieldURI(fPrior, PRIOR_RGB), PRIOR_RGB, [m0, nigSigmaMode(A0, B0)], truth);
+                contourSvg(fieldURI(fPrior, PRIOR_RGB), PRIOR_RGB, [m0, nigVarMode(A0, B0)], priorMean, truth);
             document.getElementById("figLik").innerHTML =
-                likelihoodContourSvg(fLik, LIK_RGB, [dbar, mleSigma(ssd, n)], truth);
+                likelihoodContourSvg(fLik, LIK_RGB, [dbar, mleVar(ssd, n)], null, truth);
             document.getElementById("figPost2d").innerHTML =
-                contourSvg(fieldURI(fPost, POST_RGB), POST_RGB, [mn, nigSigmaMode(an, bn)], truth);
+                contourSvg(fieldURI(fPost, POST_RGB), POST_RGB, [mn, nigVarMode(an, bn)], postMean, truth);
 
             // 1-D row: the data, and the three marginals over Δ — prior and posterior are
             // located-scaled t's, the likelihood is the peak-1 Gaussian profile

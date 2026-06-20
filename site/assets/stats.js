@@ -140,12 +140,15 @@ function likelihoodProfile(dbar, ssd, n) {
   return (x) => Math.exp(-0.5 * ((x - dbar) / sd) ** 2);
 }
 
-/* ---- where the (Δ, σ) surface peaks, as the group std dev σ (step 3) ----------
-   The heatmap is drawn in (Δ, σ) WITH the σ²_d→σ Jacobian (∝σ), so at Δ = m the
-   rendered slice is p(σ) ∝ σ^−(2a+2)·exp(−b/2σ²), peaking at σ = √(b/(a+1)/2). This
-   is the ridge the eye sees — NOT the (Δ, σ²) NIG mode √(b/(a+3/2)/2), which the
-   Jacobian shifts off the visible peak. */
-const nigSigmaMode = (a, b) => Math.sqrt(b / (a + 1) / 2);
+/* ---- where the (Δ, σ²) surface peaks, as the group variance σ² (step 3) -------
+   The heatmap is drawn in (Δ, σ²) with NO Jacobian, so the dot marks the true joint
+   NIG mode: at Δ = m the slice is p(σ²_d) ∝ (σ²_d)^−(a+3/2)·exp(−b/σ²_d), peaking at
+   σ²_d = b/(a+3/2); in the group variance that is σ² = b/(a+3/2)/2. */
+const nigVarMode = (a, b) => b / (a + 1.5) / 2;
 
-/* the MLE of the group std dev from the differences: σ̂²_d = ssd/n, σ = √(σ̂²_d/2). */
-const mleSigma = (ssd, n) => Math.sqrt(ssd / n / 2);
+/* the mean of the surface in the group variance σ² — E[σ²_d] = b/(a−1), so
+   E[σ²] = b/(a−1)/2. Exists only for a > 1; callers hide the ✕ otherwise. */
+const nigVarMean = (a, b) => b / (a - 1) / 2;
+
+/* the MLE of the group variance from the differences: σ̂²_d = ssd/n, σ² = σ̂²_d/2. */
+const mleVar = (ssd, n) => ssd / n / 2;
