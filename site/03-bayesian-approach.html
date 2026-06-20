@@ -59,15 +59,15 @@
                 </tr>
                 <tr>
                     <td><strong>κ₀</strong></td>
-                    <td>how strongly — measured in <em>pseudo-observations</em>: your
-                        hunch enters the maths worth exactly κ₀ imaginary data points</td>
+                    <td>how strongly you hold m₀ — measured in <em>pseudo-observations</em>:
+                        your hunch about Δ enters the maths worth exactly κ₀ imaginary data points</td>
                     <td>a slider (try the extremes)</td>
                 </tr>
                 <tr>
                     <td><strong>a₀, b₀</strong></td>
                     <td>the same two roles, for the variance σ²</td>
                     <td>σ²₀ is a slider — the variance you expect <em>on average</em> (it pins
-                        the mean); a₀ = ½κ₀ ties the variance's weight to κ₀</td>
+                        the mean); ν₀ = 2a₀, the variance's own pseudo-count, is held fixed and gentle</td>
                 </tr>
             </table>
 
@@ -209,11 +209,12 @@
         const PRIOR_RGB = [142, 111, 174], LIK_RGB = [201, 106, 94], POST_RGB = [74, 74, 74];
         const BG = "#FBFAF7";   // page background — used as a halo to break lines under labels
 
-        /* ---- variance prior: a₀ = κ₀/2 so the variance carries the SAME κ₀ pseudo-
-           observations as the mean (one "prior weight" governs both). b₀ pins the
-           EXPECTED variance E[σ²] to σ²₀ (= b₀/(a₀−1)/2), which exists only for a₀ > 1
-           (κ₀ > 2); below that the mean diverges, so b₀ falls back to pinning the mode
-           and the mean ✕ is hidden — see render(). ------------------------------------ */
+        /* ---- variance prior: DECOUPLED from κ₀ and held fixed. ν₀ is the variance's
+           prior pseudo-observations — the Δ-marginal's degrees of freedom — with a₀ = ν₀/2;
+           keeping ν₀ > 2 makes E[σ²] finite. b₀ then pins the EXPECTED variance
+           E[σ²] = b₀/(a₀−1)/2 to σ²₀, so the ✕ (the mean) sits exactly at σ²₀ and never
+           hits the a₀ = 1 singularity. κ₀ now weights only the mean. ------------------- */
+        const VARIANCE_A0 = 2;
 
         /* ---- geometry: contour panels --------------------------------------------
            The y axis shows the variance σ² (the parameter the prior is a belief about),
@@ -436,7 +437,7 @@
 
         const m0S = makeSlider(grpPrior, { label: "prior centre for Δ · m₀", min: -2, max: 2, step: 0.05, value: 0, fmt: v => v.toFixed(2), onInput: render });
         const k0S = makeSlider(grpPrior, {
-            label: "prior weight · κ₀ (pseudo-obs.)", min: -1, max: 2, step: 0.05, value: 0.70,
+            label: "prior weight on Δ · κ₀ (pseudo-obs.)", min: -1, max: 2, step: 0.05, value: 0.70,
             fmt: v => { const k = 10 ** v; return k < 10 ? k.toFixed(1) : k.toFixed(0); }, onInput: render
         });
         const s0S = makeSlider(grpPrior, { label: "prior expected σ² · σ²₀", min: 0.25, max: 4, step: 0.05, value: 1.0, fmt: v => v.toFixed(2), onInput: render });
@@ -444,11 +445,8 @@
         function render() {
             const delta = deltaS.value, varr = varS.value, n = nS.value;
             const m0 = m0S.value, k0 = 10 ** k0S.value;
-            const A0 = k0 / 2;                       // variance pseudo-count tracks κ₀
-            // σ²₀ pins the EXPECTED variance: E[σ²] = b₀/(a₀−1)/2 = σ²₀, valid for a₀ > 1.
-            // Below that (κ₀ ≤ 2) the mean diverges, so we fall back to pinning the mode
-            // and hide the ✕ — the prior is then too diffuse to have an expected value.
-            const B0 = A0 > 1 ? (A0 - 1) * 2 * s0S.value : (A0 + 1) * 2 * s0S.value;
+            const A0 = VARIANCE_A0;
+            const B0 = (A0 - 1) * 2 * s0S.value;     // pins E[σ²] = σ²₀ (a₀ > 1, no singularity)
             const sigma = Math.sqrt(varr);
 
             // the n per-pair differences dᵢ ~ Normal(Δ, 2σ²), and the conjugate update
