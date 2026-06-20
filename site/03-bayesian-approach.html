@@ -209,13 +209,6 @@
         const PRIOR_RGB = [142, 111, 174], LIK_RGB = [201, 106, 94], POST_RGB = [74, 74, 74];
         const BG = "#FBFAF7";   // page background — used as a halo to break lines under labels
 
-        /* ---- variance prior: DECOUPLED from κ₀ and held fixed. ν₀ is the variance's
-           prior pseudo-observations — the Δ-marginal's degrees of freedom — with a₀ = ν₀/2;
-           keeping ν₀ > 2 makes E[σ²] finite. b₀ then pins the EXPECTED variance
-           E[σ²] = b₀/(a₀−1)/2 to σ²₀, so the ✕ (the mean) sits exactly at σ²₀ and never
-           hits the a₀ = 1 singularity. κ₀ now weights only the mean. ------------------- */
-        const VARIANCE_A0 = 2;
-
         /* ---- geometry: contour panels --------------------------------------------
            The y axis shows the variance σ² (the parameter the prior is a belief about),
            NOT the standard deviation. σ² is not commensurable with Δ, so the panel is
@@ -437,7 +430,7 @@
 
         const m0S = makeSlider(grpPrior, { label: "prior centre for Δ · m₀", min: -2, max: 2, step: 0.05, value: 0, fmt: v => v.toFixed(2), onInput: render });
         const k0S = makeSlider(grpPrior, {
-            label: "prior weight on Δ · κ₀ (pseudo-obs.)", min: -1, max: 2, step: 0.05, value: 0.70,
+            label: "prior weight on Δ · κ₀ (pseudo-obs.)", min: -1, max: 2, step: 0.05, value: 0,
             fmt: v => { const k = 10 ** v; return k < 10 ? k.toFixed(1) : k.toFixed(0); }, onInput: render
         });
         const s0S = makeSlider(grpPrior, { label: "prior expected σ² · σ²₀", min: 0.25, max: 4, step: 0.05, value: 1.0, fmt: v => v.toFixed(2), onInput: render });
@@ -445,8 +438,7 @@
         function render() {
             const delta = deltaS.value, varr = varS.value, n = nS.value;
             const m0 = m0S.value, k0 = 10 ** k0S.value;
-            const A0 = VARIANCE_A0;
-            const B0 = (A0 - 1) * 2 * s0S.value;     // pins E[σ²] = σ²₀ (a₀ > 1, no singularity)
+            const { a0: A0, b0: B0 } = variancePrior(s0S.value);
             const sigma = Math.sqrt(varr);
 
             // the n per-pair differences dᵢ ~ Normal(Δ, 2σ²), and the conjugate update

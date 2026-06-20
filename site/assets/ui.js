@@ -1,6 +1,18 @@
 "use strict";
-/* ui.js — reusable page controls. The labelled slider with a live readout is
-   the one interactive widget every demo page shares. */
+/* ui.js — reusable page controls and the small translators from slider values to
+   model inputs. The labelled slider with a live readout is the one interactive
+   widget every demo page shares. */
+
+/* the σ²₀ slider → the variance prior's Inv-Gamma (a₀, b₀), shared by steps 3 & 4.
+   The shape is DECOUPLED from κ₀ (which then weights only the mean) and held fixed at
+   a₀ = ν₀/2, with ν₀ a gentle pseudo-count kept > 2 so the mean stays finite; b₀ pins
+   the EXPECTED variance E[σ²] = b₀/(a₀−1)/2 to the group variance s0 (the ×2 maps
+   σ² → σ²_d) — no a₀ = 1 singularity. */
+const NIG_NU0 = 4;
+function variancePrior(s0) {
+  const a0 = NIG_NU0 / 2;
+  return { a0, b0: (a0 - 1) * 2 * s0 };
+}
 
 function makeSlider(parent, { label, min, max, step, value, fmt, onInput }) {
   const row = document.createElement("label");

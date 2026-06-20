@@ -194,7 +194,7 @@ This brings a huge conceptual simplification. I no longer need to conceive a dif
 ## Current material
 
 ### Intro text
-Names step 3's sleight of hand: the flat prior, which declared every effect size (Δ = 0.1, 3, a million) equally believable — not humility but a strong claim. Makes the prior explicit via Bayes as multiplication: posterior ~ prior × likelihood. The unknowns come as a pair — effect Δ and noise σ² — so the prior is a distribution over that plane; the conjugate choice is the Normal-inverse-gamma: Δ | σ²_d ~ Normal(m₀, σ²_d/κ₀) and σ²_d ~ Inv-Gamma(a₀, b₀). Three panels draw prior (purple), likelihood (terracotta), posterior (dark) as filled equal-volume contours over the (Δ, σ) plane (σ as standard deviation, both axes same scale), with a green cross at the true (Δ, σ). Below: the data and the marginal over Δ as the three 1-D shadows. A simplification keeps the algebra on one screen: the model is fed the n per-pair differences dᵢ = x_{B,i} − x_{A,i}, each Normal(Δ, σ²_d) with σ²_d = 2σ².
+Names step 3's sleight of hand: the flat prior, which declared every effect size (Δ = 0.1, 3, a million) equally believable — not humility but a strong claim. Makes the prior explicit via Bayes as multiplication: posterior ~ prior × likelihood. The unknowns come as a pair — effect Δ and noise σ² — so the prior is a distribution over that plane; the conjugate choice is the Normal-inverse-gamma: Δ | σ²_d ~ Normal(m₀, σ²_d/κ₀) and σ²_d ~ Inv-Gamma(a₀, b₀). Three panels draw prior (purple), likelihood (terracotta), posterior (dark) as filled equal-volume contours over the (Δ, σ²) plane (the variance, on its own natural scale — no change of variable), with a green cross at the true (Δ, σ²). Prior and posterior each carry a mode dot and a mean ✕ in their colour (the ✕ shown only when the mean exists); the likelihood, not being a distribution, gets only its peak. Below: the data and the marginal over Δ as the three 1-D shadows. A simplification keeps the algebra on one screen: the model is fed the n per-pair differences dᵢ = x_{B,i} − x_{A,i}, each Normal(Δ, σ²_d) with σ²_d = 2σ².
 
 ### Try this
 1. Play with the sliders. Which plots respond to changes on the samples and which respond to changes on the prior.
@@ -220,13 +220,14 @@ Names step 3's sleight of hand: the flat prior, which declared every effect size
 
 - **Short description:** jointly estimating the effect Δ and the noise σ² from the per-pair differences, with a conjugate Normal-inverse-gamma prior, then reporting the marginal posterior over Δ (the variance integrated out as a nuisance).
 - **Mathematical model:**
-  - *Prior (Normal-inverse-gamma):* `Δ | σ²_d ~ Normal(m₀, σ²_d/κ₀)` and `σ²_d ~ Inv-Gamma(a₀, b₀)`. Here `σ²_d = 2σ²` (the variance of a difference of two groups). m₀, κ₀, σ²₀ are sliders. Crucially `a₀ = κ₀/2`, so the *single* "prior weight" slider κ₀ governs the pseudo-count for **both** the mean and the variance (n data points add n to κ and n/2 to a, so a₀ = κ₀/2 makes both worth exactly κ₀ observations). To keep the σ²₀ slider's meaning stable as κ₀ moves, b₀ pins the Inv-Gamma *mode* to 2σ²₀: `b₀ = (a₀+1)·2σ²₀`.
+  - *Prior (Normal-inverse-gamma):* `Δ | σ²_d ~ Normal(m₀, σ²_d/κ₀)` and `σ²_d ~ Inv-Gamma(a₀, b₀)`. Here `σ²_d = 2σ²` (the variance of a difference of two groups). m₀, κ₀, σ²₀ are sliders. κ₀ is the prior weight on **Δ only** (its pseudo-observations). The variance prior is **decoupled** and held fixed: a₀ = ν₀/2 with ν₀ a gentle, fixed pseudo-count (ν₀ = 4 ⇒ a₀ = 2), kept above 2 so E[σ²] is finite. b₀ then pins the **expected** variance to σ²₀: `b₀ = (a₀−1)·2σ²₀`, so E[σ²] = b₀/(a₀−1)/2 = σ²₀ — no a₀ = 1 singularity. (Earlier drafts coupled `a₀ = κ₀/2` and pinned the *mode*; that made the mean diverge for κ₀ ≤ 2 and produced a discontinuity in the prior at κ₀ = 2.)
   - *Likelihood:* the n per-pair differences `dᵢ ~ Normal(Δ, σ²_d)`.
   - *Posterior:* Normal-inverse-gamma with updated `(mₙ, κₙ, aₙ, bₙ)`; the *marginal over Δ* is a located-scaled Student-t with `df = 2aₙ`, `loc = mₙ`, `scale = √(bₙ/(aₙ·κₙ))`.
-- **How the posterior was computed:** *conjugate prior–likelihood → closed-form (analytic) update* (`nigUpdate`). The 2-D (Δ, σ) surfaces are evaluated on a grid only for the equal-volume heatmap drawing (with a Jacobian for the σ² → σ reparametrization); the inference itself is the analytic conjugate update, and the Δ marginal is the analytic Student-t.
+- **How the posterior was computed:** *conjugate prior–likelihood → closed-form (analytic) update* (`nigUpdate`). The 2-D (Δ, σ²) surfaces are evaluated on a grid only for the equal-volume heatmap drawing (in the variance's own scale, so no Jacobian); the inference itself is the analytic conjugate update, and the Δ marginal is the analytic Student-t.
 - **Critical code** (`03-bayesian-approach.html`, `render`):
 
 ```js
+const { a0: A0, b0: B0 } = variancePrior(s0S.value);                  // shared prior (steps 3 & 4)
 const { dbar, ssd } = drawSample(pool, { delta, sigma, n });
 const { kn, mn, an, bn } = nigUpdate(m0, k0, A0, B0, n, dbar, ssd);   // conjugate update
 ...
@@ -273,7 +274,7 @@ The Bayesian treatment is the logical way to think under uncertainty. In other w
 
 - **Short description:** turning the step-4 posterior over Δ into an *action* (bet / fold) by maximizing expected utility; the inferential object is the expected reward `E[U] = ∫ reward(Δ − Δ̂)·P(Δ) dΔ` averaged against the posterior, contrasted with a classical (1−α) confidence-interval rule read worst-case.
 - **Mathematical model:**
-  - *Prior / Likelihood / Posterior:* identical to step 3 — the same Normal-inverse-gamma conjugate posterior (with the `a₀ = κ₀/2` coupling and the `b₀ = (a₀+1)·2σ²₀` mode-pin), marginal over Δ a Student-t.
+  - *Prior / Likelihood / Posterior:* identical to step 3 — the same Normal-inverse-gamma conjugate posterior (κ₀ weighting the mean only, the variance prior decoupled with fixed a₀ = ν₀/2 and `b₀ = (a₀−1)·2σ²₀` pinning the expected variance), marginal over Δ a Student-t.
   - *Reward (utility):* `U(x) = 1 − |Δ − x|^p − c·|Δ − x|`, clamped at −1; sliders for degree p and linear penalty c.
   - *Bayesian rule:* bet iff `E[U] > 0`, betting on the posterior mode mₙ.
   - *Classical rule:* take the (1−α) CI `d̄ ± t·se`; with no distribution to average over, act worst-case — bet iff the reward at the interval edge stays ≥ 0.
