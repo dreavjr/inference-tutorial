@@ -233,9 +233,11 @@
 
             <h2>Links</h2>
             <ul class="links">
-                <li><a href="https://en.wikipedia.org/wiki/Confusion_matrix#Table_of_confusion">Confusion matrix — Table of confusion</a></li>
+                <li><a href="https://en.wikipedia.org/wiki/Confusion_matrix#Table_of_confusion">Confusion matrix — Table of
+                        confusion</a></li>
                 <li><a href="https://en.wikipedia.org/wiki/Sensitivity_and_specificity">Sensitivity and specificity</a></li>
-                <li><a href="https://en.wikipedia.org/wiki/Positive_and_negative_predictive_values">Positive and negative predictive values</a></li>
+                <li><a href="https://en.wikipedia.org/wiki/Positive_and_negative_predictive_values">Positive and negative
+                        predictive values</a></li>
                 <li><a href="https://en.wikipedia.org/wiki/Base_rate_fallacy">Base rate fallacy</a></li>
             </ul>
         </section>
@@ -402,9 +404,9 @@
         const TOTALS = [1000, 10000, 100000, 1000000];
 
         // col 1: base rate, total cases   col 2: sensitivity, specificity
-        const prevS = makeSlider(grpLeft, { label: "base rate · P/(P+N)", min: 0.01, max: 0.99, step: 0.01, value: 0.50, fmt: v => (v * 100).toFixed(0) + " %", onInput: refresh });
+        const prevS = makeSlider(grpLeft, { label: "base rate · prevalence", min: 0.01, max: 0.99, step: 0.01, value: 0.50, fmt: v => (v * 100).toFixed(0) + " %", onInput: refresh });
         const sensS = makeSlider(grpRight, { label: "sensitivity · power · tpr · (1−β)", min: 0.05, max: 1.00, step: 0.01, value: 0.80, fmt: v => (v * 100).toFixed(0) + " %", onInput: refresh });
-        const totS = makeSlider(grpLeft, { label: "total cases · P+N", min: 0, max: 3, step: 1, value: 0, fmt: v => fmtN(TOTALS[v]), onInput: refresh });
+        const totS = makeSlider(grpLeft, { label: "total cases", min: 0, max: 3, step: 1, value: 0, fmt: v => fmtN(TOTALS[v]), onInput: refresh });
         const specS = makeSlider(grpRight, { label: "specificity · significance · tnr · (1−α)", min: 0.50, max: 1.00, step: 0.005, value: 0.95, fmt: v => (v * 100).toFixed(1) + " %", onInput: refresh });
 
         function refresh() {
