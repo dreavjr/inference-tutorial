@@ -394,19 +394,19 @@
             const { a0: A0, b0: B0 } = variancePrior(s0S.value);
             const sigma = Math.sqrt(varr);
 
-            // the n per-pair differences dᵢ ~ Normal(Δ, 2σ²), and the conjugate update
-            const { dbar, ssd } = drawSample(pool, { delta, sigma, n });
-            const { kn, mn, an, bn } = nigUpdate(m0, k0, A0, B0, n, dbar, ssd);
+            // the between-subjects summary (Δ̂ and the pooled SS), and the conjugate update
+            const { dbar, ss2 } = drawSample(pool, { delta, sigma, n });
+            const { kn, mn, an, bn } = nigUpdate(m0, k0, A0, B0, n, dbar, ss2);
 
             // truth in (Δ, σ²) — σ² is the group variance, the y axis of the panels
             const truth = [delta, varr];
 
             // 2-D panels: each draws its own equal-volume contours (no shared scale). The
-            // dot is the (Δ, σ²) surface peak (NIG mode for prior/posterior, MLE for the
-            // likelihood). The ✕ marks the mean — prior and posterior only, and only when it
+            // dot is the (Δ, σ²) surface peak (NIG mode for prior/posterior, the integrated-
+            // likelihood peak for the likelihood). The ✕ marks the mean — prior and posterior only, and only when it
             // exists (a > 1); the likelihood is not a distribution, so it has no centre of mass.
             const fPrior = computeField((dd, s2) => logNIG(dd, s2, m0, k0, A0, B0));
-            const fLik = computeField((dd, s2) => logLik(dd, s2, n, dbar, ssd));
+            const fLik = computeField((dd, s2) => logLik(dd, s2, n, dbar, ss2));
             const fPost = computeField((dd, s2) => logNIG(dd, s2, mn, kn, an, bn));
 
             const priorMean = A0 > 1 ? [m0, nigVarMean(A0, B0)] : null;
@@ -415,7 +415,7 @@
             document.getElementById("figPrior").innerHTML =
                 contourSvg(fieldURI(fPrior, PRIOR_RGB), PRIOR_RGB, [m0, nigVarMode(A0, B0)], priorMean, truth);
             document.getElementById("figLik").innerHTML =
-                likelihoodContourSvg(fLik, LIK_RGB, [dbar, mleVar(ssd, n)], null, truth);
+                likelihoodContourSvg(fLik, LIK_RGB, [dbar, likVarMode(ss2, n)], null, truth);
             document.getElementById("figPost2d").innerHTML =
                 contourSvg(fieldURI(fPost, POST_RGB), POST_RGB, [mn, nigVarMode(an, bn)], postMean, truth);
 
@@ -427,7 +427,7 @@
             const pos = nigMarginalDelta(mn, kn, an, bn);
             document.getElementById("figMarg").innerHTML = marginalSvg(
                 locScaleTpdf(pri.loc, pri.scale, pri.df),
-                likelihoodProfile(dbar, ssd, n),
+                likelihoodProfile(dbar, ss2, n),
                 locScaleTpdf(pos.loc, pos.scale, pos.df),
                 delta);
         }

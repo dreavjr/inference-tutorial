@@ -21,17 +21,21 @@ function makePool(seed) {
   return { z1: fill(norm), z2: fill(norm), j1: fill(r), j2: fill(r) };
 }
 
-/* Turn a pool into one experiment: two groups of n drawn from populations
-   centred at ∓Δ/2 with spread σ, plus the n per-pair differences
-   dᵢ = x_{B,i} − x_{A,i} ~ Normal(Δ, 2σ²). Every page draws its sample this way,
-   so the same pool + knobs always yield the same data across the series. */
+/* Turn a pool into one experiment: two groups of n drawn from independent
+   populations centred at ∓Δ/2 with a shared spread σ. The two groups are NOT
+   paired (there are no subjects to pair), so we summarise them the between-subjects
+   way: the difference of group means Δ̂ = x̄_B − x̄_A, and the pooled within-group
+   sum of squares ss2 — expressed on the difference-variance scale σ²_d = 2σ² so the
+   conjugate model can work in Δ. ss2 = 2·[Σ(x_{A,i}−x̄_A)² + Σ(x_{B,i}−x̄_B)²] carries
+   2n−2 degrees of freedom and E[ss2] = (2n−2)·σ²_d. Δ̂ has variance σ²_d/n = 2σ²/n.
+   Every page draws its sample this way, so the same pool + knobs always yield the
+   same data across the series. */
 function drawSample(pool, { delta, sigma, n }) {
   const xa = pool.z1.slice(0, n).map(z => -delta / 2 + sigma * z);
   const xb = pool.z2.slice(0, n).map(z =>  delta / 2 + sigma * z);
-  const d  = xb.map((v, i) => v - xa[i]);
-  const dbar = mean(d);
-  const ssd  = d.reduce((s, v) => s + (v - dbar) ** 2, 0);   // Σ(dᵢ − d̄)²
-  return { xa, xb, d, dbar, ssd };
+  const dbar = mean(xb) - mean(xa);                          // Δ̂ = x̄_B − x̄_A
+  const ss2  = 2 * (n - 1) * (svar(xa) + svar(xb));          // pooled SS on the σ²_d scale, df = 2n−2
+  return { xa, xb, dbar, ss2 };
 }
 
 /* ---- Student's t distribution ------------------------------------------ */
@@ -101,23 +105,31 @@ function tTestPower({ delta, sigma, n, alpha, df }) {
 }
 
 /* ---- Normal-inverse-gamma conjugate model ------------------------------
-   joint log density over (Δ, σ²), the Gaussian log-likelihood of n observed
-   differences, and the conjugate prior→posterior update used by steps 4 & 5. */
+   joint log density over (Δ, σ²_d), the integrated Gaussian log-likelihood of the
+   two-sample experiment (grand mean marginalised out under a flat prior), and the
+   conjugate prior→posterior update used by steps 3 & 4. The likelihood is the
+   between-subjects pooled model: Δ̂ ~ Normal(Δ, σ²_d/n) and the pooled within-group
+   SS carries 2n−2 df, so the integrated likelihood has v-power (2n−1)/2. */
 
 function logNIG(d, s2, m, k, a, b) {
   return 0.5 * Math.log(k / (2 * Math.PI * s2)) - k * (d - m) ** 2 / (2 * s2)
        + a * Math.log(b) - logGamma(a) - (a + 1) * Math.log(s2) - b / s2;
 }
 
-function logLik(d, s2, n, dbar, ssd) {
-  return -(n / 2) * Math.log(2 * Math.PI * s2) - (ssd + n * (dbar - d) ** 2) / (2 * s2);
+function logLik(d, s2, n, dbar, ss2) {
+  return -((2 * n - 1) / 2) * Math.log(2 * Math.PI * s2) - (ss2 + n * (dbar - d) ** 2) / (2 * s2);
 }
 
-function nigUpdate(m0, k0, a0, b0, n, dbar, ssd) {
+/* Conjugate update for the pooled two-sample model. The mean Δ carries weight n
+   (Δ̂ has variance σ²_d/n), while the variance picks up the pooled 2n−2 df: that and
+   the +½ borrowed by completing the square on the mean give aₙ = a₀ + n − ½. In the
+   flat limit (a₀=−½, b₀=0, κ₀=0) the Δ marginal is t with df = 2n−2 and
+   scale² = (ss2/2)/((n−1)n) = se² — exactly step 1/5's pooled t-test. */
+function nigUpdate(m0, k0, a0, b0, n, dbar, ss2) {
   const kn = k0 + n;
   const mn = (k0 * m0 + n * dbar) / kn;
-  const an = a0 + n / 2;
-  const bn = b0 + ssd / 2 + k0 * n * (dbar - m0) ** 2 / (2 * kn);
+  const an = a0 + n - 0.5;
+  const bn = b0 + ss2 / 2 + k0 * n * (dbar - m0) ** 2 / (2 * kn);
   return { kn, mn, an, bn };
 }
 
@@ -134,9 +146,10 @@ function nigMarginalDelta(m, k, a, b) {
 }
 
 /* the Gaussian profile likelihood over Δ, peak-normalised to 1 — a relative
-   support weighting, not a density: centre d̄, sd √(ssd/((n−1)·n)). */
-function likelihoodProfile(dbar, ssd, n) {
-  const sd = Math.sqrt(ssd / (n - 1) / n);
+   support weighting, not a density: centre Δ̂, sd = the pooled standard error
+   se = √((ss2/2)/((n−1)·n)) = sp·√(2/n). */
+function likelihoodProfile(dbar, ss2, n) {
+  const sd = Math.sqrt(ss2 / 2 / (n - 1) / n);
   return (x) => Math.exp(-0.5 * ((x - dbar) / sd) ** 2);
 }
 
@@ -150,5 +163,6 @@ const nigVarMode = (a, b) => b / (a + 1.5) / 2;
    E[σ²] = b/(a−1)/2. Exists only for a > 1; callers hide the ✕ otherwise. */
 const nigVarMean = (a, b) => b / (a - 1) / 2;
 
-/* the MLE of the group variance from the differences: σ̂²_d = ssd/n, σ² = σ̂²_d/2. */
-const mleVar = (ssd, n) => ssd / n / 2;
+/* where the integrated-likelihood surface peaks, as the group variance σ². At Δ=Δ̂
+   it maximises at σ²_d = ss2/(2n−1), so in the group variance σ² = ss2/(2n−1)/2. */
+const likVarMode = (ss2, n) => ss2 / (2 * n - 1) / 2;

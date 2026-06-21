@@ -507,17 +507,17 @@
             const alpha = alphaS.value, p = pS.value, c = 10 ** cS.value;
             const sigma = Math.sqrt(varr);
 
-            // one experiment: the sample, its difference summary, the conjugate posterior
-            const { xa, xb, dbar, ssd } = drawSample(samplePool, { delta, sigma, n });
+            // one experiment: the sample, its between-subjects summary, the conjugate posterior
+            const { xa, xb, dbar, ss2 } = drawSample(samplePool, { delta, sigma, n });
             const { df: dfC, se } = tTest(xa, xb);
-            const { kn, mn, an, bn } = nigUpdate(m0, k0, A0, B0, n, dbar, ssd);
+            const { kn, mn, an, bn } = nigUpdate(m0, k0, A0, B0, n, dbar, ss2);
 
             // the three readings over Δ — prior, likelihood, posterior (steps 3-4)
             const pri = nigMarginalDelta(m0, k0, A0, B0);
             const pos = nigMarginalDelta(mn, kn, an, bn);
             const prior = locScaleTpdf(pri.loc, pri.scale, pri.df);
             const post = locScaleTpdf(pos.loc, pos.scale, pos.df);
-            const lik = likelihoodProfile(dbar, ssd, n);
+            const lik = likelihoodProfile(dbar, ss2, n);
 
             // the (1−α) confidence interval, and the "CI read as a uniform density"
             const hw = tCrit(alpha, dfC) * se;
@@ -549,7 +549,7 @@
             return {
                 pool: samplePool,
                 delta, varr, n, m0, k0, B0, alpha, p, c, sigma,
-                xa, xb, dbar, ssd, kn, mn, an, bn, se, dfC, hw, ciLo, ciHi, boxH, BK, postHalf,
+                xa, xb, dbar, ss2, kn, mn, an, bn, se, dfC, hw, ciLo, ciHi, boxH, BK, postHalf,
                 prior, lik, post, box, rew,
                 modePost, modeCI,
                 erPost, betPost,

@@ -193,11 +193,6 @@ This brings a huge conceptual simplification. I no longer need to conceive a dif
 - Likelihoods are not normalized, nor the product prior x likelihood. Normalizing is _the_ main challenge of Bayesian inference
 - Priors should reflect domain knowledge and be lax enough to allow the model to "change opinions", but making them _too_ lax leads to missed opportunities
 
-## Current material
-
-### Intro text
-Names step 3's sleight of hand: the flat prior, which declared every effect size (Δ = 0.1, 3, a million) equally believable — not humility but a strong claim. Makes the prior explicit via Bayes as multiplication: posterior ~ prior × likelihood. The unknowns come as a pair — effect Δ and noise σ² — so the prior is a distribution over that plane; the conjugate choice is the Normal-inverse-gamma: Δ | σ²_d ~ Normal(m₀, σ²_d/κ₀) and σ²_d ~ Inv-Gamma(a₀, b₀). Three panels draw prior (purple), likelihood (terracotta), posterior (dark) as filled equal-volume contours over the (Δ, σ²) plane (the variance, on its own natural scale — no change of variable), with a green cross at the true (Δ, σ²). Prior and posterior each carry a mode dot and a mean ✕ in their colour (the ✕ shown only when the mean exists); the likelihood, not being a distribution, gets only its peak. Below: the data and the marginal over Δ as the three 1-D shadows. A simplification keeps the algebra on one screen: the model is fed the n per-pair differences dᵢ = x_{B,i} − x_{A,i}, each Normal(Δ, σ²_d) with σ²_d = 2σ².
-
 ### Try this
 1. Play with the sliders. Which plots respond to changes on the samples and which respond to changes on the prior.
 2. Reset the sliders to default values.
@@ -257,18 +252,18 @@ https://en.wikipedia.org/wiki/Cromwell%27s_rule
 
 ### Inference — Bayesian joint posterior over (Δ, σ²_d) via a Normal-inverse-gamma conjugate prior
 
-- **Short description:** jointly estimating the effect Δ and the noise σ² from the per-pair differences, with a conjugate Normal-inverse-gamma prior, then reporting the marginal posterior over Δ (the variance integrated out as a nuisance).
+- **Short description:** jointly estimating the effect Δ and the noise σ² from both groups (between-subjects, pooled), with a conjugate Normal-inverse-gamma prior, then reporting the marginal posterior over Δ (the variance integrated out as a nuisance).
 - **Mathematical model:**
-  - *Prior (Normal-inverse-gamma):* `Δ | σ²_d ~ Normal(m₀, σ²_d/κ₀)` and `σ²_d ~ Inv-Gamma(a₀, b₀)`. Here `σ²_d = 2σ²` (the variance of a difference of two groups). m₀, κ₀, σ²₀ are sliders. κ₀ is the prior weight on **Δ only** (its pseudo-observations). The variance prior is **decoupled** and held fixed: a₀ = ν₀/2 with ν₀ a gentle, fixed pseudo-count (ν₀ = 4 ⇒ a₀ = 2), kept above 2 so E[σ²] is finite. b₀ then pins the **expected** variance to σ²₀: `b₀ = (a₀−1)·2σ²₀`, so E[σ²] = b₀/(a₀−1)/2 = σ²₀ — no a₀ = 1 singularity. (Earlier drafts coupled `a₀ = κ₀/2` and pinned the *mode*; that made the mean diverge for κ₀ ≤ 2 and produced a discontinuity in the prior at κ₀ = 2.)
-  - *Likelihood:* the n per-pair differences `dᵢ ~ Normal(Δ, σ²_d)`.
-  - *Posterior:* Normal-inverse-gamma with updated `(mₙ, κₙ, aₙ, bₙ)`; the *marginal over Δ* is a located-scaled Student-t with `df = 2aₙ`, `loc = mₙ`, `scale = √(bₙ/(aₙ·κₙ))`.
+  - *Prior (Normal-inverse-gamma):* `Δ | σ²_d ~ Normal(m₀, σ²_d/κ₀)` and `σ²_d ~ Inv-Gamma(a₀, b₀)`. Here `σ²_d = 2σ²` (the difference-of-means variance scale). m₀, κ₀, σ²₀ are sliders. κ₀ is the prior weight on **Δ only** (its pseudo-observations). The variance prior is **decoupled** and held fixed: a₀ = ν₀/2 with ν₀ a gentle, fixed pseudo-count (ν₀ = 4 ⇒ a₀ = 2), kept above 2 so E[σ²] is finite. b₀ then pins the **expected** variance to σ²₀: `b₀ = (a₀−1)·2σ²₀`, so E[σ²] = b₀/(a₀−1)/2 = σ²₀ — no a₀ = 1 singularity. (Earlier drafts coupled `a₀ = κ₀/2` and pinned the *mode*; that made the mean diverge for κ₀ ≤ 2 and produced a discontinuity in the prior at κ₀ = 2.)
+  - *Likelihood (between-subjects, pooled):* the difference of group means `Δ̂ = x̄_B − x̄_A ~ Normal(Δ, σ²_d/n)` together with the pooled within-group sum of squares (`2n − 2` df, the grand mean marginalised out under a flat prior). The two groups are **independent — there is no pairing** — so σ²_d is estimated from all 2n observations, not from n formed differences. The integrated likelihood over (Δ, σ²_d) carries variance-power (2n−1)/2.
+  - *Posterior:* Normal-inverse-gamma with updated `(mₙ, κₙ, aₙ, bₙ)`, where `aₙ = a₀ + n − ½` (the pooled 2n−2 df plus the ½ borrowed by completing the square on the mean). The *marginal over Δ* is a located-scaled Student-t with `df = 2aₙ`, `loc = mₙ`, `scale = √(bₙ/(aₙ·κₙ))`. In the flat-prior limit (a₀=−½, b₀=0, κ₀=0) it reduces **exactly** to step 1/5's pooled t: `df = 2n−2`, `loc = Δ̂`, `scale = se`.
 - **How the posterior was computed:** *conjugate prior–likelihood → closed-form (analytic) update* (`nigUpdate`). The 2-D (Δ, σ²) surfaces are evaluated on a grid only for the equal-volume heatmap drawing (in the variance's own scale, so no Jacobian); the inference itself is the analytic conjugate update, and the Δ marginal is the analytic Student-t.
 - **Critical code** (`03-bayesian-approach.html`, `render`):
 
 ```js
 const { a0: A0, b0: B0 } = variancePrior(s0S.value);                  // shared prior (steps 3 & 4)
-const { dbar, ssd } = drawSample(pool, { delta, sigma, n });
-const { kn, mn, an, bn } = nigUpdate(m0, k0, A0, B0, n, dbar, ssd);   // conjugate update
+const { dbar, ss2 } = drawSample(pool, { delta, sigma, n });          // Δ̂ and the pooled SS (df 2n−2)
+const { kn, mn, an, bn } = nigUpdate(m0, k0, A0, B0, n, dbar, ss2);   // conjugate update
 ...
 const pri = nigMarginalDelta(m0, k0, A0, B0);
 const pos = nigMarginalDelta(mn, kn, an, bn);                          // Student-t marginal over Δ
@@ -277,11 +272,11 @@ const pos = nigMarginalDelta(mn, kn, an, bn);                          // Studen
   with the closed-form update and marginal in `assets/stats.js`:
 
 ```js
-function nigUpdate(m0, k0, a0, b0, n, dbar, ssd) {
+function nigUpdate(m0, k0, a0, b0, n, dbar, ss2) {   // ss2 = pooled SS on the σ²_d scale (df 2n−2)
   const kn = k0 + n;
   const mn = (k0 * m0 + n * dbar) / kn;
-  const an = a0 + n / 2;
-  const bn = b0 + ssd / 2 + k0 * n * (dbar - m0) ** 2 / (2 * kn);
+  const an = a0 + n - 0.5;                            // pooled 2n−2 df + ½ from the mean term
+  const bn = b0 + ss2 / 2 + k0 * n * (dbar - m0) ** 2 / (2 * kn);
   return { kn, mn, an, bn };
 }
 function nigMarginalDelta(m, k, a, b) {
@@ -327,7 +322,7 @@ https://en.wikipedia.org/wiki/Expected_utility_hypothesis
 
 - **Short description:** turning the step-4 posterior over Δ into an *action* (bet / fold) by maximizing expected utility; the inferential object is the expected reward `E[U] = ∫ reward(Δ − Δ̂)·P(Δ) dΔ` averaged against the posterior, contrasted with a classical (1−α) confidence-interval rule read worst-case.
 - **Mathematical model:**
-  - *Prior / Likelihood / Posterior:* identical to step 3 — the same Normal-inverse-gamma conjugate posterior (κ₀ weighting the mean only, the variance prior decoupled with fixed a₀ = ν₀/2 and `b₀ = (a₀−1)·2σ²₀` pinning the expected variance), marginal over Δ a Student-t.
+  - *Prior / Likelihood / Posterior:* identical to step 3 — the same between-subjects pooled Normal-inverse-gamma conjugate posterior (κ₀ weighting the mean only, the variance prior decoupled with fixed a₀ = ν₀/2 and `b₀ = (a₀−1)·2σ²₀` pinning the expected variance), marginal over Δ a Student-t. Both rules now read the same pooled variance estimate: the Bayesian posterior and the classical CI (`tTest`, df = 2n−2) coincide in the flat-prior limit, so the head-to-head is a clean prior-vs-α contrast rather than a model mismatch.
   - *Reward (utility):* `U(x) = 1 − |Δ − x|^p − c·|Δ − x|`, clamped at −1; sliders for degree p and linear penalty c.
   - *Bayesian rule:* bet iff `E[U] > 0`, betting on the posterior mode mₙ.
   - *Classical rule:* take the (1−α) CI `d̄ ± t·se`; with no distribution to average over, act worst-case — bet iff the reward at the interval edge stays ≥ 0.
@@ -335,7 +330,7 @@ https://en.wikipedia.org/wiki/Expected_utility_hypothesis
 - **Critical code** (`04-the-decision.html`, `computeState` + helpers):
 
 ```js
-const { kn, mn, an, bn } = nigUpdate(m0, k0, A0, B0, n, dbar, ssd);
+const { kn, mn, an, bn } = nigUpdate(m0, k0, A0, B0, n, dbar, ss2);
 const pos = nigMarginalDelta(mn, kn, an, bn);
 ...
 const rew = (x, ctr) => rewardClamped(x, ctr, p, c);   // U = max(-1, 1 - |x-ctr|^p - c|x-ctr|)
@@ -408,10 +403,10 @@ https://en.wikipedia.org/wiki/Credible_interval
 
 - **Short description:** estimating the effect size Δ = μ_B − μ_A as a full posterior distribution under flat (non-informative) priors — which yields a shifted, scaled Student-t, i.e. step 1's t-distribution re-centred on the observed difference.
 - **Mathematical model:**
-  - *Likelihood:* Gaussian, as in step 1 (`dᵢ ~ Normal(Δ, σ²_d)`).
+  - *Likelihood:* Gaussian between-subjects, as in step 1 (both groups, common σ²).
   - *Prior:* flat (improper) on Δ and on log σ — "let the data speak."
   - *Posterior over Δ* (σ² marginalized out): a located-scaled Student-t centred at `Δ̂ = x̄_B − x̄_A`, scale = the t-test's standard error `se`, `df = n + m − 2`.
-- **How the posterior was computed:** *analytic* — the flat-prior result coincides with the classical sampling object, so the page re-uses `tTest`'s `(dObs, se, df)`; no numerical integration. The (1−α) HDI is exactly the equal-tailed band `Δ̂ ± t·se`.
+- **How the posterior was computed:** *analytic* — the flat-prior result coincides with the classical sampling object, so the page re-uses `tTest`'s `(dObs, se, df)`; no numerical integration. The (1−α) HDI is exactly the equal-tailed band `Δ̂ ± t·se`. This is also **exactly the flat-prior limit of the step 3–4 conjugate model** (a₀=−½, b₀=0, κ₀=0 ⇒ df = 2n−2, scale = se), so steps 3–5 share one between-subjects pooled variance model — flattening the step-3 prior lands precisely here.
 - **Critical code** (`05-bayesian-t-test.html`, `render` + `posteriorSvg`):
 
 ```js
