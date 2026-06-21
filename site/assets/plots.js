@@ -216,7 +216,7 @@ function wireImpliedHover(svgId, { heightAt, label, labelX, labelMinY }) {
 
 function makeIntervalSim({ sliders, simArea, simBtn, resampleBtn, getParams, adopt, caption, isFalse }) {
     const SIMW = 960, SIMH = 165, SML = 46, SMR = 24, SMT = 16, SMB = 16;
-    const N_SIM = 40, SIM_WAIT = 300;
+    const N_SIM = 40, SIM_WAIT = 150;
     const MAROON = "#8C2F39";
     const simMidY = SIMH / 2, simSpacing = (SIMW - SML - SMR) / N_SIM;
     const NS = "http://www.w3.org/2000/svg";

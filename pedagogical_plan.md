@@ -1,6 +1,6 @@
 # Step 1: How classical tests work
 
-## Pedagogical plan
+## Main argument
 
 Classical inference doesn't accept parameters as random variables because that would clash with the frequentist notion of probability. To bypass that blocking point, it uses the experiment as the source of variation. Each experiment is associated to a random sample, which allow statistics or estimators to have a sampling distribution even though the true parameters are still consided fixed. Instead of the *parameters*, whose uncertainty classical inference dosn't even have language to define, it's the *estimators* that will be the object of significance or confidence analyses.
 
@@ -102,9 +102,9 @@ return { power, beta: 1 - power };
 - Add the MLE estimator on the plot?
 - change \hat(D) -> \hat(Δ)
 
-# Step 2: What we want vs. can control
+# Step 2: The world vs. the test
 
-## Pedagogical plan
+## Main argument
 
 The ideas of power and significance appear with different names: sensitivity and specificity, true positive rate and true negative rate, etc. They are formal properties of the test but do not necessarily correspond to the challenges we will face in reality. PPV and NPV correspond much more to real-life concerns.
 
@@ -177,7 +177,7 @@ function confusion(prev, sens, spec, total) {
 
 # Step 3: The Bayesian approach
 
-## Pedagogical plan
+## Main argument
 
 Bayesian inference brings a profound conceptual change: probabilities are no longer just about repeatable measurements, they are about degrees of ignorance. Now, both data *and parameters* can be random variables with probability distributions.
 
@@ -185,7 +185,9 @@ This brings a huge conceptual simplification. I no longer need to conceive a dif
 
 
 ### Concepts
-- Prior, likelihood, posterior
+- Prior
+- Likelihood
+- Posterior
 
 ### Take-homes
 - Likelihoods are not normalized, nor the product prior x likelihood. Normalizing is _the_ main challenge of Bayesian inference
@@ -207,11 +209,49 @@ Names step 3's sleight of hand: the flat prior, which declared every effect size
 7. Can you see marginalization in action? What are the parameters used in the estimation? Which do you and which don't you care about.
 
 ### Take-homes
+- Bayesian probabilities break the asymmetry between parameters and data: everything is a random variable with a distribution
+- Inference by Bayes' rule: posterior is proportional to prior x likelihood. The posterior represents how much I expect the parameter's value to be in certain regions of the parameter space
 - Conceptually, the prior flatness should reflect the knowledge you have about the parameters. If you look at a flat prior and think "well, the parameter could _never_ be in this range", you are not exploiting all the knowledge you have.
 - In practice, the influence of the prior is small, provided you have enough data or your prior is not at once assertive and wrong.
 - Conjugate priors measure the strength of the prior as pseudo-counts, i.e., as the equivalent "convincing power" of that number of data samples.
 - The likelihood is the part where usually everyone agrees (including classical inference), because it's relatively easier to establish how data comes from the parameters than vice-versa.
 - Bayesian inference is often called subjective, but that is true only in the sense that different actors may have different knowledge about the problem, and be exposed to different data. Two Bayesian actors starting from the same "state of ignorance" and seeing exactly the same data must reach _exactly_ the same conclusions, now matter how they organize the inference computation.
+
+### Dialog
+
+ "What's the chance that these samples come from different means?" you ask.
+
+"Essentially 100%," says Bayesian inference.
+
+"Really? Why's that?"
+
+"Well, the event of the means being _exactly_ the same has probability 0. So the means are different almost surely."
+
+"I see what you mean, even if that asnwer doesn't really help me. Wait. Doesn't the question bother you?"
+
+"Why would it? It's a perfectly valid question."
+
+"Someone told me that either the means are true or they aren't, there's no chance involved."
+
+"I disagree. Chance is not about what things _are_: it's about what _we know_ about them."
+
+"But what do we know about the means, then?"
+
+"The is _exactly_ encoded by this posterior distribution."
+
+"But how do I know that the means come from that distribution?"
+
+"That question makes no sense. As I said, the distribution is not about the means, it's about your knowledge about them."
+
+(...)  [TODO: resvise and complete]
+
+### Links
+
+https://en.wikipedia.org/wiki/Bayes%27_theorem
+https://en.wikipedia.org/wiki/Bayesian_inference
+https://en.wikipedia.org/wiki/Cox%27s_theorem
+https://en.wikipedia.org/wiki/Cromwell%27s_rule
+
 
 ## Inferences
 
@@ -251,21 +291,28 @@ function nigMarginalDelta(m, k, a, b) {
 
 # Step 4: Making a decision
 
-## Pedagogical plan
+## Main argument
 
 The Bayesian treatment is the logical way to think under uncertainty. In other words, given what you know, the probabilities it outputs are the unique fully-coherent conclusion. Even with the cost model known by both, a decision based on classical inference has a free parameter (alpha) that must be chosen externally to the decision apparatus, while the Bayesian decision apparatus can marginalize (integrate) over all nuisances to make a decision that maximizes expected reward. The consequence is that under a system of bets, the Bayesian decision procedure will inevitably make better bets (in expectation), provided that you don't start from too wrong _and_ too strong assumptions.
 
 ### Try this
-1. Defaults: with c = 0 the only penalty is polynomial, so break-even ε = 1 and the CI fits inside it; both rules bet and win — the paradigms agree.
-2. Drop n to 3–4: the CI balloons past ε = 1, its worst-case boundary turns negative, the classical rule refuses (banks 0); the compact posterior still expects positive return — it bets and wins. The Bayesian edge is sharpest when data are scarce.
-3. Crank n to 100: both beliefs sharpen, both bet, actual payoffs converge near peak reward 1 — with enough data the rules agree again.
-4. Raise c (linear penalty): break-even ε pulls in below 1; first the wide-interval classical rule folds, push further and even the posterior's expectation drops below zero so the Bayesian folds too. (With c > 0, a higher p widens ε, nudging both back toward betting.)
-5. Tighten the prior (κ₀ ↑) and shift m₀ off the truth: the posterior's bet pulls away from the interval's midpoint — watch a confident-but-wrong prior keep its estimated pill green and betting while the actual pill slides red: overconfidence made quantitative.
+
+TODO!
 
 ### Take-homes
 - A posterior is an input to a decision, not the decision itself; pair it with a reward model and act on expected utility — the whole of Bayesian decision theory.
-- A confidence interval allows bounding the likely rewards but using only the best and worst case to guide the decision underperforms the Bayesian framework.
+- A confidence interval allows bounding the likely rewards but using only the best and worst case to guide the decision underperforms in comparison with Bayesian decition, which exploits all information available.
 
+
+### Dialog
+
+TODO!
+
+
+### Links
+https://en.wikipedia.org/wiki/Dutch_book_arguments
+https://en.wikipedia.org/wiki/Decision_theory
+https://en.wikipedia.org/wiki/Expected_utility_hypothesis
 
 ## Inferences
 
@@ -306,49 +353,34 @@ function integrate(f) {                 // ∫f dx by the trapezoid rule
 }
 ```
 
-# Step 5: A difference in style?
+# Step 5: A Bayesian t-test?
 
-## Pedagogical plan
+## Main argument
 
-Bayesian probabilities are not tied to frequencies: they represent what you must conclude when you are reasoning under uncertainty. A probability distribution represent how much you can locate the value of a random variable given all that you know. This small change changes everything, because now parameters don't have to be fixed: their distribution represent what you know about them, not frequencies that depend on repetition.
+TODO!
+
+(This is a bit of a tangent: the idea is to show that we cheat by using Bayesian inference while throwing away information, we should not expect to reap the benefits. This is a bit of a side-lesson: Steps 1-4 and the exercise of Step 6 should not depend on it.)
 
 ### Concepts
-- Bayesian probabilities break the asymmetry between parameters and data: everything is a random variable with a distribution
-- Inference by Bayes' rule: posterior is proportional to prior x likelihood. The posterior represents how much I expect the parameter's value to be in certain regions of the parameter space
-- Priors don't have to be informative
 
-Myths to dismiss:
-- Bayesian probability is all about priors => you can often use non-informative or little-informative priors (although that is not necessarily a good idea for most problems)
-- I can use Bayesian inference to mimick hard-threshold classical tests and still reap the benefits => if you don't add informative priors ("let the data speak for itself" zealousness) and force sharp decisions instead of exploit the uncertainty, Bayesian inference can give exactly the same results as classical inference
+TODO!
 
 ### Take-homes
-- This is not the Bayesian treatment: (1) I'm using maximum a posteriori with an uninformative prior = same as maximum likelihood. Credible intervals force a binarization of the decision that goes against the Bayesian ethos.
+- Priors don't have to be informative and can even be improper, but almost always using such a flat prior is a missed opportunity
+- You can use Bayesian inference to mimick hard-threshold classical tests, but you shouldn't expect to reap the benefits of Bayesian
+- This is not the Bayesian treatment: (1) I'm using maximum a posteriori with an uninformative prior = same as maximum likelihood. Credible intervals force a binarization of the decision that goes against the Bayesian ethos of using all information available
+- Still, credible intervals (the Bayesian answer to classical confidence intervals) are a useful visual summary for communicating results, especially when then public would be disturbed by the lack of interval estimation
 
-## Current material
+### Dialog
 
-## Pedagogical plan
+TODO!
 
-### Intro text
-Step 1 asked only "if H₀ were true, how surprising is our t?" and answers with a yes/no stamp — never telling us how large the effect is or how sure we are. The Bayesian move needs no new machinery, just a change of reading: take the same t-distribution and re-centre it on the observed difference instead of on 0, letting it describe the whole range of plausible effect sizes (with flat priors this is exactly the posterior for the mean difference — a shifted, scaled t). Both panels share step 1's square scale; the right panel is the distribution over Δ. Because it is a genuine density, a very certain posterior becomes a tall thin spike that fades out at the top of the box. Hovering the Δ curve maps any candidate effect size to the two population means it implies.
+### Links
 
-### Concept table
-- the curve's peak → the observed difference Δ̂ = x̄₂ − x̄₁, our best estimate
-- the curve's width → our uncertainty, wide when data are few or noisy
-- the curve's height → it's a real density (area = 1), so concentrating ⇒ taller
-- the dashed line at 0 → the null; if it sits out in the tail, the data doubt it
-- the green dashed Δ → the real effect, unknown in life, shown here because we simulate
+TODO!
+https://en.wikipedia.org/wiki/Maximum_a_posteriori_estimation
+https://en.wikipedia.org/wiki/Credible_interval
 
-### Try this
-1. Hover slowly across the Δ curve: the two implied means slide apart and back — the curve shows which separations the data consider plausible.
-2. Is 0 under the curve? With defaults, barely (the Bayesian echo of "significant"); drag Δ toward 0 and the curve drifts until it straddles 0 and "no effect" becomes most plausible.
-3. Raise n: the curve concentrates (taller, narrower) around the truth — certainty about size, not just a smaller p; far enough and the spike fades out the top. This is power from the inside.
-4. Raise σ²: the curve fattens and sinks — noise widens the band of indistinguishable effect sizes.
-5. "New sample" a few times: the curve jumps (its centre Δ̂ is the noisy observed effect) but usually keeps true Δ in its bulk; each study hands you one curve and you never see the green line.
-
-### Take-homes
-- A p-value returns a verdict; this returns an estimate with honest error bars — same t-distribution read the other way round.
-- The shape is the message: "significant" can hide a curve spanning trivial to enormous effects; "not significant" can hide a curve tight around zero. The stamp throws that away; the distribution keeps it.
-- One sleight of hand remains — "with flat priors" was itself a choice, made explicit in the next step.
 
 ## Inferences
 
@@ -378,12 +410,12 @@ Steps 1–5 are the live session (≈1 hour, adult software developers). Step 6 
 sixth live step — it is a take-home coding exercise, deliberately left a little less
 finished than the rest. The reasons we settled on this:
 
-- Step 5 carries the thesis of the whole tutorial (Making a decision apparatus
+- Step 4 carries the thesis of the whole tutorial (Making a decision apparatus
   marginalizes nuisances and maximizes expected reward; classical inference leaves α as a
   free parameter chosen outside the apparatus). It must stay live and must land on the
   continuous model the learner has lived in for four steps — one new idea (decision) on
   established ground, not two new ideas at once. So we do **not** cut Step 5 to make room.
-- The continuous thread (1→3→4→5) is a complete spine. Step 2 is the only binary step and
+- The continuous thread (1→3→4) is a complete spine. Step 2 is the only binary step and
   the only one that never gets a Bayesian answer; its closing line even promises "Bayes'
   theorem — where we go next" and then the thread is dropped. Step 6 is that owed answer.
 - For this audience the strongest capstone is an **inversion**: for five steps they dragged
@@ -394,7 +426,7 @@ finished than the rest. The reasons we settled on this:
   fills in. Transfer (apply the pipeline to new data) is exactly the move that consolidates
   it.
 
-## Pedagogical plan
+## Main argument
 
 The exercise re-runs the entire pipeline — prior → likelihood → posterior → expected
 utility → act — on a binary classifier with a single unknown: its success rate *p*. It is a
@@ -413,22 +445,19 @@ Why binary data is the right place to *code* this rather than slider it:
   where the answer key exists, then carry it where it doesn't (cf. learning numerical
   integration on ∫x² dx first).
 
-Concepts (each a callback, made tactile by code):
+### concepts
 - The prior **is** Step 2's base rate, written as `Beta(α, β)` — a few imaginary cases,
-  priced in pseudo-observations (the pseudo-count α + β echoes Step 4's κ₀).
-- Normalization is "the main challenge of Bayesian inference" (Step 4) shrunk to one
+  priced in pseudo-observations (the pseudo-count α + β echoes Step 3's κ₀).
+- Normalization is "the main challenge of Bayesian inference" (Step 3) shrunk to one
   Riemann sum: divide the curve by its own area.
-- The decision is Step 5's rule on new data: pair the posterior with a reward, act on
+- The decision is Step 4's rule on new data: pair the posterior with a reward, act on
   expected utility.
 
 ### Take-homes
 - The same four boxes (prior, likelihood, posterior, decision) are, on binary data, ten
   lines of array arithmetic.
-- Marginalization vs expectation: there is only one unknown, so what the learner codes in
-  the decision step is an **expectation** over *p*, not a marginalization of a nuisance.
-- The grid that solves this in one line is hopeless in higher dimensions (N cells per axis →
-  Nᵈ cells); that wall is the whole reason MCMC and variational inference exist — the
-  forward-pointer past the course.
+- Integrating over the things you want to ignore to get the ones you care about is the bread and butter of Bayesian inference. Marginalization and expected values are different facets of this strategy.
+- Integration becomes a problem as the number of parameters grows => curse of dimensionality. Things like MCMC and, in particular, HMC have greatly broadened the universe of problems for which we can apply Bayesian inference, but this is still a problematic or even completely intractable step for many problems.
 
 Decisions about the model (where we deviated from first sketches):
 - **Notation:** `Beta(alpha, beta)` for the prior; `n, p` for the Binomial (so the rate is
@@ -448,52 +477,6 @@ Decisions about the model (where we deviated from first sketches):
     closed-form decision), honor the literal FN penalty (decision degenerates to "always
     bet"), or go to the full three-cell model (TP +, FP −, FN −) for a richer threshold.
 
-## Current material
-
-A notebook mock-up (page-local CSS for the cell vocabulary, to be promoted to shared CSS
-once the design settles and the engine is wired). Cells alternate **provided** (read-only
-scaffolding / answer keys) and **your code** (signature + docstring contract + `# TODO`);
-the **Run** buttons are intentionally inert. A callout at the top states plainly that the
-page is deliberately unfinished and the engine is not connected yet.
-
-### Intro text
-Frames Step 6 as the Bayesian answer Step 2 never got, and as the
-capstone inversion (build the machine, don't drag its sliders). States the pipeline on new
-data and the two reasons binary data is the right place to code it (finite support [0, 1];
-Beta-Binomial conjugacy as an answer key).
-
-The seven cells:
-0. **Setup** (provided): the grid `p = linspace(0,1,N)`, `dp`; the data `n, k`; the prior
-   `alpha, beta`.
-1. **Prior** (you code): `prior_kernel(p, alpha, beta)` → un-normalized Beta kernel.
-2. **Likelihood** (you code): `likelihood(p, n, k)` → `p**k * (1-p)**(n-k)`, the
-   n-choose-k constant dropped (washes out in normalization).
-3. **Normalize** (you code): `normalize(density, dp)` — the one hard line — then
-   `posterior = normalize(prior_kernel * likelihood, dp)`.
-4. **Conjugate check** (provided): overlay `Beta(α+k, β+n−k)`; numeric must match analytic
-   (if not, the bug is in `normalize`).
-5. **Belief → act** (you code): `GAIN`/`COST`, `expected_utility_act(p, posterior, dp)` as a
-   weighted sum, `decide(...)` returning bet/fold; output checks against the closed form.
-6. **Why this was a toy** (read-me): the curse-of-dimensionality thought experiment.
-
-Closing prose:
-- "Questions to answer (once it runs)" — morals-as-questions: the flat prior `(1,1)` and its
-  hidden bet; a tight wrong prior `(40,4)` vs more data; a rare-success low-mean prior
-  `(2,40)`; raising `COST` until `decide` folds and tying break-even to `COST/(GAIN+COST)`
-  and Step 5.
-- "The moral (write your own)" — three `TODO` prompts for the learner.
-### - Concept table
-  `decide`→Step 5, with a deliberate `TODO` row.
-
-Not yet done: wire the in-browser Python engine and the plot helpers (`plot_three`,
-`plot_overlay`, the E[U]/bet-fold output); promote the notebook CSS to shared; decide whether
-to link the page from `index.html` (currently unlinked so it doesn't read as a sixth live
-step); resolve the reward-model open question above.
-
-## Inferences
-
-(Reference implementation: `bayesian-decision-do-it-yourself.ipynb` — the notebook with answers
-filled in; the page `do-it-yourself.html` is the learner-facing mock-up.)
 
 ### Inference — Beta-Binomial posterior for a classifier's success rate p, computed numerically on a grid
 
@@ -520,25 +503,12 @@ post_exact = beta_dist(alpha + k, beta + n - k).pdf(p) # conjugate answer key
 assert np.allclose(posterior, post_exact, atol=1e-3)
 ```
 
-### Inference — Bet/fold decision by expected utility over the posterior
+# Further reading
 
-- **Short description:** the step-5 decision rule on binary data — pair the posterior over p with a reward (GAIN on a true positive, COST on a false positive) and act iff the expected utility of acting is positive.
-- **Mathematical model:** per-case payoff of acting is `GAIN·p − COST·(1−p)`; `E[U(act)] = ∫ (GAIN·p − COST·(1−p))·posterior(p) dp`, a single weighted sum over the grid. Bet iff `E[U] > 0`. Because the reward is *linear* in p, there is also a closed form using only the posterior mean `E[p] = (α+k)/(α+β+n)`, with break-even at `COST/(GAIN+COST)`.
-- **How computed:** numerical expectation over the grid posterior (a Riemann sum), with the linear closed form as a second answer-key check. Note this is an *expectation* over the single unknown p, not a *marginalization* of a nuisance (there is only one parameter).
-- **Critical code** (`bayesian-decision-do-it-yourself.ipynb`, cell 5):
+TODO!
 
-```python
-def expected_utility_act(p, posterior, dp):
-    payoff = GAIN * p - COST * (1 - p)
-    return np.sum(payoff * posterior) * dp
+- Doing Bayesian Data Analysis, Kruschke => easier, accessible, includes a practical cookbook
 
-def decide(p, posterior, dp):
-    value = expected_utility_act(p, posterior, dp)
-    return value, ("bet" if value > 0 else "fold")
+- Statistical rethinking, McElreath  => rigorous but accessible, great explanation for conceptual issues, companion course available on the web
 
-E_p         = (alpha + k) / (alpha + beta + n)         # closed-form check
-closed_form = GAIN * E_p - COST * (1 - E_p)
-```
-
-# General TODO
-- Make the simulation twice as fast
+- Bayesian Data Analysis, Gelman et al. => _the_ rigorous textbook for modern Bayesian inference, very comprehensive, steep in difficulty
