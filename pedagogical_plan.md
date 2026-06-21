@@ -323,7 +323,7 @@ https://en.wikipedia.org/wiki/Expected_utility_hypothesis
 - **Short description:** turning the step-4 posterior over Δ into an *action* (bet / fold) by maximizing expected utility; the inferential object is the expected reward `E[U] = ∫ reward(Δ − Δ̂)·P(Δ) dΔ` averaged against the posterior, contrasted with a classical (1−α) confidence-interval rule read worst-case.
 - **Mathematical model:**
   - *Prior / Likelihood / Posterior:* identical to step 3 — the same between-subjects pooled Normal-inverse-gamma conjugate posterior (κ₀ weighting the mean only, the variance prior decoupled with fixed a₀ = ν₀/2 and `b₀ = (a₀−1)·2σ²₀` pinning the expected variance), marginal over Δ a Student-t. Both rules now read the same pooled variance estimate: the Bayesian posterior and the classical CI (`tTest`, df = 2n−2) coincide in the flat-prior limit, so the head-to-head is a clean prior-vs-α contrast rather than a model mismatch.
-  - *Reward (utility):* `U(x) = 1 − |Δ − x|^p − c·|Δ − x|`, clamped at −1; sliders for degree p and linear penalty c.
+  - *Reward (utility):* `U(x) = 1 − c·|Δ − x|^p`, clamped at −1; peak +1 sits on the truth and falls off with the error |Δ − x|. Sliders for the degree p (how sharply the penalty grows) and the penalty weight c (how steeply it bites).
   - *Bayesian rule:* bet iff `E[U] > 0`, betting on the posterior mode mₙ.
   - *Classical rule:* take the (1−α) CI `d̄ ± t·se`; with no distribution to average over, act worst-case — bet iff the reward at the interval edge stays ≥ 0.
 - **How computed:** the posterior is the same analytic conjugate update (`nigUpdate` / `nigMarginalDelta`); the *decision* expectation is then obtained by **numerical integration** (trapezoid rule, M = 4000 over [−12, 12]) of posterior × reward — not a closed form, since the reward is non-conjugate.
@@ -333,7 +333,7 @@ https://en.wikipedia.org/wiki/Expected_utility_hypothesis
 const { kn, mn, an, bn } = nigUpdate(m0, k0, A0, B0, n, dbar, ss2);
 const pos = nigMarginalDelta(mn, kn, an, bn);
 ...
-const rew = (x, ctr) => rewardClamped(x, ctr, p, c);   // U = max(-1, 1 - |x-ctr|^p - c|x-ctr|)
+const rew = (x, ctr) => rewardClamped(x, ctr, p, c);   // U = max(-1, 1 - c|x-ctr|^p)
 // Bayesian rule: expected reward of betting on the posterior mode
 const erPost = integrate(x => post(x) * rew(x, modePost));
 const betPost = erPost > 0;
