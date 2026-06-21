@@ -84,7 +84,36 @@
         <section class="prose">
             <h2>Try this</h2>
             <ol>
-                <li>TODO!</li>
+                <li>Play with the sliders and watch which panels respond to what: the <em>truth
+                        &amp; sample</em> move all four panels, the <em>prior</em> moves the marginal
+                    (2) and the Bayesian decision (3), and the <em>reward</em> moves both decision
+                    panels (3, 4). Notice that α moves only the confidence-interval panel (4) — the
+                    Bayesian rule never looks at it.</li>
+                <li>Reset to defaults and read the two decision panels side by side. Panel 3 weighs
+                    the <em>whole</em> posterior against the reward — the gold lens is the expected
+                    reward E[U], and the rule bets iff E[U] &gt; 0. Panel 4 keeps only the interval's
+                    two edges and acts on the <em>worst</em> one.</li>
+                <li>Double-click panel 3. The reward model sweeps across and the integrand fills in
+                    behind it; the number it accumulates is E[U]. That single integral — posterior ×
+                    reward, summed — is the entire Bayesian decision.</li>
+                <li>Run a simulation. Compare "earned" for the two rules over 40 samples: the
+                    Bayesian rule earns more on average. Check the other tallies too — "earned if
+                    always bet" shows what folding the bad bets buys you, and "earning ceiling" is
+                    the unreachable best (betting exactly on the truth every time).</li>
+                <li>Raise the reward penalty c (or the degree p): mistakes hurt more and both rules
+                    turn cautious — but the CI rule, judging by its worst edge, folds first and
+                    leaves reward on the table the Bayesian rule still collects.</li>
+                <li>Drag α down toward 0.005. The CI widens, its worst edge slides further out, and
+                    the CI rule folds almost everywhere. The Bayesian rule, blind to α, keeps betting
+                    wherever E[U] &gt; 0. Ask yourself: why should a <em>false-positive rate</em> gate
+                    a decision that's really about <em>reward</em>?</li>
+                <li>Push n up to 100. Both rules sharpen and converge — a tight posterior leaves the
+                    CI's worst case no longer pessimistic. The gap between the rules is a small-sample
+                    phenomenon.</li>
+                <li>Now set the prior at once <em>wrong and strong</em>: m₀ far from the true Δ and
+                    κ₀ near 100. Simulate. The Bayesian edge can vanish or reverse — the guarantee
+                    holds only if you don't start from assumptions that are both confident and
+                    mistaken.</li>
             </ol>
 
             <h2>The moral</h2>
