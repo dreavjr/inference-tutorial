@@ -148,6 +148,15 @@
             font-style: normal;
             font-weight: 600;
         }
+
+        .card code {
+            font: 0.86em/1 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+            background: #F4F1EA;
+            border: 1px solid var(--rule);
+            border-radius: 5px;
+            padding: 1px 5px;
+            color: #545049;
+        }
     </style>
 </head>
 
@@ -161,12 +170,47 @@
 
         <section class="prose">
             <div class="callout">
-                <!-- TODO: short intro to the exercise -->
-                <p style="margin:0 0 .6em">Lorem ipsum....</p>
+                <p style="margin:0 0 .6em">You've reached the end of the guided tour. This last stop is
+                    hands-on: a Jupyter notebook that rebuilds the whole Bayesian pipeline — prior,
+                    likelihood, posterior, and the quantity you actually decide on — for a binary
+                    classifier whose success rate you don't know.</p>
+                <p style="margin:0">The plumbing and the plots are written for you; you fill in the few
+                    lines at the heart of the inference, marked <strong>⚠️&nbsp;Do it yourself!</strong>
+                    Grab it whichever way suits you.</p>
             </div>
         </section>
 
-        <!-- TODO: links to the local and labs notebooks here -->
+        <nav class="cards">
+            <a class="card" href="https://github.com/dreavjr/inference-tutorial/blob/main/bayesian-decision-do-it-yourself.ipynb"
+                target="_blank" rel="noopener">
+                <span class="num">DOWNLOAD</span>
+                <h3>Run it on your computer</h3>
+                <svg viewBox="0 0 260 84" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                    <g fill="none" stroke="#3D6FB0" stroke-width="2.4" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <line x1="130" y1="20" x2="130" y2="52" />
+                        <path d="M116 40 L130 54 L144 40" />
+                        <path d="M96 64 H164" />
+                    </g>
+                </svg>
+                <p>Open it in your own Jupyter. Needs Python with <code>numpy</code>, <code>scipy</code>
+                    and <code>matplotlib</code> (the repo's <code>requirements.txt</code> has the full
+                    list). Best if you already have a local setup.</p>
+            </a>
+
+            <a class="card" href="https://colab.research.google.com/github/dreavjr/inference-tutorial/blob/main/bayesian-decision-do-it-yourself-colab.ipynb"
+                target="_blank" rel="noopener">
+                <span class="num">GOOGLE COLAB</span>
+                <h3>Run it in your browser</h3>
+                <svg viewBox="0 0 260 84" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                    <rect x="104" y="22" width="52" height="40" rx="11" fill="none" stroke="#E0883A"
+                        stroke-width="2.4" />
+                    <polygon points="124,33 124,51 141,42" fill="#E0883A" />
+                </svg>
+                <p>Ready to run, nothing to install — the first cell sets up the packages for you. Just
+                    sign in with a Google account and start coding.</p>
+            </a>
+        </nav>
 
         <nav class="pager">
             <a href="05-bayesian-t-test.html"><span class="lbl">Previous</span><span class="title">←&ensp;A Bayesian
