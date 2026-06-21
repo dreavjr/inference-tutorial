@@ -35,18 +35,17 @@
             </p>
 
             <p class="formula" style="font-style:normal">
-                U(x)&ensp;=&ensp;1&thinsp;−&thinsp;|Δ&thinsp;−&thinsp;x|<sup>p</sup>&thinsp;−&thinsp;c&thinsp;·&thinsp;|Δ&thinsp;−&thinsp;x|
+                U(x)&ensp;=&ensp;max(−1,&thinsp; 1&thinsp;−&thinsp;c&thinsp;·&thinsp;|Δ&thinsp;−&thinsp;x|<sup>p</sup>)
             </p>
 
             <p>Read it plainly: if the truth is <strong>Δ</strong> and you commit to the value
                 <strong>x</strong>, you earn the most — a full <em>1</em> — when you land exactly on the
-                truth. Miss, and two penalties bite: a <em>polynomial</em> one, |Δ − x|<sup>p</sup>, and
-                a <em>linear</em> one, c · |Δ − x|. For positive <em>c</em> the reward falls through
-                <em>zero</em> at a break-even error <strong>ε</strong> — the largest miss you can still
-                profit from — and keeps dropping past it. Negative <em>c</em> pushes that crossing
-                outward and can even remove it from view. Raising <em>p</em>, oddly, often pushes ε
-                outward too — for misses under one unit a higher power bites less, so a little more
-                error is forgiven. (With c = 0, only the polynomial remains and ε sits at exactly 1.)
+                truth. Miss by |Δ − x|, and the penalty <em>c · |Δ − x|<sup>p</sup></em> bites: the
+                reward falls through <em>zero</em> at a break-even error
+                <strong>ε = (1/c)<sup>1/p</sup></strong> — the largest miss you can still profit from —
+                and keeps dropping until it bottoms out at <em>−1</em>. The weight <em>c</em> sets how
+                fast it falls (and so how near ε sits); the power <em>p</em> sets the shape. (With
+                c = 1, ε sits at exactly 1.)
             </p>
 
             <table class="concept">
@@ -63,9 +62,9 @@
                 </tr>
                 <tr>
                     <td><strong>c</strong></td>
-                    <td>the <em>linear penalty</em> — a flat charge per unit
-                        of error; raising it tilts the whole reward down, lowering the payoff away from truth</td>
-                    <td>a slider (−10…10)</td>
+                    <td>the <em>penalty weight</em> — how steeply the reward falls with error;
+                        raising it shrinks the band of bets that still pay (and pulls ε inward)</td>
+                    <td>a slider (0.1…10, log)</td>
                 </tr>
                 <tr>
                     <td><strong>Δ</strong></td>
@@ -98,10 +97,10 @@
                 <strong>MLE</strong> Δ̂ at its centre, a <strong>margin of error E</strong> (the
                 half-width) reaching either way. With no distribution to take an expectation over, the
                 rule turns <strong>worst-case</strong>. The reward hits zero at a break-even error
-                <strong>ε</strong> (solve 1 − ε<sup>p</sup> − c·ε = 0); compare it to E —
+                <strong>ε</strong> (solve 1 − c·ε<sup>p</sup> = 0, so ε = (1/c)<sup>1/p</sup>); compare it to E —
                 <strong>bet iff E ≤ ε</strong>, so that even the interval's worst boundary still pays. The
                 dotted links read the reward you'd score at the MLE (the most, always 1) and at each
-                extreme (the least, 1 − E<sup>p</sup> − c·E).
+                extreme (the least, 1 − c·E<sup>p</sup>).
             </p>
 
             <p>Then each panel shows what the decision <em>really</em> earns. The
@@ -167,20 +166,21 @@
         <section class="prose">
             <h2>Try this</h2>
             <ol>
-                <li><strong>Defaults.</strong> With c = 0 the only penalty is the polynomial, so the
-                    break-even ε sits at exactly 1 — and the confidence interval fits inside it. Both rules
-                    bet, and both win: a gentle starting point where the two paradigms agree.</li>
+                <li><strong>Defaults</strong> (c = 1). The break-even ε sits at exactly 1 — and the
+                    confidence interval fits inside it. Both rules bet, and both win: a gentle starting
+                    point where the two paradigms agree.</li>
                 <li><strong>Drop n to 3 or 4.</strong> The confidence interval balloons past ε = 1, so
                     its worst-case boundary turns negative and the classical rule <em>refuses</em>, banking
                     0. The posterior stays compact enough to still expect a positive return — it bets, and
                     here wins. The Bayesian's edge is sharpest when data are scarce.</li>
                 <li><strong>Crank n to 100.</strong> Both beliefs sharpen, both bet, and their actual
                     payoffs converge near the peak reward of 1 — with enough data the rules agree again.</li>
-                <li><strong>Raise c, the linear penalty.</strong> Now every miss is charged, so the
-                    break-even ε pulls inward below 1. First the wide-interval classical rule folds; push c
-                    further and even the posterior's expectation drops below zero, so the Bayesian folds
-                    too. High enough stakes make both refuse. (With c &gt; 0, try <strong>p</strong> as
-                    well — a higher power now <em>widens</em> ε, nudging both rules back toward betting.)</li>
+                <li><strong>Raise c, the penalty weight.</strong> Now every miss is charged more, so the
+                    break-even ε = (1/c)<sup>1/p</sup> pulls inward below 1. First the wide-interval
+                    classical rule folds; push c further and even the posterior's expectation drops below
+                    zero, so the Bayesian folds too. High enough stakes make both refuse. (Try <strong>p</strong>
+                    as well — with c &gt; 1 a higher power <em>widens</em> ε, nudging both rules back toward
+                    betting.)</li>
                 <li><strong>Tighten the prior</strong> (κ₀ ↑) and shift <strong>m₀</strong> off the
                     truth. The posterior's bet — its peak — pulls away from the interval's midpoint, and
                     you can watch a confident-but-wrong prior keep its <em>estimated</em> pill green and
@@ -241,13 +241,12 @@
 
         function rewardRaw(x, ctr, p, c) {
             const e = Math.abs(x - ctr);
-            return 1 - Math.pow(e, p) - c * e;
+            return 1 - c * Math.pow(e, p);
         }
 
         function rewardClamped(x, ctr, p, c) {
-            // capped at +1: the most you can earn is a full 1, landing exactly on the truth.
-            // (for negative c the raw formula rises above 1 just off-centre — clamp that off.)
-            return Math.max(-1, Math.min(1, rewardRaw(x, ctr, p, c)));
+            // peak of 1 sits exactly on the truth (c > 0 ⇒ never above 1); floored at −1
+            return Math.max(-1, rewardRaw(x, ctr, p, c));
         }
 
         // how far from its centre the (raw) reward falls to the axis floor −1 — the curve's
@@ -444,7 +443,10 @@
 
         const alphaS = makeSlider(grpDecision, { label: "false-positive rate · α (t-test)", min: 0.005, max: 0.2, step: 0.005, value: 0.05, fmt: v => v.toFixed(3), onInput: onControlChange });
         const pS = makeSlider(grpDecision, { label: "reward model degree · p", min: 1, max: 10, step: 0.1, value: 2, fmt: v => v.toFixed(1), onInput: onControlChange });
-        const cS = makeSlider(grpDecision, { label: "reward linear penalty · c", min: -10, max: 10, step: 0.1, value: 0, fmt: v => v.toFixed(1), onInput: onControlChange });
+        const cS = makeSlider(grpDecision, {
+            label: "reward penalty weight · c", min: -1, max: 1, step: 0.05, value: 0,
+            fmt: v => { const cc = 10 ** v; return cc < 1 ? cc.toFixed(2) : cc.toFixed(1); }, onInput: onControlChange
+        });
 
         const SIMW = 960, SIMH = 176, SML = 46, SMR = 24, SMT = 14, SMB = 18;
         const SIM_WAIT = 300, N_SIM = 40, SIM_COL_W = 10.5, SIM_HEAT_SLICES = 52;
@@ -468,7 +470,7 @@
         function buildRewardEggData(state) {
             const A = -12, B = 12, M = 2400, h = (B - A) / M;
             // start/end the sweep with the reward curve just off-screen — wider curves
-            // (e.g. negative c) need more lead-in, capped to the integration window
+            // (small c, or large p) need more lead-in, capped to the integration window
             const centerPad = Math.min(rewardHalfExtent(state.p, state.c), 12 - HALF);
             const centerLo = state.delta - HALF - centerPad;
             const centerHi = state.delta + HALF + centerPad;
@@ -573,7 +575,7 @@
             const delta = deltaS.value, varr = varS.value, n = nS.value;
             const m0 = m0S.value, k0 = 10 ** k0S.value;
             const { a0: A0, b0: B0 } = variancePrior(s0S.value);
-            const alpha = alphaS.value, p = pS.value, c = cS.value;
+            const alpha = alphaS.value, p = pS.value, c = 10 ** cS.value;
             const sigma = Math.sqrt(varr);
 
             // one experiment: the sample, its difference summary, the conjugate posterior
