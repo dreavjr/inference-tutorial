@@ -422,105 +422,19 @@ const hdiLo = Math.max(dObs - tc * se, -HALF), hdiHi = Math.min(dObs + tc * se, 
 ## Role and framing
 
 Steps 1–5 are the live session (≈1 hour, adult software developers). Step 6 is **not** a
-sixth live step — it is a take-home coding exercise, deliberately left a little less
-finished than the rest. The reasons we settled on this:
-
-- Step 4 carries the thesis of the whole tutorial (Making a decision apparatus
-  marginalizes nuisances and maximizes expected reward; classical inference leaves α as a
-  free parameter chosen outside the apparatus). It must stay live and must land on the
-  continuous model the learner has lived in for four steps — one new idea (decision) on
-  established ground, not two new ideas at once. So we do **not** cut Step 5 to make room.
-- The continuous thread (1→3→4) is a complete spine. Step 2 is the only binary step and
-  the only one that never gets a Bayesian answer; its closing line even promises "Bayes'
-  theorem — where we go next" and then the thread is dropped. Step 6 is that owed answer.
-- For this audience the strongest capstone is an **inversion**: for five steps they dragged
-  sliders on a machine someone else built; here they build the machine behind the slider.
-  "You've been playing with the posterior — now compute one."
-- The deliberate incompleteness *is* the assignment: the scaffold and the questions are
-###   fully built, but the morals and part of the concept table
-  fills in. Transfer (apply the pipeline to new data) is exactly the move that consolidates
-  it.
+sixth live step — it is a take-home coding exercise, deliberately left less
+finished than the rest.
 
 ## Main argument
 
 The exercise re-runs the entire pipeline — prior → likelihood → posterior → expected
-utility → act — on a binary classifier with a single unknown: its success rate *p*. It is a
-Jupyter-style notebook (an in-browser, client-side Python engine to be wired in later;
-the current page is a non-functional mock-up so we can settle the design first).
-
-Why binary data is the right place to *code* this rather than slider it:
-
-- *p* is a probability, so its entire universe is [0, 1] — the prior, likelihood and
-  posterior are just arrays over a fine grid. No tails to truncate, no axis bounds to guess
-  (the thing that made Step 4's (Δ, σ) plane fiddly). The finite fixed support makes this
-  the *most* concrete of the six, not the least.
-- Beta is conjugate to the Binomial, so the exact posterior `Beta(α+k, β+n−k)` is known on
-  paper. The grid is a *numerical* answer to a problem that also has an *analytic* one —
-  which is not busywork but the only honest way to learn a numerical method: practise it
-  where the answer key exists, then carry it where it doesn't (cf. learning numerical
-  integration on ∫x² dx first).
-
-### concepts
-- The prior **is** Step 2's base rate, written as `Beta(α, β)` — a few imaginary cases,
-  priced in pseudo-observations (the pseudo-count α + β echoes Step 3's κ₀).
-- Normalization is "the main challenge of Bayesian inference" (Step 3) shrunk to one
-  Riemann sum: divide the curve by its own area.
-- The decision is Step 4's rule on new data: pair the posterior with a reward, act on
-  expected utility.
-
-### Take-homes
-- The same four boxes (prior, likelihood, posterior, decision) are, on binary data, ten
-  lines of array arithmetic.
-- Integrating over the things you want to ignore to get the ones you care about is the bread and butter of Bayesian inference. Marginalization and expected values are different facets of this strategy.
-- Integration becomes a problem as the number of parameters grows => curse of dimensionality. Things like MCMC and, in particular, HMC have greatly broadened the universe of problems for which we can apply Bayesian inference, but this is still a problematic or even completely intractable step for many problems.
-
-Decisions about the model (where we deviated from first sketches):
-- **Notation:** `Beta(alpha, beta)` for the prior; `n, p` for the Binomial (so the rate is
-  `p`, gridded over [0, 1]); data is `(n, k)`.
-- **No frequentist component on this page** (no Wald interval, no CI-vs-posterior contrast).
-  The only backward link to Step 2 is the conceptual base-rate→prior bridge.
-- **Reward simplified to a bet/fold** with a `GAIN` on a true positive and a `COST` on a
-  false positive; folding is a guaranteed 0. We chose an FP cost rather than the originally
-  suggested FN penalty because with FP = TN = 0 the decision degenerates ("always act,"
-  no interior threshold). Consequence to keep honest in the text: this reward is linear in
-  *p*, so the decision *also* has a closed form (`GAIN·E[p] − COST·(1−E[p])`, with
-  `E[p] = (α+k)/(α+β+n)`). That reverses the earlier "the decision needs the grid" beat — so
-  the page now frames the grid sum as the *general* recipe (works for any reward) and uses
-  the closed form as a *second* answer-key check. The "hard part" message rests on
-  normalization (cell 3) and the curse of dimensionality (cell 7).
-  - *Open question still on the table:* keep the FP-cost version (clean interior threshold,
-    closed-form decision), honor the literal FN penalty (decision degenerates to "always
-    bet"), or go to the full three-cell model (TP +, FP −, FN −) for a richer threshold.
-
-
-### Inference — Beta-Binomial posterior for a classifier's success rate p, computed numerically on a grid
-
-- **Short description:** estimating a binary classifier's success rate p from `(n, k)` (k successes in n cases) using a Beta prior conjugate to the Binomial likelihood; the posterior is computed *numerically* on a [0, 1] grid (normalization by a Riemann sum) and cross-checked against the analytic `Beta(α+k, β+n−k)`.
-- **Mathematical model:**
-  - *Prior:* `p ~ Beta(α, β)`, kernel `p^(α−1)·(1−p)^(β−1)` — step 2's base rate, now as a density; pseudo-count α+β echoes step 4's κ₀.
-  - *Likelihood:* `k ~ Binomial(n, p)`, kernel `p^k·(1−p)^(n−k)` (the n-choose-k constant dropped — it washes out in normalization).
-  - *Posterior:* `Beta(α+k, β+n−k)`.
-- **How computed:** *numerical* — grid `p = linspace(0,1,N)`, multiply prior kernel × likelihood, then normalize by dividing by its own Riemann-sum area (`density.sum()·dp`). The conjugacy supplies an *analytic* answer key (`scipy.stats.beta`) that the numerical posterior is asserted to match to 1e-3.
-- **Critical code** (`bayesian-decision-do-it-yourself.ipynb`, cells 1–4):
-
-```python
-def prior_kernel(p, alpha, beta):
-    return p**(alpha - 1) * (1 - p)**(beta - 1)        # un-normalised Beta
-
-def likelihood(p, n, k):
-    return p**k * (1 - p)**(n - k)                     # Binomial kernel in p
-
-def normalize(density, dp):
-    return density / (density.sum() * dp)              # the one hard line
-
-posterior  = normalize(prior_kernel(p, alpha, beta) * likelihood(p, n, k), dp)
-post_exact = beta_dist(alpha + k, beta + n - k).pdf(p) # conjugate answer key
-assert np.allclose(posterior, post_exact, atol=1e-3)
+utility → act — on a binary classifier with a single unknown: its success rate *\theta*. It is a
+Jupyter notebook to be completed by the learner
 ```
 
-# Further reading
+## Further reading
 
-TODO!
+Add links and explanations about those material:
 
 - Doing Bayesian Data Analysis, Kruschke => easier, accessible, includes a practical cookbook
 
