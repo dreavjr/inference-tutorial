@@ -403,13 +403,15 @@
             out.push(`<line x1='${ML}' x2='${ML + S}' y1='${BASE}' y2='${BASE}' stroke='${PAL.rule}' stroke-width='1'/>`);
 
             // pills: estimated — the rule's verdict (green when it says bet, grey when fold);
-            // actual — what we really earn (green win, red loss, grey no-play / refused).
+            // actual — the true reward that bet really earns (never floored). When the rule
+            // folds, both pills go grey; when it bets, actual is green / grey / maroon by sign.
             // estimated reward is one expected value (posterior), or the min…max across the
             // interval (CI) — the centre earns 1, the extremes share the same endpoint value.
             const estValue = sweep ? sweep.estR : estR;
             const estDisp = isBox ? `${fmtRewardPill(estLo)}...${fmtRewardPill(estHi)}` : fmtRewardPill(estValue);
             out.push(pill(ML + 8, TOP + 6, `estimated ${estDisp}`, (sweep ? estValue > 0 : bet) ? GRN_F : GREY));
-            out.push(pill(ML + 8, TOP + 32, `actual ${fmtRewardPill(actR)}`, actR > 0 ? GRN_F : actR < 0 ? RED_F : GREY));
+            const actColor = !bet ? GREY : actR > 0 ? GRN_F : actR < 0 ? MAROON : GREY;
+            out.push(pill(ML + 8, TOP + 32, `actual ${fmtRewardPill(actR)}`, actColor));
 
             return `<svg viewBox='0 0 ${FW} ${FH}' xmlns='http://www.w3.org/2000/svg'>${out.join("")}</svg>`;
         }
@@ -632,7 +634,7 @@
         function renderRewardPost(state, rewardEgg = null) {
             figRewPost.innerHTML = rewardSvg({
                 dens: state.post, isBox: false, mode: state.modePost, delta: state.delta, p: state.p, c: state.c, BK: state.BK,
-                estR: state.erPost, actR: state.actPost, bet: state.betPost, accent: POST_C, showEstimatedCurve: false, sweep: rewardEgg
+                estR: state.erPost, actR: state.actPostRaw, bet: state.betPost, accent: POST_C, showEstimatedCurve: false, sweep: rewardEgg
             });
         }
 
@@ -647,7 +649,7 @@
             document.getElementById("figRewCI").innerHTML = rewardSvg({
                 dens: state.box, isBox: true, lo: state.ciLo, hi: state.ciHi, mode: state.modeCI, delta: state.delta,
                 p: state.p, c: state.c, BK: state.BK, estR: state.erCI, estLo: state.erCIlo, estHi: state.erCIhi,
-                actR: state.actCI, bet: state.betCI, accent: PAL.blue
+                actR: state.actCIRaw, bet: state.betCI, accent: PAL.blue
             });
         }
 
