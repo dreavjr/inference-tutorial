@@ -245,7 +245,22 @@
         }
 
         function rewardClamped(x, ctr, p, c) {
-            return Math.max(-1, rewardRaw(x, ctr, p, c));
+            // capped at +1: the most you can earn is a full 1, landing exactly on the truth.
+            // (for negative c the raw formula rises above 1 just off-centre — clamp that off.)
+            return Math.max(-1, Math.min(1, rewardRaw(x, ctr, p, c)));
+        }
+
+        // how far from its centre the (raw) reward falls to the axis floor −1 — the curve's
+        // visible half-width; used to begin/end the sweep with the curve just off-screen
+        function rewardHalfExtent(p, c) {
+            let hi = 1;
+            while (rewardRaw(hi, 0, p, c) > -1 && hi < 64) hi *= 2;
+            let lo = 0;
+            for (let k = 0; k < 50; k++) {
+                const mid = 0.5 * (lo + hi);
+                if (rewardRaw(mid, 0, p, c) > -1) lo = mid; else hi = mid;
+            }
+            return hi;
         }
 
         /* ---- panels 3 & 4: a belief scored against the reward model, twice --------
@@ -349,8 +364,11 @@
                 `fill='none' stroke='${col}' stroke-width='1.8'${dash ? ` stroke-dasharray='${dash}'` : ""}/>`;
             // sweeping: the maroon reward model slides across (centred on the moving sweep
             // position) while the revealed integrand below stays centred on the fixed bet
-            if (sweep) out.push(curve((x) => rewardClamped(x, sweep.center, p, c), MAROON));
-            else if (showEstimatedCurve) out.push(curve(rewE, REWARD_C)); // estimated — centred on the decision
+            if (sweep) {
+                if (!sweep.hideCurve) out.push(curve((x) => rewardClamped(x, sweep.center, p, c), MAROON));
+            } else if (showEstimatedCurve) {
+                out.push(curve(rewE, REWARD_C)); // estimated — centred on the decision
+            }
             out.push(curve(rewA, PAL.green, "6 4")); // true — centred on the truth (dashed)
 
             // float 4: dotted links from the CI bar (reward 0.5) to the estimated-reward
@@ -449,7 +467,9 @@
 
         function buildRewardEggData(state) {
             const A = -12, B = 12, M = 2400, h = (B - A) / M;
-            const centerPad = 0.9;
+            // start/end the sweep with the reward curve just off-screen — wider curves
+            // (e.g. negative c) need more lead-in, capped to the integration window
+            const centerPad = Math.min(rewardHalfExtent(state.p, state.c), 12 - HALF);
             const centerLo = state.delta - HALF - centerPad;
             const centerHi = state.delta + HALF + centerPad;
             // the integrand is fixed — posterior × reward centred on the bet (modePost);
@@ -639,11 +659,12 @@
             const duration = 1800;
             const start = performance.now();
 
-            const drawFrame = (center) => {
+            const drawFrame = (center, hideCurve = false) => {
                 renderRewardPost(state, {
                     center,
                     maxAbs: eggData.maxAbs,
                     estR: rewardEggEstimate(eggData, state, center),
+                    hideCurve,
                 });
             };
 
@@ -651,12 +672,9 @@
                 if (token !== rewardEggToken) return;
                 const t = Math.min(1, (now - start) / duration);
                 const center = eggData.centerLo + (eggData.centerHi - eggData.centerLo) * t;
-                drawFrame(center);
-                if (t < 1) rewardEggFrame = requestAnimationFrame(tick);
-                else {
-                    rewardEggFrame = 0;
-                    if (token === rewardEggToken) render(state);
-                }
+                if (t < 1) { drawFrame(center); rewardEggFrame = requestAnimationFrame(tick); }
+                // freeze: full integrand revealed, sweeping curve hidden, until something changes
+                else { rewardEggFrame = 0; drawFrame(center, true); }
             };
 
             drawFrame(eggData.centerLo);
@@ -873,6 +891,7 @@
                 const x = (SML + (idx + 0.5) * SIM_SPACING).toFixed(1);
                 bayesMarker.setAttribute("x1", x); bayesMarker.setAttribute("x2", x); bayesMarker.setAttribute("opacity", "1");
                 ciMarker.setAttribute("x1", x); ciMarker.setAttribute("x2", x); ciMarker.setAttribute("opacity", "1");
+                stopRewardEgg(false);   // hovering a different example resets a held/running sweep
                 render(simEntries[idx]);
             };
 
