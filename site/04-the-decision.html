@@ -23,97 +23,15 @@
         </header>
 
         <section class="prose">
-            <p><a href="03-bayesian-approach.html">Step 4</a> handed us a posterior — a whole
-                distribution over the effect Δ. But a distribution is not yet a decision. Sooner or
-                later you must <em>act</em>: ship the drug, set the dose, choose B over A. A belief is
-                only worth something once it touches a choice.</p>
-
-            <p>Bayesian decision theory closes that last gap with one rule:
-                <strong>act to maximise expected utility under your posterior.</strong> It needs two
-                ingredients — the posterior you already have, and a <strong>reward model</strong> that
-                says how good each outcome is. We use a simple two-parameter family:
-            </p>
-
-            <p class="formula" style="font-style:normal">
-                U(x)&ensp;=&ensp;max(−1,&thinsp; 1&thinsp;−&thinsp;c&thinsp;·&thinsp;|Δ&thinsp;−&thinsp;x|<sup>p</sup>)
-            </p>
-
-            <p>Read it plainly: if the truth is <strong>Δ</strong> and you commit to the value
-                <strong>x</strong>, you earn the most — a full <em>1</em> — when you land exactly on the
-                truth. Miss by |Δ − x|, and the penalty <em>c · |Δ − x|<sup>p</sup></em> bites: the
-                reward falls through <em>zero</em> at a break-even error
-                <strong>ε = (1/c)<sup>1/p</sup></strong> — the largest miss you can still profit from —
-                and keeps dropping until it bottoms out at <em>−1</em>. The weight <em>c</em> sets how
-                fast it falls (and so how near ε sits); the power <em>p</em> sets the shape. (With
-                c = 1, ε sits at exactly 1.)
-            </p>
-
-            <table class="concept">
-                <tr>
-                    <th>knob</th>
-                    <th>what it does</th>
-                    <th>here</th>
-                </tr>
-                <tr>
-                    <td><strong>p</strong></td>
-                    <td>the <em>polynomial degree</em> — how the penalty
-                        curves: a gentle bowl at p = 1, a flat top with steep walls as p climbs</td>
-                    <td>a slider (1…10)</td>
-                </tr>
-                <tr>
-                    <td><strong>c</strong></td>
-                    <td>the <em>penalty weight</em> — how steeply the reward falls with error;
-                        raising it shrinks the band of bets that still pay (and pulls ε inward)</td>
-                    <td>a slider (0.1…10, log)</td>
-                </tr>
-                <tr>
-                    <td><strong>Δ</strong></td>
-                    <td>where the reward is centred — the truth itself;
-                        we can draw it here only because we simulate</td>
-                    <td>the green line</td>
-                </tr>
-            </table>
-
-            <p>A belief is not yet a decision. To force the issue we ask a sharper question:
-                <strong>given what I believe, should I place the bet at all — and if so, on what
-                    value?</strong> The bottom row answers it two ways, both committing to the same kind of
-                bet (the peak of the belief, <strong>Δ̂</strong>) but deciding <em>whether to bet</em>
-                by different rules.
-            </p>
-
-            <p>On the <strong>left</strong>, your honest <strong style="color:#333">posterior</strong>.
-                The Bayesian rule is to <strong>act on expected utility</strong>: average the reward —
-                centred on your bet Δ̂ — against the whole posterior,</p>
-
-            <p class="formula" style="font-style:normal">
-                E[U]&ensp;=&ensp;∫&thinsp;reward(Δ&thinsp;−&thinsp;Δ̂)&thinsp;·&thinsp;P(Δ)&thinsp;dΔ</p>
-
-            <p>and <strong>place the bet only when that expectation is positive</strong>. The shaded
-                gold lens is the overlap the integral measures.</p>
-
-            <p>On the <strong>right</strong>, the classical reading. A
-                <strong style="color:#3D6FB0">(1 − α) confidence interval</strong> is not a distribution,
-                so there's nothing to average against — we draw it honestly as a flat error bar: the
-                <strong>MLE</strong> Δ̂ at its centre, a <strong>margin of error E</strong> (the
-                half-width) reaching either way. With no distribution to take an expectation over, the
-                rule turns <strong>worst-case</strong>. The reward hits zero at a break-even error
-                <strong>ε</strong> (solve 1 − c·ε<sup>p</sup> = 0, so ε = (1/c)<sup>1/p</sup>); compare it to E —
-                <strong>bet iff E ≤ ε</strong>, so that even the interval's worst boundary still pays. The
-                dotted links read the reward you'd score at the MLE (the most, always 1) and at each
-                extreme (the least, 1 − c·E<sup>p</sup>).
-            </p>
-
-            <p>Then each panel shows what the decision <em>really</em> earns. The
-                <strong style="color:#A77B2E">estimated</strong> pill is the rule's own forecast — the
-                posterior's expected reward, or the CI's <em>min … max</em> range — turning
-                <strong style="color:#2E7D5B">green</strong> when the rule says place the bet and
-                <strong style="color:#9AA0A6">grey</strong> when it says fold. The
-                <strong style="color:#2E7D5B">actual</strong> pill is the payoff once the hidden truth Δ
-                is revealed: the true reward (the green curve, centred on Δ) read at the point you
-                committed to — the dot, dropped from Δ̂ — or <strong>zero if you refused the bet</strong>.
-                It turns green for a win, <strong style="color:#C0392B">red</strong> for a loss, grey for
-                a no-play. The gap between the two pills is the price of not knowing the truth.
-            </p>
+            <p>The Bayesian treatment is the logical way to think under uncertainty. In other
+                words, given what you know, the probabilities it outputs are the unique
+                fully-coherent conclusion. Even with the cost model known by both, a decision based
+                on classical inference has a free parameter (alpha) that must be chosen externally
+                to the decision apparatus, while the Bayesian decision apparatus can marginalize
+                (integrate) over all nuisances to make a decision that maximizes expected reward.
+                The consequence is that under a system of bets, the Bayesian decision procedure will
+                inevitably make better bets (in expectation), provided that you don't start from too
+                wrong <em>and</em> too strong assumptions.</p>
         </section>
 
         <section class="demo">
@@ -166,47 +84,27 @@
         <section class="prose">
             <h2>Try this</h2>
             <ol>
-                <li><strong>Defaults</strong> (c = 1). The break-even ε sits at exactly 1 — and the
-                    confidence interval fits inside it. Both rules bet, and both win: a gentle starting
-                    point where the two paradigms agree.</li>
-                <li><strong>Drop n to 3 or 4.</strong> The confidence interval balloons past ε = 1, so
-                    its worst-case boundary turns negative and the classical rule <em>refuses</em>, banking
-                    0. The posterior stays compact enough to still expect a positive return — it bets, and
-                    here wins. The Bayesian's edge is sharpest when data are scarce.</li>
-                <li><strong>Crank n to 100.</strong> Both beliefs sharpen, both bet, and their actual
-                    payoffs converge near the peak reward of 1 — with enough data the rules agree again.</li>
-                <li><strong>Raise c, the penalty weight.</strong> Now every miss is charged more, so the
-                    break-even ε = (1/c)<sup>1/p</sup> pulls inward below 1. First the wide-interval
-                    classical rule folds; push c further and even the posterior's expectation drops below
-                    zero, so the Bayesian folds too. High enough stakes make both refuse. (Try <strong>p</strong>
-                    as well — with c &gt; 1 a higher power <em>widens</em> ε, nudging both rules back toward
-                    betting.)</li>
-                <li><strong>Tighten the prior</strong> (κ₀ ↑) and shift <strong>m₀</strong> off the
-                    truth. The posterior's bet — its peak — pulls away from the interval's midpoint, and
-                    you can watch a confident-but-wrong prior keep its <em>estimated</em> pill green and
-                    betting while the <em>actual</em> pill slides red: overconfidence, made quantitative.</li>
+                <li>TODO!</li>
             </ol>
 
             <h2>The moral</h2>
             <div class="moral">
                 <ul>
-                    <li>A posterior is an <em>input</em> to a decision, not the decision itself. Pair
-                        it with a reward model and act on expected utility — that is the whole of Bayesian
-                        decision theory.</li>
-                    <li>A confidence interval is <strong>not</strong> a probability distribution. The
-                        common habit of reading it as “uniform over the plausible values” is a specific,
-                        and usually worse, belief — and a decision made on it earns less.</li>
-                    <li>The shape the posterior carries — mass piled near the estimate, thinning into
-                        the tails — is precisely what a uniform block discards, and precisely what a reward
-                        centred on the truth pays you to keep.</li>
-                    <li>Same data, same interval width — yet a different decision, because of how
-                        honestly the uncertainty <em>inside</em> the interval is shaped.</li>
-                    <li>Two numbers, never one: what a method <em>thinks</em> it will earn and what it
-                        <em>actually</em> earns. A trustworthy rule keeps the pair close; a tight wrong
-                        prior, or a mis-shaped interval, pries them apart.
-                    </li>
+                    <li>A posterior is an input to a decision, not the decision itself; pair it with
+                        a reward model and act on expected utility — the whole of Bayesian decision
+                        theory.</li>
+                    <li>A confidence interval allows bounding the likely rewards but using only the
+                        best and worst case to guide the decision underperforms in comparison with
+                        Bayesian decision, which exploits all information available.</li>
                 </ul>
             </div>
+
+            <h2>Links</h2>
+            <ul class="links">
+                <li><a href="https://en.wikipedia.org/wiki/Dutch_book_arguments">Dutch book arguments</a></li>
+                <li><a href="https://en.wikipedia.org/wiki/Decision_theory">Decision theory</a></li>
+                <li><a href="https://en.wikipedia.org/wiki/Expected_utility_hypothesis">Expected utility hypothesis</a></li>
+            </ul>
         </section>
 
         <nav class="pager">

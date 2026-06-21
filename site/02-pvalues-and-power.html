@@ -157,46 +157,15 @@
         </header>
 
         <section class="prose">
-            <p><a href="01-the-t-test.html">Step 1</a> built the machine that stamps
-                <strong>significant / not significant</strong> on a study. Now run that machine at
-                scale: a thousand studies (or screened patients, or tested hypotheses). In each one,
-                reality either holds an effect (<strong>condition +</strong>) or it doesn't
-                (<strong>condition −</strong>), and the machine ends with a verdict:
-                <strong>predicted +</strong> (“significant!”) or <strong>predicted −</strong>.
-            </p>
+            <p>The ideas of power and significance appear with different names: sensitivity and
+                specificity, true positive rate and true negative rate, etc. They are formal
+                properties of the test but do not necessarily correspond to the challenges we will
+                face in reality. PPV and NPV correspond much more to real-life concerns.</p>
 
-            <p>Two famous numbers describe the <em>procedure</em>:</p>
-
-            <table class="concept">
-                <tr>
-                    <th>testing language</th>
-                    <th>diagnostic language</th>
-                    <th>the question it answers</th>
-                </tr>
-                <tr>
-                    <td><strong>1 − α</strong>&ensp;(α = significance level)</td>
-                    <td><strong>specificity</strong></td>
-                    <td><em>If there is nothing</em>, how often do we correctly stay quiet?</td>
-                </tr>
-                <tr>
-                    <td><strong>power</strong>&ensp;(1 − β)</td>
-                    <td><strong>sensitivity</strong>, recall</td>
-                    <td><em>If there is something</em>, how often do we catch it?</td>
-                </tr>
-            </table>
-
-            <p>Both questions begin with an <strong><em>if</em> about the truth</strong> — and
-                the truth is precisely what you don't know. The question you actually face after an
-                experiment runs in the opposite direction:</p>
-
-            <blockquote>“My result came out <strong>positive</strong>. How likely is it that the
-                effect is <strong>real</strong>?”</blockquote>
-
-            <p>That number is the <strong>PPV</strong> (positive predictive value, a.k.a.
-                <strong>precision</strong>); its mirror image for negative results is the
-                <strong>NPV</strong>. Neither α nor power can answer it on their own. Play with the
-                demo below to see why.
-            </p>
+            <p>Frequentist and classical analysis very often converge to the same answers for a
+                large number of samples, but on this particular issue, increasing sampling size
+                won't work: the four metrics are proportions and insensitive (in expectation) to
+                sample size.</p>
         </section>
 
         <section class="demo">
@@ -228,44 +197,47 @@
         <section class="prose">
             <h2>Try this</h2>
             <ol>
-                <li><strong>Defaults</strong> (α = 0.05, power = 0.80, base rate 50 %):
-                    PPV ≈ 94 %. Positive results can be trusted — this is the comfortable world the
-                    textbook numbers implicitly assume.</li>
-                <li><strong>Drag the base rate down to 10 %</strong> — you are now testing
-                    riskier, more surprising hypotheses. α and power have not moved, yet PPV falls to
-                    ≈ 64 %: one positive in three is false.</li>
-                <li><strong>Down to 2 %</strong> — a long-shot screen. PPV ≈ 25 %: three
-                    “discoveries” out of four are wrong, with the very same respectable test.</li>
-                <li>Try to rescue it <strong>without touching the base rate</strong>. Pushing
-                    power to 100 % barely helps (PPV ≈ 29 %). What works is specificity: push it to
-                    99.5 % (α = 0.005) and watch the false positives melt away.</li>
-                <li>Back at base rate 2 %, <strong>crank the total cases</strong> from 1,000 to
-                    1,000,000. Every count grows a thousandfold — and not a single percentage moves.
-                    PPV is a property of <em>proportions</em>; more cases of the same mix only
-                    estimate the same disappointment more precisely. <strong>Sample size will not
-                        save you.</strong></li>
+                <li>Play with the sliders and observe how the contingency table (plot 1) and the
+                    fork arrows (plot 2) change.</li>
+                <li>Reset the sliders to default. This is the "textbook zone" (significance=95%,
+                    power=80%). PPV and NPV do not match sensitivity and specificity exactly, but the
+                    difference is moderate enough to be still useful.</li>
+                <li>Slide base rate down to 10%. Significance and power are unchanged, but PPV falls
+                    to ≈ 64% (one positive in three is false).</li>
+                <li>Slide base rate up to 90%. PPV is great, but now NPV falls to ≈ 34% (two
+                    negatives in three are false).</li>
+                <li>Play with the base rates. Can you find one that makes PPV ≈ Significance and
+                    NPV ≈ Specificity? What about vice-versa? Is there something special about those
+                    base rates?</li>
+                <li>Reset the sliders and bring base rate down to 2%. Try to rescue PPV without
+                    touching the base rate. Does it respond more to sensitivity or specificity? Do
+                    you get why? (Hint: look at the change in the arrows!)</li>
+                <li>Pick any base rate and crank total cases up to 1,000,000. Every count grows
+                    1000×, but the four metrics don't budge. Sample size will not save you this
+                    time.</li>
             </ol>
 
             <h2>The moral</h2>
             <div class="moral">
                 <ul>
-                    <li><strong>Sensitivity (power)</strong> and <strong>specificity (1 − α)</strong>
-                        are properties of the <strong>test</strong>. They condition on the truth:
-                        <em>if the effect is real…</em>, <em>if it isn't…</em>
-                    </li>
-                    <li><strong>PPV</strong> and <strong>NPV</strong> are properties of
-                        <strong>your result</strong>: they condition on what you actually observed —
-                        and they depend, inescapably, on the <strong>base rate</strong>.
-                    </li>
-                    <li>Same test, different population → a positive means something different.
-                        p-value and power are blind to this; that is not a flaw to fix but a question
-                        they were never designed to answer. And more data won't fix it either.</li>
-                    <li>Getting from (sensitivity, specificity, base rate) to (PPV, NPV) is exactly
-                        <strong>Bayes' theorem</strong> — <a href="05-bayesian-t-test.html">where we go
-                            next</a>.
-                    </li>
+                    <li>Sensitivity and specificity are properties of the test, while PPV and NPV are
+                        properties of both the test and the reality.</li>
+                    <li>Sensitivity (1 - beta) and specificity (1 − α) are conditioned on what is
+                        true in the world.</li>
+                    <li>PPV and NPV are conditioned on the test answer. They are more useful because
+                        test results are observable, while the latent truth often isn't.</li>
+                    <li>Sensitivity and specificity don't bound false positives and negatives, not
+                        even asymptotically, unless you make assumptions about the base rate.</li>
                 </ul>
             </div>
+
+            <h2>Links</h2>
+            <ul class="links">
+                <li><a href="https://en.wikipedia.org/wiki/Confusion_matrix#Table_of_confusion">Confusion matrix — Table of confusion</a></li>
+                <li><a href="https://en.wikipedia.org/wiki/Sensitivity_and_specificity">Sensitivity and specificity</a></li>
+                <li><a href="https://en.wikipedia.org/wiki/Positive_and_negative_predictive_values">Positive and negative predictive values</a></li>
+                <li><a href="https://en.wikipedia.org/wiki/Base_rate_fallacy">Base rate fallacy</a></li>
+            </ul>
         </section>
 
         <nav class="pager">

@@ -23,80 +23,18 @@
         </header>
 
         <section class="prose">
-            <p><a href="05-bayesian-t-test.html">Step 3</a> pulled a small sleight of hand. To
-                make the posterior a simple shifted t, it used a <strong>flat prior</strong> —
-                before seeing any data, every effect size was declared equally believable:
-                Δ = 0.1, Δ = 3, Δ = a million. That felt humble. It isn't. It is a very strong
-                claim that absurd effects deserve the same advance credence as realistic ones.</p>
+            <p>Bayesian inference brings a profound conceptual change: probabilities are no longer
+                just about repeatable measurements, they are about degrees of ignorance. Now, both
+                data <em>and parameters</em> can be random variables with probability
+                distributions.</p>
 
-            <p>This page makes the prior explicit. Bayes' theorem is a multiplication —</p>
-
-            <p class="formula" style="font-style:normal">
-                <em>posterior</em>&ensp;~&ensp;<em>prior</em>&ensp;×&ensp;<em>likelihood</em>
-            </p>
-
-            <p>— and our unknowns come as a pair: the effect <strong>Δ</strong> and the noise
-                <strong>σ²</strong>. So the prior must be a distribution over that whole plane. The
-                conjugate choice — the one that keeps the algebra closed — is the
-                <strong>Normal-inverse-gamma</strong>:
-            </p>
-
-            <p class="formula" style="font-style:normal">Δ&hairsp;|&hairsp;σ²<sub>d</sub> ~
-                Normal(m₀,&thinsp;σ²<sub>d</sub>/κ₀)&emsp;and&emsp;σ²<sub>d</sub> ~ Inv-Gamma(a₀,&thinsp;b₀)</p>
-
-            <p>Its knobs are few, and each has a plain reading:</p>
-
-            <table class="concept">
-                <tr>
-                    <th>knob</th>
-                    <th>what it says</th>
-                    <th>here</th>
-                </tr>
-                <tr>
-                    <td><strong>m₀</strong></td>
-                    <td>where you expect Δ to be, before data</td>
-                    <td>a slider</td>
-                </tr>
-                <tr>
-                    <td><strong>κ₀</strong></td>
-                    <td>how strongly you hold m₀ — measured in <em>pseudo-observations</em>:
-                        your hunch about Δ enters the maths worth exactly κ₀ imaginary data points</td>
-                    <td>a slider (try the extremes)</td>
-                </tr>
-                <tr>
-                    <td><strong>a₀, b₀</strong></td>
-                    <td>the same two roles, for the variance σ²</td>
-                    <td>σ²₀ is a slider — the variance you expect <em>on average</em> (it pins
-                        the mean); ν₀ = 2a₀, the variance's own pseudo-count, is held fixed and gentle</td>
-                </tr>
-            </table>
-
-            <p>The three panels below are filled contours over the <strong>(Δ, σ²)</strong>
-                plane — a teardrop of belief — with the vertical axis the <em>variance</em>
-                σ², the model's own parameter, plotted on its natural scale (no change of
-                variable). All three use the same equal-volume contours — each band encloses
-                a further seventh of that panel's belief, out to 98% — so a lax prior spreads
-                into a broad, shallow teardrop next to the tight, compact posterior. Because
-                σ² is bounded below at 0 with a long upper tail, the teardrops lean upward.
-                On the left, the <strong style="color:#8E6FAE">prior</strong>;
-                on the right, the <strong>posterior</strong>; and between them, where it belongs in
-                the multiplication, the <strong style="color:#C96A5E">Gaussian likelihood</strong> of
-                the observed sample. The <strong style="color:#8E6FAE">prior</strong> and
-                <strong>posterior</strong> each carry two markers in their own colour — a dot at
-                the <em>mode</em> (the peak the eye sees) and an ✕ at the <em>mean</em>, which the
-                upward skew pulls above it; since σ²₀ now sets the prior's expected variance, that
-                ✕ sits exactly at σ²₀. The likelihood, not being a distribution, gets only its peak
-                — there is no centre of mass to mark — and the prior's ✕ vanishes when the belief
-                is too diffuse to have a mean at all. The small green cross is the simulation's
-                true (Δ, σ²) — in real
-                life, the one thing you never get to see. Below the triptych, the data and the
-                <strong>marginal over Δ</strong>: the three curves are the 1-D shadows of the three
-                panels, on the same square scale as steps 1 and 3.
-            </p>
-
-            <p style="font-size:14.5px;color:#6D675D">(One simplification to keep the algebra
-                on a single screen: the model is fed the n per-pair differences d&#7522; = x<sub>B,i</sub> −
-                x<sub>A,i</sub>, each Normal(Δ, σ²<sub>d</sub>) with σ²<sub>d</sub> = 2σ².)</p>
+            <p>This brings a huge conceptual simplification. I no longer need to conceive a
+                different test statistic for every kind of hypothesis I want to test. I only need a
+                generative model of the data from the parameters (that's the likelihood) and
+                whatever prior reflects my opinion on the parameters before seeing the data. In the
+                domain of the parameters I multiply the prior by the likelihood to get the
+                unnormalized posterior. Then I marginalize (integrate) all the parameters I don't
+                care about.</p>
         </section>
 
         <section class="demo">
@@ -145,46 +83,61 @@
         <section class="prose">
             <h2>Try this</h2>
             <ol>
-                <li><strong>Defaults</strong> (m₀ = 0, κ₀ = 1, n = 12). The posterior teardrop
-                    sits between prior and likelihood — much closer to the likelihood, because twelve
-                    real observations outvote one imaginary one. In the marginal, the dark curve peaks
-                    just short of the terracotta one: a whisper of healthy skepticism.</li>
-                <li><strong>Go lax: κ₀ → 0.1.</strong> The prior flattens into a vast sheet —
-                    and the posterior becomes the likelihood. Congratulations: you have rebuilt
-                    step 3. Now press <strong>new sample</strong> a few times at n = 12 and watch the
-                    posterior chase every sample across the plane. “Letting the data speak” with
-                    twelve points means letting <em>noise</em> speak.</li>
-                <li><strong>Skeptical but fair: m₀ = 0, κ₀ ≈ 10.</strong> The posterior is pulled
-                    toward 0 — slightly biased when the truth is 0.8 — but resampling barely moves
-                    it. With small n, trading a little bias for a lot of stability is usually a
-                    bargain; that trade is exactly what a prior buys.</li>
-                <li><strong>Tight and wrong: m₀ = −1, κ₀ = 100.</strong> A hundred imaginary
-                    observations outvote twelve real ones: the posterior parks near −1 and the green
-                    cross sits far outside the teardrop. Raise n to 100 and the data claw their way
-                    back. Tight priors are loud — be sure before you shout.</li>
-                <li><strong>Crank n to 100</strong> and sweep κ₀ from 0.1 to 10: the posterior
-                    barely budges. Every reasonable prior is washed out by enough data. Priors matter
-                    exactly when data are scarce — which is exactly when “non-informative” is most
-                    dangerous.</li>
+                <li>Play with the sliders. Which plots respond to changes on the samples and which
+                    respond to changes on the prior.</li>
+                <li>Reset the sliders to default values.</li>
+                <li>Slide the prior weight all the way down. How does the posterior respond to
+                    changes on reality? Or about resampling?</li>
+                <li>Slide the prior weight all the way up. How does the posterior now respond to
+                    reality changes and resampling?</li>
+                <li>Set the prior center very wrong (Δ and σ² very different than the prior center
+                    for them).</li>
+                <li>Slide the prior weight all the way down and play with resampling and sample
+                    sizes. How does the posterior respond? Set the prior weight all the way up and
+                    try the same.</li>
+                <li>Suppose you had to bet with a colleague doing this same exercise in this same
+                    page on the parameters of their populations. They will show you their samples,
+                    but not the true distributions. How should you set your prior to maximize your
+                    winning chances?</li>
+                <li>Can you see marginalization in action? What are the parameters used in the
+                    estimation? Which do you and which don't you care about.</li>
             </ol>
 
             <h2>The moral</h2>
             <div class="moral">
                 <ul>
-                    <li>A flat prior is not the absence of opinion. It is the opinion that
-                        preposterous effect sizes are as credible as modest ones — and with little
-                        data, that opinion leaks straight into the posterior as width and wobble.</li>
-                    <li><strong>κ₀ prices your conviction in the only honest currency: data.</strong>
-                        Ask “how many observations is my hunch worth?” — and notice that both answers
-                        can be wrong: 0.1 abandons the posterior to noise, 100 deafens it to evidence.</li>
-                    <li>When n is small, weakly-informative beats non-informative; when n is large,
-                        the argument dissolves on its own — so the cases where the lax prior “plays it
-                        safe” are precisely the cases where it doesn't.</li>
-                    <li>The prior is not a sin to hide; it is a dial to disclose. State it, vary
-                        it, and show the posterior barely moves — <em>that</em> is what a robust claim
-                        looks like.</li>
+                    <li>Bayesian probabilities break the asymmetry between parameters and data:
+                        everything is a random variable with a distribution</li>
+                    <li>Inference by Bayes' rule: posterior is proportional to prior x likelihood.
+                        The posterior represents how much I expect the parameter's value to be in
+                        certain regions of the parameter space</li>
+                    <li>Conceptually, the prior flatness should reflect the knowledge you have about
+                        the parameters. If you look at a flat prior and think "well, the parameter
+                        could <em>never</em> be in this range", you are not exploiting all the
+                        knowledge you have.</li>
+                    <li>In practice, the influence of the prior is small, provided you have enough
+                        data or your prior is not at once assertive and wrong.</li>
+                    <li>Conjugate priors measure the strength of the prior as pseudo-counts, i.e.,
+                        as the equivalent "convincing power" of that number of data samples.</li>
+                    <li>The likelihood is the part where usually everyone agrees (including
+                        classical inference), because it's relatively easier to establish how data
+                        comes from the parameters than vice-versa.</li>
+                    <li>Bayesian inference is often called subjective, but that is true only in the
+                        sense that different actors may have different knowledge about the problem,
+                        and be exposed to different data. Two Bayesian actors starting from the same
+                        "state of ignorance" and seeing exactly the same data must reach
+                        <em>exactly</em> the same conclusions, no matter how they organize the
+                        inference computation.</li>
                 </ul>
             </div>
+
+            <h2>Links</h2>
+            <ul class="links">
+                <li><a href="https://en.wikipedia.org/wiki/Bayes%27_theorem">Bayes' theorem</a></li>
+                <li><a href="https://en.wikipedia.org/wiki/Bayesian_inference">Bayesian inference</a></li>
+                <li><a href="https://en.wikipedia.org/wiki/Cox%27s_theorem">Cox's theorem</a></li>
+                <li><a href="https://en.wikipedia.org/wiki/Cromwell%27s_rule">Cromwell's rule</a></li>
+            </ul>
         </section>
 
         <nav class="pager">

@@ -2,7 +2,7 @@
 
 ## Main argument
 
-Classical inference doesn't accept parameters as random variables because that would clash with the frequentist notion of probability. To bypass that blocking point, it uses the experiment as the source of variation. Each experiment is associated to a random sample, which allow statistics or estimators to have a sampling distribution even though the true parameters are still consided fixed. Instead of the *parameters*, whose uncertainty classical inference dosn't even have language to define, it's the *estimators* that will be the object of significance or confidence analyses.
+Classical inference doesn't accept parameters as random variables because that would clash with the frequentist notion of probability. To bypass that blocking point, it uses the experiment as the source of variation. Each experiment is associated to a random sample, which allow statistics or estimators to have a sampling distribution even though the true parameters are still considered fixed. Instead of the *parameters*, whose uncertainty classical inference doesn't even have language to define, it's the *estimators* that will be the object of significance or confidence analyses.
 
 ### Concepts
 - Experimental sample, sampling distribution, test statistic
@@ -120,7 +120,7 @@ Frequentist and classical analysis very often converge to the same answers for a
 7. Pick any base rate and crank total cases up to 1,000,000. Every count grows 1000×, but the four metrics don't budge. Sample size will not save you this time.
 
 ### Take-homes
-- Sensitivity and speicifity are properties of the test, while PPV and NPV are properties of both the test and the reality.
+- Sensitivity and specificity are properties of the test, while PPV and NPV are properties of both the test and the reality.
 - Sensitivity (1 - beta) and specificity (1 − α) are conditioned on what is true in the world.
 - PPV and NPV are conditioned on the test answer. They are more useful because test results are observable, while the latent truth often isn't.
 - Sensitivity and specificity don't bound false positives and negatives, not even asymptotically, unless you make assumptions about the base rate.
@@ -215,7 +215,7 @@ Names step 3's sleight of hand: the flat prior, which declared every effect size
 - In practice, the influence of the prior is small, provided you have enough data or your prior is not at once assertive and wrong.
 - Conjugate priors measure the strength of the prior as pseudo-counts, i.e., as the equivalent "convincing power" of that number of data samples.
 - The likelihood is the part where usually everyone agrees (including classical inference), because it's relatively easier to establish how data comes from the parameters than vice-versa.
-- Bayesian inference is often called subjective, but that is true only in the sense that different actors may have different knowledge about the problem, and be exposed to different data. Two Bayesian actors starting from the same "state of ignorance" and seeing exactly the same data must reach _exactly_ the same conclusions, now matter how they organize the inference computation.
+- Bayesian inference is often called subjective, but that is true only in the sense that different actors may have different knowledge about the problem, and be exposed to different data. Two Bayesian actors starting from the same "state of ignorance" and seeing exactly the same data must reach _exactly_ the same conclusions, no matter how they organize the inference computation.
 
 ### Dialog
 
@@ -227,7 +227,7 @@ Names step 3's sleight of hand: the flat prior, which declared every effect size
 
 "Well, the event of the means being _exactly_ the same has probability 0. So the means are different almost surely."
 
-"I see what you mean, even if that asnwer doesn't really help me. Wait. Doesn't the question bother you?"
+"I see what you mean, even if that answer doesn't really help me. Wait. Doesn't the question bother you?"
 
 "Why would it? It's a perfectly valid question."
 
@@ -237,13 +237,13 @@ Names step 3's sleight of hand: the flat prior, which declared every effect size
 
 "But what do we know about the means, then?"
 
-"The is _exactly_ encoded by this posterior distribution."
+"That is _exactly_ encoded by this posterior distribution."
 
 "But how do I know that the means come from that distribution?"
 
 "That question makes no sense. As I said, the distribution is not about the means, it's about your knowledge about them."
 
-(...)  [TODO: resvise and complete]
+(...)  [TODO: revise and complete]
 
 ### Links
 
@@ -301,7 +301,7 @@ TODO!
 
 ### Take-homes
 - A posterior is an input to a decision, not the decision itself; pair it with a reward model and act on expected utility — the whole of Bayesian decision theory.
-- A confidence interval allows bounding the likely rewards but using only the best and worst case to guide the decision underperforms in comparison with Bayesian decition, which exploits all information available.
+- A confidence interval allows bounding the likely rewards but using only the best and worst case to guide the decision underperforms in comparison with Bayesian decision, which exploits all information available.
 
 
 ### Dialog
@@ -367,9 +367,9 @@ TODO!
 
 ### Take-homes
 - Priors don't have to be informative and can even be improper, but almost always using such a flat prior is a missed opportunity
-- You can use Bayesian inference to mimick hard-threshold classical tests, but you shouldn't expect to reap the benefits of Bayesian
+- You can use Bayesian inference to mimic hard-threshold classical tests, but you shouldn't expect to reap the benefits of Bayesian
 - This is not the Bayesian treatment: (1) I'm using maximum a posteriori with an uninformative prior = same as maximum likelihood. Credible intervals force a binarization of the decision that goes against the Bayesian ethos of using all information available
-- Still, credible intervals (the Bayesian answer to classical confidence intervals) are a useful visual summary for communicating results, especially when then public would be disturbed by the lack of interval estimation
+- Still, credible intervals (the Bayesian answer to classical confidence intervals) are a useful visual summary for communicating results, especially when the public would be disturbed by the lack of interval estimation
 
 ### Dialog
 

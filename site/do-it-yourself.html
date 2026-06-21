@@ -170,46 +170,27 @@
                     sketch of the finished exercise. We are settling the <em>design</em> first.</p>
             </div>
 
-            <p>Every model so far lived on a continuous effect size Δ. But <a href="02-pvalues-and-power.html">Step
-                    2</a> never did — it was about a <strong>binary</strong> verdict (positive / negative,
-                correct / wrong) and a <strong>base rate</strong>, and it was the one step that never
-                got its Bayesian answer. Here is that answer.</p>
+            <p>The exercise re-runs the entire pipeline — prior → likelihood → posterior →
+                expected utility → act — on a binary classifier with a single unknown: its success
+                rate <em>p</em>. It is a Jupyter-style notebook (an in-browser, client-side Python
+                engine to be wired in later; the current page is a non-functional mock-up so we can
+                settle the design first).</p>
 
-            <p>The object is a <strong>classifier</strong> with a single unknown: its true success
-                rate <strong>p</strong>. You watch it decide <em>n</em> labelled cases, it gets
-                <em>k</em> right, and you want the honest distribution over <em>p</em> — then a
-                decision. The whole pipeline you met in steps 3–5 returns, on new data:
-            </p>
+            <p>Why binary data is the right place to <em>code</em> this rather than slider it:</p>
 
-            <p class="formula" style="font-style:normal">
-                <em>posterior</em>&ensp;~&ensp;<em>prior</em>&ensp;×&ensp;<em>likelihood</em>&emsp;→&emsp;<em>expected
-                    utility</em>&ensp;→&ensp;<em>act</em>
-            </p>
-
-            <p>Two things make binary data the right place to <em>code</em> this by hand, rather
-                than drag a slider over it:</p>
-
-            <table class="concept">
-                <tr>
-                    <th>what changes</th>
-                    <th>why it helps</th>
-                </tr>
-                <tr>
-                    <td><em>p</em> is a probability, so its <strong>entire</strong> universe is the interval [0, 1]</td>
-                    <td>the prior, likelihood and posterior are just arrays over a fine grid — no
-                        tails to truncate, no axis bounds to guess (the thing that made Step 4's plane fiddly)</td>
-                </tr>
-                <tr>
-                    <td>the Beta–Binomial pair is <strong>conjugate</strong></td>
-                    <td>the exact posterior is known on paper — so you can <em>check</em> your
-                        numerical answer against ground truth before trusting it anywhere else</td>
-                </tr>
-            </table>
-
-            <p>So your grid is a <em>numerical</em> answer to a problem that also has an
-                <em>analytic</em> one. That is not busywork — it is the only honest way to learn a
-                method: practise it where the answer key exists, then carry it where it doesn't.
-            </p>
+            <ul>
+                <li><em>p</em> is a probability, so its entire universe is [0, 1] — the prior,
+                    likelihood and posterior are just arrays over a fine grid. No tails to truncate,
+                    no axis bounds to guess (the thing that made Step 4's (Δ, σ) plane fiddly). The
+                    finite fixed support makes this the <em>most</em> concrete of the six, not the
+                    least.</li>
+                <li>Beta is conjugate to the Binomial, so the exact posterior <code>Beta(α+k,
+                    β+n−k)</code> is known on paper. The grid is a <em>numerical</em> answer to a
+                    problem that also has an <em>analytic</em> one — which is not busywork but the
+                    only honest way to learn a numerical method: practise it where the answer key
+                    exists, then carry it where it doesn't (cf. learning numerical integration on
+                    ∫x² dx first).</li>
+            </ul>
         </section>
 
         <!-- ============================ THE NOTEBOOK ============================ -->
@@ -395,18 +376,19 @@ def decide(p, posterior, dp):
                 </ul>
             </div>
 
-            <h2>The moral <span style="font-weight:400;color:var(--muted);font-size:18px">(write your own)</span></h2>
+            <h2>The moral</h2>
             <div class="moral">
                 <ul>
-                    <li><span class="todo">TODO —</span> the same four boxes (prior, likelihood,
-                        posterior, decision) you dragged through five steps are, on binary data, ten lines
-                        of array arithmetic. State that in your own words.</li>
-                    <li><span class="todo">TODO —</span> conjugacy gave a free answer key — twice (the
-                        posterior <em>and</em> the decision). Say what the grid is <em>for</em>, then, if
-                        the closed form was there all along.</li>
-                    <li><span class="todo">TODO —</span> the grid that solved this in one line is
-                        hopeless in five dimensions — the one honest sentence about what the rest of
-                        Bayesian computation is <em>for</em>.</li>
+                    <li>The same four boxes (prior, likelihood, posterior, decision) are, on binary
+                        data, ten lines of array arithmetic.</li>
+                    <li>Integrating over the things you want to ignore to get the ones you care
+                        about is the bread and butter of Bayesian inference. Marginalization and
+                        expected values are different facets of this strategy.</li>
+                    <li>Integration becomes a problem as the number of parameters grows => curse of
+                        dimensionality. Things like MCMC and, in particular, HMC have greatly
+                        broadened the universe of problems for which we can apply Bayesian inference,
+                        but this is still a problematic or even completely intractable step for many
+                        problems.</li>
                 </ul>
             </div>
 

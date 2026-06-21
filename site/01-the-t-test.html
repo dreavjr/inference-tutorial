@@ -22,85 +22,14 @@
         </header>
 
         <section class="prose">
-            <p>Somewhere out there are two <strong>populations</strong> — say, outcomes under
-                treatment A and under treatment B. Each is a whole distribution of individuals
-                (the blue and orange curves below). The truth has knobs we never observe directly:
-                the <strong>true difference of the means</strong> (Δ) and the
-                <strong>true variance</strong> (σ²).
-            </p>
-
-            <p>What we <em>do</em> observe is a <strong>sample</strong>: n points from each
-                population — the dots.</p>
-
-            <p>The classical recipe goes:</p>
-            <ol>
-                <li>State the <strong>null hypothesis H₀</strong>: <em>the two populations have
-                        the same mean</em> (Δ&nbsp;=&nbsp;0) — against the <strong>alternative H₁</strong>:
-                    <em>they don't</em>.
-                </li>
-                <li>Condense the entire sample into a single number, the <strong>test
-                        statistic</strong>
-                    <span class="formula">t&nbsp;=
-                        <span class="frac">
-                            <span class="num">x̄<sub>B</sub> − x̄<sub>A</sub></span>
-                            <span class="den">s<sub>p</sub>&hairsp;√(2/n)</span>
-                        </span>
-                    </span>
-                    — the observed difference of sample means, measured in units of its own
-                    estimation noise.
-                </li>
-                <li><em>If H₀ were true</em>, the observed difference would still wobble around 0
-                    from sample to sample — and in a known way: a <strong>Student's&nbsp;t scaled by
-                        the standard error</strong> (the dark curve). The right panel draws this on the
-                    <em>same axis as the data</em>, so the observed difference <strong>D̂</strong> sits
-                    in both pictures at once. Notice how tight this band is next to the populations:
-                    the <em>difference of means</em> is pinned far more precisely than any single
-                    individual — and the band tightens further, like 1/√n, as the sample grows.
-                </li>
-                <li>The <strong>p-value</strong> is the probability, <em>under H₀</em>, of a
-                    difference at least as extreme as the one you got: the shaded two-sided
-                    <strong>tail area</strong>. (Standardised, D̂ becomes the statistic <em>t</em>,
-                    shown beneath the marker.)
-                </li>
-                <li>If p ≤ <strong>α</strong> (fixed here at 0.05 — the small ticks on the
-                    baseline), call the result <em>significant</em> and <strong>reject H₀</strong>.</li>
-            </ol>
-
-            <p>A map of the picture:</p>
-            <table class="concept">
-                <tr>
-                    <th>concept</th>
-                    <th>where to see it below</th>
-                </tr>
-                <tr>
-                    <td>population</td>
-                    <td>the two smooth curves — never observed directly</td>
-                </tr>
-                <tr>
-                    <td>sample</td>
-                    <td>the dots just above (blue) and below (orange) the line</td>
-                </tr>
-                <tr>
-                    <td>H₀</td>
-                    <td>“blue and orange coincide” — drag Δ to 0 to <em>make it true</em></td>
-                </tr>
-                <tr>
-                    <td>observed difference</td>
-                    <td>the marker <strong>D̂</strong> (with its <em>t</em> value) in the right panel</td>
-                </tr>
-                <tr>
-                    <td>its null distribution</td>
-                    <td>the dark scaled-t curve — how the difference scatters if H₀ holds</td>
-                </tr>
-                <tr>
-                    <td>p-value</td>
-                    <td>the shaded tail area beyond ±D̂, also in numbers</td>
-                </tr>
-                <tr>
-                    <td>α</td>
-                    <td>the bar p must clear; ticks mark the critical difference ±t·se</td>
-                </tr>
-            </table>
+            <p>Classical inference doesn't accept parameters as random variables because that
+                would clash with the frequentist notion of probability. To bypass that blocking
+                point, it uses the experiment as the source of variation. Each experiment is
+                associated to a random sample, which allow statistics or estimators to have a
+                sampling distribution even though the true parameters are still considered fixed.
+                Instead of the <em>parameters</em>, whose uncertainty classical inference doesn't
+                even have language to define, it's the <em>estimators</em> that will be the object
+                of significance or confidence analyses.</p>
         </section>
 
         <section class="demo">
@@ -136,42 +65,46 @@
         <section class="prose">
             <h2>Try this</h2>
             <ol>
-                <li><strong>Drag Δ to 0.</strong> H₀ is now <em>true</em>. Press
-                    <strong>new sample</strong> a dozen times: D̂ dances around zero and the p-value
-                    bounces all over the place. About one press in twenty will dip below 0.05 and
-                    “discover” an effect that does not exist. That 1-in-20 is exactly α — the
-                    false-positive rate you signed up for.
-                </li>
-                <li><strong>Δ = 0.5, n = 12</strong>: a real but modest effect, rarely
-                    significant — the test is <em>underpowered</em>. Now drag n to 100: same truth,
-                    yet significance almost every time. The null band tightens like 1/√n while D̂
-                    stays put, so <em>any</em> nonzero difference eventually lands in the tail.
-                    Significance measures evidence, not importance.</li>
-                <li><strong>Crank σ² up</strong> and watch the null band widen and significance
-                    melt away. The test is a tug of war: signal (D̂) against noise (the band's width,
-                    se = s<sub>p</sub>√(2/n)).</li>
-                <li><strong>Drop n to 3 or 4</strong> and watch the band turn squat and wide — and
-                    the <em>±t·se</em> critical ticks slide far out: with so little data the test
-                    demands a much bigger difference before it is surprised. Raise n and the band
-                    grows so tall and tight it <strong>fades out at the top</strong> — pinned tighter
-                    than the panel can show.</li>
+                <li>Play with the sliders. Note what happens with reality (plot 1) and the test
+                    (plot 2) in different scenarios.</li>
+                <li>For a fixed reality, how does the test respond to different sample sizes and
+                    significances (α)?</li>
+                <li>Run a simulation. Do the observed mismatched significances (dotted lines)
+                    correspond to the expected rates α and β shown in plot 2?</li>
+                <li>Reset the position of the sliders to their initial values by refreshing the
+                    page or clicking on the "reset" button.</li>
+                <li>Drag Δ to 0: you just made H₀ true! Resample a few dozen times or simulate: D̂
+                    and p bounce; ~1 in 20 dips below 0.05 — that is α, the false-positive rate.</li>
+                <li>Set Δ = 0.5, a real but very modest effect: H₀ is now false, but will rarely be
+                    rejected. The test is underpowered.</li>
+                <li>Raise n to 100 and it's significant almost always. Significance measures
+                    evidence for the difference, not its magnitude.</li>
+                <li>Crank σ² up: the null-hypothesis band widens, significance melts away — a tug of
+                    war between signal and noise.</li>
+                <li>Drop n to 3–4: band turns squat and wide, ±t·se critical ticks slide far out;
+                    raise n and the band grows so tall and tight it fades out at the top.</li>
             </ol>
 
             <h2>The moral</h2>
             <div class="moral">
                 <ul>
-                    <li>The p-value answers exactly one question: <em>“<strong>If</strong> there
-                            were truly no difference, how surprising would my t be?”</em> It is a tail
-                        probability computed under H₀ — nothing more.</li>
-                    <li>It is <strong>not</strong> the probability that H₀ is true, and a rejection
-                        is <strong>not</strong> a measure of how big or important the effect is.</li>
-                    <li>“Reject H₀” is simply the machine stamping <strong>positive</strong> on
-                        this study. How much <em>belief</em> such a stamp deserves is a different
-                        question entirely — it is the subject of the
-                        <a href="02-pvalues-and-power.html">next step</a>.
-                    </li>
+                    <li>The p-value answers one question: "If there were truly no difference, how
+                        surprising would my test statistic be?"</li>
+                    <li>It is <em>not</em> the (unconditional) probability that H₀ is true —
+                        classical inference doesn't have language for that</li>
+                    <li>A classical hypothesis is either true or false, our ignorance doesn't make
+                        it probabilistic</li>
                 </ul>
             </div>
+
+            <h2>Links</h2>
+            <ul class="links">
+                <li><a href="https://en.wikipedia.org/wiki/Null_hypothesis_significance_testing">Null hypothesis significance testing</a></li>
+                <li><a href="https://en.wikipedia.org/wiki/Statistical_significance">Statistical significance</a></li>
+                <li><a href="https://en.wikipedia.org/wiki/Power_(statistics)">Power (statistics)</a></li>
+                <li><a href="https://en.wikipedia.org/wiki/P-value">P-value</a></li>
+                <li><a href="https://en.wikipedia.org/wiki/Student%27s_t-test">Student's t-test</a></li>
+            </ul>
         </section>
 
         <nav class="pager">

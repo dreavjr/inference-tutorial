@@ -23,58 +23,12 @@
         </header>
 
         <section class="prose">
-            <p><a href="01-the-t-test.html">Step 1</a> asked one question: <em>if H₀ were true,
-                    how surprising is our t?</em> It answers with a yes/no stamp — reject, or don't. But
-                it never tells us the thing we usually care about: <strong>how large is the effect,
-                    and how sure are we?</strong></p>
+            <p>TODO!</p>
 
-            <p>The Bayesian move needs no new machinery — just a change of reading. Take the
-                very same t-distribution and re-centre it: instead of parking it on 0 (the null) and
-                asking about our observed t, park it on <strong>our observed difference</strong> and
-                let it describe the whole range of effect sizes the data find plausible. (With flat
-                priors this <em>is</em> the posterior for the mean difference — a shifted, scaled
-                t.)</p>
-
-            <p>Both panels below are drawn on the <strong>same square scale as step 1</strong>,
-                so you can read one against the other. The right-hand panel is the distribution over
-                the effect size <strong>Δ</strong>:</p>
-
-            <table class="concept">
-                <tr>
-                    <th>you see</th>
-                    <th>it means</th>
-                </tr>
-                <tr>
-                    <td>the curve's <strong>peak</strong></td>
-                    <td>the observed difference <strong>Δ̂</strong> = x̄₂ − x̄₁ — our best estimate</td>
-                </tr>
-                <tr>
-                    <td>the curve's <strong>width</strong></td>
-                    <td>our uncertainty — wide when data are few or noisy</td>
-                </tr>
-                <tr>
-                    <td>the curve's <strong>height</strong></td>
-                    <td>it's a real density (area = 1), so concentrating ⇒ taller</td>
-                </tr>
-                <tr>
-                    <td>the dashed line at <strong>0</strong></td>
-                    <td>the null; if it sits out in the tail, the data doubt it</td>
-                </tr>
-                <tr>
-                    <td>the green dashed <strong>Δ</strong></td>
-                    <td>the real effect — unknown in life, shown here because we simulate</td>
-                </tr>
-            </table>
-
-            <p>Because it is a genuine density, a very certain posterior becomes a tall, thin
-                spike — and when it grows past the top of the box it simply <strong>fades out</strong>,
-                dissolving into the upper edge: <em>more certain than the panel can show.</em></p>
-
-            <p>And the bridge between the two panels: <strong>hover the Δ curve.</strong>
-                Pick any candidate effect size and the left panel shows the two population means it
-                would imply. The distribution over Δ is, quite literally, a distribution over
-                <em>how far apart the two worlds are.</em>
-            </p>
+            <p style="font-size:14.5px;color:#6D675D">(This is a bit of a tangent: the idea is to
+                show that we cheat by using Bayesian inference while throwing away information, we
+                should not expect to reap the benefits. This is a bit of a side-lesson: Steps 1-4
+                and the exercise of Step 6 should not depend on it.)</p>
         </section>
 
         <section class="demo">
@@ -110,46 +64,32 @@
         <section class="prose">
             <h2>Try this</h2>
             <ol>
-                <li><strong>Hover slowly across the Δ curve.</strong> Watch the two implied
-                    means on the left panel slide apart and back together. The curve is showing you
-                    <em>which separations the data consider plausible</em> — most weight near Δ̂,
-                    little out in the tails.
-                </li>
-                <li><strong>Is 0 under the curve?</strong> With the defaults, barely — almost all
-                    the mass sits to the right of the null line, so the data clearly prefer a positive
-                    effect. (This is the Bayesian echo of “significant.”) Now drag <strong>Δ toward
-                        0</strong>: the curve drifts left until it straddles 0, and “no effect” becomes
-                    the most plausible reading.</li>
-                <li><strong>Raise n.</strong> The curve concentrates — <em>taller and
-                        narrower</em> — around the truth: more data buys certainty about the size, not
-                    merely a smaller p. Push n far enough and the spike outgrows the box, fading out
-                    at the top: certainty off the chart. This is what power looks like from the
-                    inside.</li>
-                <li><strong>Raise σ².</strong> The curve fattens and sinks: noise widens the band
-                    of effect sizes the data can't tell apart.</li>
-                <li><strong>Press “new sample” a few times.</strong> The curve jumps — its centre
-                    Δ̂ is the <em>noisy</em> observed effect — but it usually keeps the true Δ within
-                    its bulk. Each real study hands you exactly one of these curves, and you never get
-                    to see the green line.</li>
+                <li>TODO!</li>
             </ol>
 
             <h2>The moral</h2>
             <div class="moral">
                 <ul>
-                    <li>A p-value returns a <strong>verdict</strong>; this returns an
-                        <strong>estimate with honest error bars</strong>. Same t-distribution, read the
-                        other way round: from <em>“how surprising under H₀”</em> to <em>“which effects
-                            are plausible given the data.”</em>
-                    </li>
-                    <li>The shape is the message. “Significant” can hide a curve so wide it spans
-                        trivial and enormous effects alike; “not significant” can hide a curve tight
-                        around zero. The stamp throws that away — the distribution keeps it.</li>
-                    <li>One sleight of hand remains: “with flat priors” slipped by in the second
-                        paragraph as if it were innocent. It isn't — it is itself a choice, and the
-                        <a href="03-bayesian-approach.html">next step</a> makes it explicit.
-                    </li>
+                    <li>Priors don't have to be informative and can even be improper, but almost
+                        always using such a flat prior is a missed opportunity</li>
+                    <li>You can use Bayesian inference to mimic hard-threshold classical tests, but
+                        you shouldn't expect to reap the benefits of Bayesian</li>
+                    <li>This is not the Bayesian treatment: (1) I'm using maximum a posteriori with
+                        an uninformative prior = same as maximum likelihood. Credible intervals force
+                        a binarization of the decision that goes against the Bayesian ethos of using
+                        all information available</li>
+                    <li>Still, credible intervals (the Bayesian answer to classical confidence
+                        intervals) are a useful visual summary for communicating results, especially
+                        when the public would be disturbed by the lack of interval estimation</li>
                 </ul>
             </div>
+
+            <h2>Links</h2>
+            <ul class="links">
+                <li>TODO!</li>
+                <li><a href="https://en.wikipedia.org/wiki/Maximum_a_posteriori_estimation">Maximum a posteriori estimation</a></li>
+                <li><a href="https://en.wikipedia.org/wiki/Credible_interval">Credible interval</a></li>
+            </ul>
         </section>
 
         <nav class="pager">
