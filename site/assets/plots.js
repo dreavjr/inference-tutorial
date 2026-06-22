@@ -344,7 +344,7 @@ function makeIntervalSim({ sliders, simArea, simBtn, resampleBtn, getParams, ado
             simArea.innerHTML =
                 `<div class="figcap">3 · repeated-sampling simulation</div>` +
                 `<div class="sim-stack">` +
-                `<div class="sim-subcap">${tTest.caption}</div>` +
+                `<div class="sim-subcap">${typeof tTest.caption === "function" ? tTest.caption(alpha) : tTest.caption}</div>` +
                 `<svg id='simTSvg' viewBox='0 0 ${SIMW} ${TIMH}' xmlns='${NS}'>${topShell.join("")}</svg>` +
                 `<div class="sim-subcap">${caption(alpha)}</div>` +
                 `<svg id='simSvg' viewBox='0 0 ${SIMW} ${SIMH}' xmlns='${NS}'>${shell.join("")}</svg>` +

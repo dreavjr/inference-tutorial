@@ -74,7 +74,7 @@
                     correspond to the expected rates α and β shown in plot 2?</li>
                 <li>Reset the position of the sliders to their initial values by refreshing the
                     page or clicking on the "reset" button.</li>
-                <li>Drag Δ to 0: you just made H₀ true! Resample a few dozen times or simulate: D̂
+                <li>Drag Δ to 0: you just made H₀ true! Resample a few dozen times or simulate: Δ̂
                     and p bounce; ~1 in 20 dips below 0.05 — that is α, the false-positive rate.</li>
                 <li>Set Δ = 0.5, a real but very modest effect: H₀ is now false, but will rarely be
                     rejected. The test is underpowered.</li>
@@ -129,7 +129,7 @@
 
         /* ---- panel 2: the null distribution OF THE DIFFERENCE, in data units ------
            Plotted on the identical scale as panel 1 (same Xp, same Yp/K), so x = 2 is
-           the same pixel here as there and the observed difference D̂ lines up with the
+           the same pixel here as there and the observed difference Δ̂ lines up with the
            gap between the sample means on the left. Under H₀ the difference scatters as
            a Student's t scaled by the standard error: D ~ se·t(df). Because se shrinks
            like 1/√n, more data makes this band visibly tighter and taller — it fades
@@ -147,7 +147,7 @@
             const dens = xs.map(x => tPdf(x / se, df) / se);     // density of the difference under H₀
             const inner = [filledCurve(xs, dens, base, PAL.ink, PAL.ink, 0.12)];
 
-            // two-sided tail area beyond ±|D̂| = the p-value
+            // two-sided tail area beyond ±|Δ̂| = the p-value
             const dt = Math.min(Math.abs(dObs), HALF);
             for (const sign of [1, -1]) {
                 const xt = linspace(dt, HALF, 81).map(x => x * sign);
@@ -179,7 +179,7 @@
                 }
             }
 
-            // observed difference D̂ — vertical marker; label toward centre, flag off-scale
+            // observed difference Δ̂ — vertical marker; label toward centre, flag off-scale
             const off = Math.abs(dObs) > HALF;
             const dm = Math.max(-HALF + 0.05, Math.min(HALF - 0.05, dObs));
             const mx = Xp(dm);
@@ -270,9 +270,9 @@
             sliders, simArea, simBtn, resampleBtn,
             getParams: () => ({ delta: deltaS.value, varr: varS.value, n: nS.value, alpha: alphaS.value }),
             adopt: (p) => { pool = p; render(); },
-            caption: () => "(1−α) confidence interval",
+            caption: (alpha) => `${((1 - alpha) * 100).toFixed(0)}% confidence interval`,
             isFalse: (significant, coversTrue) => !coversTrue,   // dashed = interval misses true Δ
-            tTest: { caption: "(1−α) significance t-test" },
+            tTest: { caption: (alpha) => `${((1 - alpha) * 100).toFixed(0)}% significance t-test` },
         });
 
         resampleBtn.addEventListener("click", () => {

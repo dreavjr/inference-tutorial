@@ -191,7 +191,7 @@
                 splayMarker(xv, color, lbl, side, { lineTopY: lblY + 5, textY: lblY });
             const dLeft = delta <= dObs;            // which of Δ, Δ̂ is the left one
             p.push(marker(delta, PAL.green, "Δ", TOP + 16, dLeft ? -1 : 1));
-            p.push(marker(dObs, PAL.ink, "Δ̂", TOP + 16, dLeft ? 1 : -1));
+            p.push(marker(dObs, PAL.ink, "Δ<tspan dx='-0.55em' dy='-0.4em'>ˆ</tspan>", TOP + 16, dLeft ? 1 : -1));
             p.push(marker(0, PAL.muted, "0", TOP + 34, 0));
 
             // verdict pill (same format as step 1): does the (1−α) HDI exclude the null?
