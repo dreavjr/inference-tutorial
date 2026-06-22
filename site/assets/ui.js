@@ -48,3 +48,36 @@ function wireReset(btn, container) {
     });
   });
 }
+
+/* Presenter mode: a distraction-free, full-width stage for talks. Shift+P
+   toggles it, Esc leaves it. The styling lives in style.css under `.presenter`;
+   here we only flip the body class and flash a brief confirmation toast. */
+(function presenterMode() {
+  let toast;
+  const flash = (msg) => {
+    if (!toast) {
+      toast = document.createElement("div");
+      toast.className = "presenter-toast";
+      document.body.appendChild(toast);
+    }
+    toast.textContent = msg;
+    toast.classList.add("show");
+    clearTimeout(flash._t);
+    flash._t = setTimeout(() => toast.classList.remove("show"), 1100);
+  };
+
+  const set = (on) => {
+    document.body.classList.toggle("presenter", on);
+    flash(on ? "Presenter mode · Esc to exit" : "Presenter mode off");
+  };
+
+  document.addEventListener("keydown", (e) => {
+    if (e.metaKey || e.ctrlKey || e.altKey) return;       // leave browser shortcuts alone
+    if (e.shiftKey && e.code === "KeyP") {
+      e.preventDefault();
+      set(!document.body.classList.contains("presenter"));
+    } else if (e.key === "Escape" && document.body.classList.contains("presenter")) {
+      set(false);
+    }
+  });
+})();
