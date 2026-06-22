@@ -29,13 +29,13 @@
                 data <em>and parameters</em> can be random variables with probability
                 distributions.</p>
 
-            <p>This brings a huge conceptual simplification. I no longer need to conceive a
-                different test statistic for every kind of hypothesis I want to test. I only need a
-                generative model of the data from the parameters (that's the likelihood) and
-                whatever prior reflects my opinion on the parameters before seeing the data. In the
-                domain of the parameters I multiply the prior by the likelihood to get the
-                unnormalized posterior. Then I marginalize (integrate) all the parameters I don't
-                care about.</p>
+            <p>This brings a huge conceptual simplification. You no longer need to conceive a
+                different test statistic for every kind of hypothesis you want to test. You only
+                need a generative model of the data from the parameters (that’s the likelihood) and
+                whatever prior reflects your opinion on the parameters before seeing the data. In the
+                domain of the parameters you multiply the prior by the likelihood to get the
+                unnormalized posterior. Then you marginalize (integrate) all the parameters you
+                don’t care about.</p>
         </section>
 
         <section class="demo">
@@ -82,24 +82,24 @@
         <section class="prose">
             <h2>Try this</h2>
             <ol>
-                <li>Play with the sliders. Which plots respond to changes on the samples and which
-                    respond to changes on the prior.</li>
-                <li>Reset the sliders to default values.</li>
+                <li>Play with the sliders. Which plots respond to changes in the samples and which
+                    respond to changes in the prior</li>
+                <li>Reset the sliders to default values</li>
                 <li>Slide the prior weight all the way down. How does the posterior respond to
-                    changes on reality? Or about resampling?</li>
+                    changes in reality? What about resampling?</li>
                 <li>Slide the prior weight all the way up. How does the posterior now respond to
                     reality changes and resampling?</li>
-                <li>Set the prior center very wrong (Δ and σ² very different than the prior center
-                    for them).</li>
+                <li>Set the prior center very wrong (true Δ and σ² very different from their prior
+                    centers)</li>
                 <li>Slide the prior weight all the way down and play with resampling and sample
                     sizes. How does the posterior respond? Set the prior weight all the way up and
-                    try the same.</li>
-                <li>Suppose you had to bet with a colleague doing this same exercise in this same
+                    try the same</li>
+                <li>Suppose you had to bet with a colleague doing this same exercise on this same
                     page on the parameters of their populations. They will show you their samples,
                     but not the true distributions. How should you set your prior to maximize your
                     winning chances?</li>
                 <li>Can you see marginalization in action? What are the parameters used in the
-                    estimation? Which do you and which don't you care about.</li>
+                    estimation? Which do you and which don’t you care about?</li>
             </ol>
 
             <h2>Takeaways</h2>
@@ -107,26 +107,26 @@
                 <ul>
                     <li>Bayesian probabilities break the asymmetry between parameters and data:
                         everything is a random variable with a distribution</li>
-                    <li>Inference by Bayes' rule: posterior is proportional to prior x likelihood.
-                        The posterior represents how much I expect the parameter's value to be in
+                    <li>Inference by Bayes’ rule: posterior is proportional to prior × likelihood.
+                        The posterior represents how much you expect the parameter’s value to be in
                         certain regions of the parameter space</li>
                     <li>Conceptually, the prior flatness should reflect the knowledge you have about
-                        the parameters. If you look at a flat prior and think "well, the parameter
-                        could <em>never</em> be in this range", you are not exploiting all the
-                        knowledge you have.</li>
+                        the parameters. If you look at a flat prior and think “well, the parameter
+                        would not be in this range”, you are not exploiting all the
+                        knowledge you have</li>
                     <li>In practice, the influence of the prior is small, provided you have enough
-                        data or your prior is not at once assertive and wrong.</li>
+                        data or your prior is not at once assertive and wrong</li>
                     <li>Conjugate priors measure the strength of the prior as pseudo-counts, i.e.,
-                        as the equivalent "convincing power" of that number of data samples.</li>
+                        as the equivalent “convincing power” of that number of data samples</li>
                     <li>The likelihood is the part where usually everyone agrees (including
-                        classical inference), because it's relatively easier to establish how data
-                        comes from the parameters than vice-versa.</li>
+                        classical inference), because it’s relatively easier to establish how data
+                        comes from the parameters than vice versa</li>
                     <li>Bayesian inference is often called subjective, but that is true only in the
                         sense that different actors may have different knowledge about the problem,
                         and be exposed to different data. Two Bayesian actors starting from the same
-                        "state of ignorance" and seeing exactly the same data must reach
+                        “state of ignorance” and seeing exactly the same data must reach
                         <em>exactly</em> the same conclusions, no matter how they organize the
-                        inference computation.
+                        inference computation
                     </li>
                 </ul>
             </div>

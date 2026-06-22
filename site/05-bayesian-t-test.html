@@ -24,33 +24,20 @@
         </header>
 
         <section class="prose">
-            <p>It's tempting to ask for a "Bayesian t-test": Step 1's familiar question, answered
-                with Step 3's machinery. We can certainly build one — put a flat (improper) prior on
+            <p>It’s tempting to ask for a “Bayesian t-test”: Step 1’s familiar question, answered
+                with Step 3’s machinery. We can certainly build one — put a flat prior on
                 the effect Δ and on the noise, multiply by the Gaussian likelihood, and read off a
                 posterior over Δ. But that posterior is not new. When the prior is flat, prior ×
-                likelihood <em>is</em> the likelihood, and the result is exactly Step 1's
+                likelihood <em>is</em> the likelihood, and the result is exactly Step 1’s
                 t-distribution — merely re-centred on the observed difference Δ̂ and re-read as a
-                degree of belief rather than a sampling distribution. The 95% credible interval is,
-                number for number, the classical confidence interval Δ̂ ± t·se.</p>
+                degree of belief rather than a sampling distribution. A credible interval from this
+                posterior is, number for number, the classical confidence interval.</p>
 
-            <p>So what did we gain? Nothing — and that is precisely the lesson. The power of Steps 3
-                and 4 came from two moves this page deliberately undoes. First, an <em>informative</em>
-                prior: real knowledge, priced in pseudo-observations, pulling the posterior toward
-                what we already know — a flat prior throws that away, declaring every effect from 0.1
-                to a million equally believable. Second, a <em>decision</em> that integrates the whole
-                posterior against a reward — here we instead collapse the posterior to a single
-                yes/no (does the interval exclude zero?), which is just the significance test wearing
-                Bayesian clothes, hard threshold α and all. Maximum a posteriori under a flat prior is
-                maximum likelihood; binarizing the posterior is the classical test. Use Bayesian
-                inference to imitate a classical procedure and you should expect classical results:
-                throw the information away and you don't get to keep its benefits. (The credible
-                interval still earns its keep as an honest visual summary — useful when an audience
-                would balk at a point estimate with no sense of its spread.)</p>
-
-            <p style="font-size:14.5px;color:#6D675D">(This is a bit of a tangent: the idea is to
-                show that we cheat by using Bayesian inference while throwing away information, we
-                should not expect to reap the benefits. This is a bit of a side-lesson: Steps 1-4
-                and the exercise of Step 6 should not depend on it.)</p>
+            <p>The power of Steps 3 and 4 came from two moves Step 5 deliberately undoes. First, and
+                most important, is a decision that integrates the whole posterior against a reward —
+                here we instead collapse the posterior to a single yes/no (does the interval exclude
+                zero?). Second is the use of a prior that encodes what you already know about the
+                parameters, even before seeing the data.</p>
         </section>
 
         <section class="demo">
@@ -83,30 +70,30 @@
         <section class="prose">
             <h2>Try this</h2>
             <ol>
-                <li>Play with the sliders. Panel 2 is read as a <em>posterior</em> over Δ — but it's
-                    the very curve from Step 1's t-test, only re-centred on the observed Δ̂ and
-                    relabelled "degrees of belief" instead of "sampling distribution."</li>
+                <li>Play with the sliders. Panel 2 is read as a <em>posterior</em> over Δ — but it’s
+                    the very curve from Step 1’s t-test, only re-centred on the observed Δ̂ and
+                    relabelled “degrees of belief” instead of “sampling distribution.”</li>
                 <li>Reset to defaults. Hover panel 2 to read off the plausibility of any effect size;
                     the shaded band is the 95% credible interval (the HDI).</li>
                 <li>Open Step 1 in another tab with the same Δ, σ², N, α. The interval Δ̂ ± t·se is
                     <em>identical</em> — with flat priors the Bayesian credible interval and the
                     classical confidence interval coincide number for number.
                 </li>
-                <li>Watch the verdict pill. "Does the HDI exclude 0?" is exactly Step 1's "is it
-                    significant?" in Bayesian clothing — we've quietly smuggled the hard threshold
+                <li>Watch the verdict pill. “Does the HDI exclude 0?” is exactly Step 1’s “is it
+                    significant?” in Bayesian clothing — we’ve quietly smuggled the hard threshold
                     back in.</li>
-                <li>Drag α from 0.05 toward 0.005: the band widens and "tolerable risk" can flip to
-                    "intolerable." A genuinely <em>credible</em> interval shouldn't depend on a
-                    <em>false-positive rate</em> — α's presence here is the tell that we're still
+                <li>Drag α from 0.05 toward 0.005: the band widens and “tolerable risk” can flip to
+                    “intolerable.” A genuinely <em>credible</em> interval shouldn’t depend on a
+                    <em>false-positive rate</em> — α’s presence here is the tell that we’re still
                     running the classical test.
                 </li>
-                <li>Set Δ small (≈0.2–0.3) with small N: the HDI straddles 0 — "intolerable." Raise N
-                    until it clears 0. It's Step 1's evidence-vs-magnitude tug of war all over again,
+                <li>Set Δ small (≈0.2–0.3) with small N: the HDI straddles 0 — “intolerable.” Raise N
+                    until it clears 0. It’s Step 1’s evidence-vs-magnitude tug of war all over again,
                     just renamed.</li>
-                <li>Run a simulation. The 40 repeated HDIs behave exactly like Step 1's confidence
+                <li>Run a simulation. The 40 repeated HDIs behave exactly like Step 1’s confidence
                     intervals — about 1 in 20 misses the true Δ. The picture is identical because the
                     arithmetic is identical.</li>
-                <li>Step back: we used Bayes' theorem (flat prior × likelihood) and then collapsed
+                <li>Step back: we used Bayes’ theorem (flat prior × likelihood) and then collapsed
                     the whole posterior to one yes/no, ignoring any reward. We did all the Bayesian
                     work and kept none of the Step-4 payoff.</li>
             </ol>
@@ -114,17 +101,23 @@
             <h2>Takeaways</h2>
             <div class="moral">
                 <ul>
-                    <li>Priors don't have to be informative and can even be improper, but almost
-                        always using such a flat prior is a missed opportunity</li>
+                    <li>Priors don’t have to be informative and can even be improper, but using
+                        such a flat prior is almost always a missed opportunity</li>
                     <li>You can use Bayesian inference to mimic hard-threshold classical tests, but
-                        you shouldn't expect to reap the benefits of Bayesian</li>
-                    <li>This is not the Bayesian treatment: (1) I'm using maximum a posteriori with
-                        an uninformative prior = same as maximum likelihood. Credible intervals force
-                        a binarization of the decision that goes against the Bayesian ethos of using
-                        all information available</li>
+                        you shouldn’t expect to reap the benefits of Bayesian inference</li>
+                    <li>The approach on this page is not the Bayesian treatment: (1) we’re using
+                        maximum a posteriori with an uninformative prior = same as maximum
+                        likelihood. (2) Credible intervals force a binarization of the decision that
+                        goes against the Bayesian ethos of using all information available</li>
                     <li>Still, credible intervals (the Bayesian answer to classical confidence
                         intervals) are a useful visual summary for communicating results, especially
                         when the public would be disturbed by the lack of interval estimation</li>
+                    <li>Although the results in Step 5 are the same as in Step 1, the interpretation
+                        is completely different. Bayesian inference will still consider the posterior
+                        to be the distribution of the parameter (even if the posterior is just the
+                        normalized likelihood), while classical inference considers that the t-test
+                        distribution is about what happens when you repeat the same experiment many
+                        times over</li>
                 </ul>
             </div>
 

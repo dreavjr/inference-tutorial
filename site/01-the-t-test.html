@@ -23,13 +23,13 @@
         </header>
 
         <section class="prose">
-            <p>Classical inference doesn't accept parameters as random variables because that
+            <p>Classical inference doesn’t accept parameters as random variables because that
                 would clash with the frequentist notion of probability. To bypass that blocking
                 point, it uses the experiment as the source of variation. Each experiment is
-                associated to a random sample, which allow statistics or estimators to have a
+                associated with a random sample, which allows statistics or estimators to have a
                 sampling distribution even though the true parameters are still considered fixed.
-                Instead of the <em>parameters</em>, whose uncertainty classical inference doesn't
-                even have language to define, it's the <em>estimators</em> that will be the object
+                Instead of the <em>parameters</em>, whose uncertainty classical inference doesn’t
+                even have language to define, it’s the <em>estimators</em> that will be the object
                 of significance or confidence analyses.</p>
         </section>
 
@@ -64,33 +64,32 @@
             <h2>Try this</h2>
             <ol>
                 <li>Play with the sliders. Note what happens with reality (plot 1) and the test
-                    (plot 2) in different scenarios.</li>
+                    (plot 2) in different scenarios</li>
                 <li>For a fixed reality, how does the test respond to different sample sizes and
                     significances (α)?</li>
-                <li>Run a simulation. Do the observed mismatched significances (dotted lines)
-                    correspond to the expected rates α and β shown in plot 2?</li>
                 <li>Reset the position of the sliders to their initial values by refreshing the
-                    page or clicking on the "reset" button.</li>
+                    page or clicking on the “reset” button</li>
                 <li>Drag Δ to 0: you just made H₀ true! Resample a few dozen times or simulate: Δ̂
-                    and p bounce; ~1 in 20 dips below 0.05 — that is α, the false-positive rate.</li>
+                    and p bounce; ~1 in 20 dips below 0.05 — that is α, the false-positive rate</li>
                 <li>Set Δ = 0.5, a real but very modest effect: H₀ is now false, but will rarely be
-                    rejected. The test is underpowered.</li>
-                <li>Raise n to 100 and it's significant almost always. Significance measures
-                    evidence for the difference, not its magnitude.</li>
+                    rejected. The test is underpowered</li>
+                <li>Raise n to 100 and it’s significant almost always. Significance measures
+                    evidence for the difference, not its magnitude</li>
                 <li>Crank σ² up: the null-hypothesis band widens, significance melts away — a tug of
-                    war between signal and noise.</li>
-                <li>Drop n to 3–4: band turns squat and wide, ±t·se critical ticks slide far out;
-                    raise n and the band grows so tall and tight it fades out at the top.</li>
+                    war between signal and noise</li>
+                <li>Drop n to 3–4: the band turns squat and wide, the critical value for the t
+                    statistic (the point where the p-value would be exactly equal to α) slides far
+                    out; raise n and the band grows so tall and tight it fades out at the top</li>
             </ol>
 
             <h2>Takeaways</h2>
             <div class="moral">
                 <ul>
-                    <li>The p-value answers one question: "If there were truly no difference, how
-                        surprising would my test statistic be?"</li>
+                    <li>The p-value answers one question: “If there were truly no difference, how
+                        surprising would your test statistic be?”</li>
                     <li>It is <em>not</em> the (unconditional) probability that H₀ is true —
-                        classical inference doesn't have language for that</li>
-                    <li>A classical hypothesis is either true or false, our ignorance doesn't make
+                        classical inference doesn’t have language for that</li>
+                    <li>A classical hypothesis is either true or false, our ignorance doesn’t make
                         it probabilistic</li>
                 </ul>
             </div>
