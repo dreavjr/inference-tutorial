@@ -220,7 +220,8 @@ function wireImpliedHover(svgId, { heightAt, label, labelX, labelMinY }) {
    (df = 2n−2 and α are fixed across draws, so the threshold is constant). A bar
    crossing the threshold is significant — exactly when the interval clears 0. */
 
-function makeIntervalSim({ sliders, simArea, simBtn, resampleBtn, getParams, adopt, caption, isFalse, tTest = null }) {
+function makeIntervalSim({ sliders, simArea, simBtn, resampleBtn, getParams, adopt, caption, isFalse, tTest = null,
+    sigLabels = ["significant", "not significant"] }) {
     const SIMW = 960, SIMH = 165, SML = 46, SMR = 24, SMT = 16, SMB = 16;
     const N_SIM = 40, SIM_WAIT = 150;
     const MAROON = "#8C2F39";
@@ -307,7 +308,7 @@ function makeIntervalSim({ sliders, simArea, simBtn, resampleBtn, getParams, ado
         // legend, bottommost row (also on top): colour = significance, style = correctness
         const lgY = SIMH - 6;
         let lx = x0;
-        for (const [col, dash, label] of [[MAROON, false, "significant"], [PAL.pale, false, "not significant"],
+        for (const [col, dash, label] of [[MAROON, false, sigLabels[0]], [PAL.pale, false, sigLabels[1]],
         [PAL.ink, false, "interval contains true Δ"], [PAL.ink, true, "interval misses true Δ"]]) {
             shell.push(`<line x1='${lx}' x2='${lx + 16}' y1='${lgY - 3}' y2='${lgY - 3}' stroke='${col}' ` +
                 `stroke-width='3' stroke-linecap='round'${dash ? " stroke-dasharray='0 6'" : ""}/>`);

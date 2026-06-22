@@ -260,6 +260,7 @@
             adopt: (p) => { pool = p; render(); },
             caption: (alpha) => `${((1 - alpha) * 100).toFixed(0)}% credible interval (HDI) per repeated sample`,
             isFalse: (significant, coversTrue) => !coversTrue,
+            sigLabels: ["tolerable risk", "intolerable risk"],
         });
 
         resampleBtn.addEventListener("click", () => {
