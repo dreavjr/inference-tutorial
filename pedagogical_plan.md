@@ -14,11 +14,11 @@ Classical inference doesn't accept parameters as random variables because that w
 2. For a fixed reality, how does the test respond to different sample sizes and significances (α)?
 3. Run a simulation. Do the observed mismatched significances (dotted lines) correspond to the expected rates α and β shown in plot 2?
 4. Reset the position of the sliders to their initial values by refreshing the page or clicking on the "reset" button.
-5. Drag Δ to 0: you just made H₀ true! Resample a few dozen times or simulate: D̂ and p bounce; ~1 in 20 dips below 0.05 — that is α, the false-positive rate.
+5. Drag Δ to 0: you just made H₀ true! Resample a few dozen times or simulate: Δ̂ and p bounce; ~1 in 20 dips below 0.05 — that is α, the false-positive rate.
 6. Set Δ = 0.5, a real but very modest effect: H₀ is now false, but will rarely be rejected. The test is underpowered.
 7. Raise n to 100 and it's significant almost always. Significance measures evidence for the difference, not its magnitude.
-7. Crank σ² up: the null-hypothesis band widens, significance melts away — a tug of war between signal and noise.
-8. Drop n to 3–4: band turns squat and wide, ±t·se critical ticks slide far out; raise n and the band grows so tall and tight it fades out at the top.
+8. Crank σ² up: the null-hypothesis band widens, significance melts away — a tug of war between signal and noise.
+9. Drop n to 3–4: band turns squat and wide, ±t·se critical ticks slide far out; raise n and the band grows so tall and tight it fades out at the top.
 
 ### Take-homes
 - The p-value answers one question: "If there were truly no difference, how surprising would my test statistic be?"
@@ -197,11 +197,11 @@ This brings a huge conceptual simplification. I no longer need to conceive a dif
 1. Play with the sliders. Which plots respond to changes on the samples and which respond to changes on the prior.
 2. Reset the sliders to default values.
 3. Slide the prior weight all the way down. How does the posterior respond to changes on reality? Or about resampling?
-3. Slide the prior weight all the way up. How does the posterior now respond to reality changes and resampling?
-4. Set the prior center very wrong (Δ and σ² very different than the prior center for them).
-5. Slide the prior weight all the way down and play with resampling and sample sizes. How does the posterior respond? Set the prior weight all the way up and try the same.
-6. Suppose you had to bet with a colleague doing this same exercise in this same page on the parameters of their populations. They will show you their samples, but not the true distributions. How should you set your prior to maximize your winning chances?
-7. Can you see marginalization in action? What are the parameters used in the estimation? Which do you and which don't you care about.
+4. Slide the prior weight all the way up. How does the posterior now respond to reality changes and resampling?
+5. Set the prior center very wrong (Δ and σ² very different than the prior center for them).
+6. Slide the prior weight all the way down and play with resampling and sample sizes. How does the posterior respond? Set the prior weight all the way up and try the same.
+7. Suppose you had to bet with a colleague doing this same exercise in this same page on the parameters of their populations. They will show you their samples, but not the true distributions. How should you set your prior to maximize your winning chances?
+8. Can you see marginalization in action? What are the parameters used in the estimation? Which do you and which don't you care about.
 
 ### Take-homes
 - Bayesian probabilities break the asymmetry between parameters and data: everything is a random variable with a distribution
@@ -382,8 +382,8 @@ TODO!
 
 ### Take-homes
 - Priors don't have to be informative and can even be improper, but almost always using such a flat prior is a missed opportunity
-- You can dress-up hard-threshold classical tests in Bayesian concepts, but you shouldn't expect to reap the benefits of Bayesian inference
-- This is not the Bayesian treatment: (1) I'm using maximum a posteriori with an uninformative prior = same as maximum likelihood. (2) Credible intervals force a binarization of the decision that goes against the Bayesian ethos of using all information available
+- You can use Bayesian inference to mimic hard-threshold classical tests, but you shouldn't expect to reap the benefits of Bayesian
+- This is not the Bayesian treatment: (1) I'm using maximum a posteriori with an uninformative prior = same as maximum likelihood. Credible intervals force a binarization of the decision that goes against the Bayesian ethos of using all information available
 - Still, credible intervals (the Bayesian answer to classical confidence intervals) are a useful visual summary for communicating results, especially when the public would be disturbed by the lack of interval estimation
 
 ### Dialog
