@@ -102,7 +102,7 @@ return { power, beta: 1 - power };
 - Add the MLE estimator on the plot?
 - change \hat(D) -> \hat(Δ)
 
-# Step 2: The world vs. the test
+# Step 2: The test vs. the world
 
 ## Main argument
 
@@ -163,7 +163,7 @@ https://en.wikipedia.org/wiki/Base_rate_fallacy
   - *Likelihood:* sensitivity `P(predicted + | condition +)` and specificity `P(predicted − | condition −)`.
   - *Posterior:* PPV `= TP/(TP+FP) = P(condition + | predicted +)` and NPV `= TN/(TN+FN)`.
   - *Computation:* exact / analytic (closed-form Bayes); the page realizes it as integer counts over a finite population.
-- **Critical code** (`02-pvalues-and-power.html`):
+- **Critical code** (`02-test-vs-world.html`):
 
 ```js
 function confusion(prev, sens, spec, total) {
