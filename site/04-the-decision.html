@@ -646,6 +646,7 @@
                 return out;
             };
             return `<svg id='simCISvg' viewBox='0 0 ${SIMW} ${SIMH}' xmlns='${SIM_NS}'>` +
+                `<defs><clipPath id='ciSimClip'><rect x='0' y='${SIM_PLOT_TOP}' width='${SIMW}' height='${(SIM_PLOT_BOT - SIM_PLOT_TOP).toFixed(1)}'/></clipPath></defs>` +
                 `<g id='simCICols'></g>` +
                 `<line id='simCIMarker' x1='0' x2='0' y1='${SIM_PLOT_TOP}' y2='${SIM_PLOT_BOT}' stroke='${PAL.ink}' stroke-width='1' stroke-dasharray='3 3' opacity='0'/>` +
                 `<line x1='${x0}' x2='${x1}' y1='${SIM_MID.toFixed(1)}' y2='${SIM_MID.toFixed(1)}' stroke='${PAL.ink}' stroke-width='1.2' stroke-dasharray='4 4' opacity='0.72'/>` +
@@ -670,6 +671,13 @@
             const halfPx = (SIM_PLOT_BOT - SIM_PLOT_TOP) / 2;
             const scale = halfPx / Math.max(span, 1e-6);
             return SIM_MID - Math.max(-halfPx, Math.min(halfPx, v * scale));
+        }
+
+        // unclamped: lets an over-long interval be cropped by the clip path instead of
+        // clamped, which would plant a false cap and skew a symmetric interval
+        function simCIYraw(v, span) {
+            const halfPx = (SIM_PLOT_BOT - SIM_PLOT_TOP) / 2;
+            return SIM_MID - v * (halfPx / Math.max(span, 1e-6));
         }
 
         function bayesSampleGroup(state, idx, span, maxAbs) {
@@ -740,9 +748,9 @@
             const g = svgNode("g", { "data-idx": String(idx) });
             const frameW = SIM_SPACING * 0.8;
             const col = state.betCI ? MAROON : GREY;
-            const yLo = simCIY(state.ciLo, span);
-            const yHi = simCIY(state.ciHi, span);
-            const yMid = simCIY(state.modeCI, span);
+            const yLo = simCIYraw(state.ciLo, span);
+            const yHi = simCIYraw(state.ciHi, span);
+            const yMid = simCIYraw(state.modeCI, span);
 
             g.appendChild(svgNode("rect", {
                 x: (x - frameW / 2).toFixed(1), y: SIM_PLOT_TOP.toFixed(1), width: frameW.toFixed(1),
@@ -752,18 +760,20 @@
             g.appendChild(svgNode("line", {
                 x1: x.toFixed(1), x2: x.toFixed(1),
                 y1: yHi.toFixed(1), y2: yLo.toFixed(1),
-                stroke: col, "stroke-width": "3", "stroke-linecap": "round", "data-line": "1"
+                stroke: col, "stroke-width": "3", "stroke-linecap": "round", "data-line": "1",
+                "clip-path": "url(#ciSimClip)"
             }));
             for (const y of [yHi, yLo]) {
                 g.appendChild(svgNode("line", {
                     x1: (x - 3.8).toFixed(1), x2: (x + 3.8).toFixed(1),
                     y1: y.toFixed(1), y2: y.toFixed(1),
-                    stroke: col, "stroke-width": "1.8", "stroke-linecap": "round"
+                    stroke: col, "stroke-width": "1.8", "stroke-linecap": "round",
+                    "clip-path": "url(#ciSimClip)"
                 }));
             }
             g.appendChild(svgNode("circle", {
                 cx: x.toFixed(1), cy: yMid.toFixed(1), r: "2.4",
-                fill: col
+                fill: col, "clip-path": "url(#ciSimClip)"
             }));
 
             const predTxt = svgNode("text", {

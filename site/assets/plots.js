@@ -280,6 +280,10 @@ function makeIntervalSim({ sliders, simArea, simBtn, resampleBtn, getParams, ado
         const ymax = Math.max(spread, Math.abs(delta) + 0.5, 0.5);
         const yScale = (simMidY - SMT) / ymax;
         const clampY = (d) => simMidY - Math.max(-(simMidY - SMT), Math.min(simMidY - SMT, (d - delta) * yScale));
+        // true (unclamped) position: a bar reaching past the frame is cropped by the
+        // clip below, not clamped — clamping would plant a false cap and make a
+        // symmetric Gaussian interval look skewed.
+        const yAt = (d) => simMidY - (d - delta) * yScale;
 
         const trueY = clampY(delta).toFixed(1);
         const zeroY = clampY(0).toFixed(1);
@@ -287,7 +291,8 @@ function makeIntervalSim({ sliders, simArea, simBtn, resampleBtn, getParams, ado
         const shell = [];
 
         // intervals go down first → guides, labels and legend paint ON TOP of them
-        shell.push(`<g id='simLines'></g>`);
+        shell.push(`<defs><clipPath id='simClip'><rect x='0' y='${SMT}' width='${SIMW}' height='${SIMH - 2 * SMT}'/></clipPath></defs>`);
+        shell.push(`<g id='simLines' clip-path='url(#simClip)'></g>`);
         shell.push(`<line id='simMarker' x1='0' x2='0' y1='${SMT}' y2='${SIMH - SMB}' stroke='${PAL.ink}' ` +
             `stroke-width='1' stroke-dasharray='3 3' opacity='0'/>`);
         shell.push(`<line x1='${x0}' x2='${x1}' y1='${trueY}' y2='${trueY}' stroke='${PAL.green}' ` +
@@ -364,7 +369,7 @@ function makeIntervalSim({ sliders, simArea, simBtn, resampleBtn, getParams, ado
             const x = SML + (i + 0.5) * simSpacing;
             const significant = !(d.lo <= 0 && d.hi >= 0);     // interval clears 0 → reject H₀
             const coversTrue = d.lo <= delta && d.hi >= delta; // does the interval capture true Δ?
-            const yLo = clampY(d.lo), yHi = clampY(d.hi);
+            const yLo = yAt(d.lo), yHi = yAt(d.hi);
             const col = significant ? MAROON : PAL.pale;
             const line = document.createElementNS(NS, "line");
             line.setAttribute("x1", x.toFixed(1)); line.setAttribute("x2", x.toFixed(1));
@@ -384,7 +389,7 @@ function makeIntervalSim({ sliders, simArea, simBtn, resampleBtn, getParams, ado
                 gLines.appendChild(cap);
             }
             const dot = document.createElementNS(NS, "circle");
-            dot.setAttribute("cx", x.toFixed(1)); dot.setAttribute("cy", clampY(d.dObs).toFixed(1));
+            dot.setAttribute("cx", x.toFixed(1)); dot.setAttribute("cy", yAt(d.dObs).toFixed(1));
             dot.setAttribute("r", "2"); dot.setAttribute("fill", PAL.ink);
             gLines.appendChild(dot);
 
