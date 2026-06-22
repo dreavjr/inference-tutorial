@@ -364,14 +364,25 @@ function makeIntervalSim({ sliders, simArea, simBtn, resampleBtn, getParams, ado
             const x = SML + (i + 0.5) * simSpacing;
             const significant = !(d.lo <= 0 && d.hi >= 0);     // interval clears 0 → reject H₀
             const coversTrue = d.lo <= delta && d.hi >= delta; // does the interval capture true Δ?
+            const yLo = clampY(d.lo), yHi = clampY(d.hi);
+            const col = significant ? MAROON : PAL.pale;
             const line = document.createElementNS(NS, "line");
             line.setAttribute("x1", x.toFixed(1)); line.setAttribute("x2", x.toFixed(1));
-            line.setAttribute("y1", clampY(d.lo).toFixed(1)); line.setAttribute("y2", clampY(d.hi).toFixed(1));
-            line.setAttribute("stroke", significant ? MAROON : PAL.pale);
+            line.setAttribute("y1", yLo.toFixed(1)); line.setAttribute("y2", yHi.toFixed(1));
+            line.setAttribute("stroke", col);
             line.setAttribute("stroke-width", "3"); line.setAttribute("stroke-linecap", "round");
             if (isFalse(significant, coversTrue)) line.setAttribute("stroke-dasharray", "0 6");
             line.setAttribute("data-idx", i);
             gLines.appendChild(line);
+            // little end caps at the interval extremes (as in step 4) — always solid
+            for (const y of [yLo, yHi]) {
+                const cap = document.createElementNS(NS, "line");
+                cap.setAttribute("x1", (x - 3.8).toFixed(1)); cap.setAttribute("x2", (x + 3.8).toFixed(1));
+                cap.setAttribute("y1", y.toFixed(1)); cap.setAttribute("y2", y.toFixed(1));
+                cap.setAttribute("stroke", col); cap.setAttribute("stroke-width", "1.8");
+                cap.setAttribute("stroke-linecap", "round");
+                gLines.appendChild(cap);
+            }
             const dot = document.createElementNS(NS, "circle");
             dot.setAttribute("cx", x.toFixed(1)); dot.setAttribute("cy", clampY(d.dObs).toFixed(1));
             dot.setAttribute("r", "2"); dot.setAttribute("fill", PAL.ink);
