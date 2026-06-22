@@ -256,8 +256,8 @@
         /* ---- step 1 simulation: 40 repeated samples, two stacked synchronised views -
            Bottom: the (1−α) confidence interval — a thick bar spanning Δ̂ ± t·se; bars
            straddling the central 0-line fail to reject H₀ (grey), those that clear it
-           are "significant" (maroon), dashed marks a "false" verdict (significance not
-           matching Δ coverage). Top: the same test read directly — each sample's |t|
+           are "significant" (maroon); the bar is solid when the interval contains the
+           true Δ and dashed when it misses it. Top: the same test read directly — each sample's |t|
            as a bar against the constant critical value; a bar crossing it is exactly
            an interval clearing 0. Both panels and the animation live in plots.js. */
 
@@ -270,7 +270,7 @@
             getParams: () => ({ delta: deltaS.value, varr: varS.value, n: nS.value, alpha: alphaS.value }),
             adopt: (p) => { pool = p; render(); },
             caption: () => "(1−α) confidence interval",
-            isFalse: (significant, coversTrue) => significant != coversTrue,
+            isFalse: (significant, coversTrue) => !coversTrue,   // dashed = interval misses true Δ
             tTest: { caption: "(1−α) significance t-test" },
         });
 

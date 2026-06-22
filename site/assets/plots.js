@@ -303,7 +303,7 @@ function makeIntervalSim({ sliders, simArea, simBtn, resampleBtn, getParams, ado
         const lgY = SIMH - 6;
         let lx = x0;
         for (const [col, dash, label] of [[MAROON, false, "significant"], [PAL.pale, false, "not significant"],
-        [PAL.ink, false, "significance matches Δ being inside interval"], [PAL.ink, true, "significance mismatches Δ coverage"]]) {
+        [PAL.ink, false, "interval contains true Δ"], [PAL.ink, true, "interval misses true Δ"]]) {
             shell.push(`<line x1='${lx}' x2='${lx + 16}' y1='${lgY - 3}' y2='${lgY - 3}' stroke='${col}' ` +
                 `stroke-width='3' stroke-linecap='round'${dash ? " stroke-dasharray='0 6'" : ""}/>`);
             shell.push(`<text x='${lx + 22}' y='${lgY}' font-size='10.5' fill='${PAL.muted}'>${label}</text>`);
