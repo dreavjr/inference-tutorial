@@ -2,7 +2,7 @@
 
 ## Main argument
 
-Classical inference doesn't accept parameters as random variables because that would clash with the frequentist notion of probability. To bypass that blocking point, it uses the experiment as the source of variation. Each experiment is associated to a random sample, which allow statistics or estimators to have a sampling distribution even though the true parameters are still considered fixed. Instead of the *parameters*, whose uncertainty classical inference doesn't even have language to define, it's the *estimators* that will be the object of significance or confidence analyses.
+Classical inference doesn't accept parameters as random variables because that would clash with the frequentist notion of probability. To bypass that blocking point, it uses the experiment as the source of variation. Each experiment is associated with a random sample, which allows statistics or estimators to have a sampling distribution even though the true parameters are still considered fixed. Instead of the *parameters*, whose uncertainty classical inference doesn't even have language to define, it's the *estimators* that will be the object of significance or confidence analyses.
 
 ### Concepts
 - Experimental sample, sampling distribution, test statistic
@@ -106,7 +106,7 @@ return { power, beta: 1 - power };
 
 ## Main argument
 
-The ideas of power and significance appear with different names: sensitivity and specificity, true positive rate and true negative rate, etc. They are formal properties of the test but do not necessarily correspond to the challenges we will face in reality. PPV and NPV correspond much more to real-life concerns.
+The ideas of power and significance appear under different names: sensitivity and specificity, true positive rate and true negative rate, etc. They are formal properties of the test but do not necessarily correspond to the challenges we will face in reality. PPV and NPV correspond much more to real-life concerns.
 
 Frequentist and classical analysis very often converge to the same answers for a large number of samples, but on this particular issue, increasing sampling size won't work: the four metrics are proportions and insensitive (in expectation) to sample size.
 
@@ -194,13 +194,13 @@ This brings a huge conceptual simplification. I no longer need to conceive a dif
 - Priors should reflect domain knowledge and be lax enough to allow the model to "change opinions", but making them _too_ lax leads to missed opportunities
 
 ### Try this
-1. Play with the sliders. Which plots respond to changes on the samples and which respond to changes on the prior.
+1. Play with the sliders. Which plots respond to changes in the samples and which respond to changes in the prior.
 2. Reset the sliders to default values.
-3. Slide the prior weight all the way down. How does the posterior respond to changes on reality? Or about resampling?
+3. Slide the prior weight all the way down. How does the posterior respond to changes in reality? What about resampling?
 4. Slide the prior weight all the way up. How does the posterior now respond to reality changes and resampling?
 5. Set the prior center very wrong (Δ and σ² very different than the prior center for them).
 6. Slide the prior weight all the way down and play with resampling and sample sizes. How does the posterior respond? Set the prior weight all the way up and try the same.
-7. Suppose you had to bet with a colleague doing this same exercise in this same page on the parameters of their populations. They will show you their samples, but not the true distributions. How should you set your prior to maximize your winning chances?
+7. Suppose you had to bet with a colleague doing this same exercise on this same page on the parameters of their populations. They will show you their samples, but not the true distributions. How should you set your prior to maximize your winning chances?
 8. Can you see marginalization in action? What are the parameters used in the estimation? Which do you and which don't you care about.
 
 ### Take-homes
@@ -255,7 +255,7 @@ https://en.wikipedia.org/wiki/Cromwell%27s_rule
 - **Short description:** jointly estimating the effect Δ and the noise σ² from both groups (between-subjects, pooled), with a conjugate Normal-inverse-gamma prior, then reporting the marginal posterior over Δ (the variance integrated out as a nuisance).
 - **Mathematical model:**
   - *Prior (Normal-inverse-gamma):* `Δ | σ²_d ~ Normal(m₀, σ²_d/κ₀)` and `σ²_d ~ Inv-Gamma(a₀, b₀)`. Here `σ²_d = 2σ²` (the difference-of-means variance scale). m₀, κ₀, σ²₀ are sliders. κ₀ is the prior weight on **Δ only** (its pseudo-observations). The variance prior is **decoupled** and held fixed: a₀ = ν₀/2 with ν₀ a gentle, fixed pseudo-count (ν₀ = 4 ⇒ a₀ = 2), kept above 2 so E[σ²] is finite. b₀ then pins the **expected** variance to σ²₀: `b₀ = (a₀−1)·2σ²₀`, so E[σ²] = b₀/(a₀−1)/2 = σ²₀ — no a₀ = 1 singularity. (Earlier drafts coupled `a₀ = κ₀/2` and pinned the *mode*; that made the mean diverge for κ₀ ≤ 2 and produced a discontinuity in the prior at κ₀ = 2.)
-  - *Likelihood (between-subjects, pooled):* the difference of group means `Δ̂ = x̄_B − x̄_A ~ Normal(Δ, σ²_d/n)` together with the pooled within-group sum of squares (`2n − 2` df, the grand mean marginalised out under a flat prior). The two groups are **independent — there is no pairing** — so σ²_d is estimated from all 2n observations, not from n formed differences. The integrated likelihood over (Δ, σ²_d) carries variance-power (2n−1)/2.
+  - *Likelihood (between-subjects, pooled):* the difference of group means `Δ̂ = x̄_B − x̄_A ~ Normal(Δ, σ²_d/n)` together with the pooled within-group sum of squares (`2n − 2` df, the grand mean marginalized out under a flat prior). The two groups are **independent — there is no pairing** — so σ²_d is estimated from all 2n observations, not from n formed differences. The integrated likelihood over (Δ, σ²_d) carries variance-power (2n−1)/2.
   - *Posterior:* Normal-inverse-gamma with updated `(mₙ, κₙ, aₙ, bₙ)`, where `aₙ = a₀ + n − ½` (the pooled 2n−2 df plus the ½ borrowed by completing the square on the mean). The *marginal over Δ* is a located-scaled Student-t with `df = 2aₙ`, `loc = mₙ`, `scale = √(bₙ/(aₙ·κₙ))`. In the flat-prior limit (a₀=−½, b₀=0, κ₀=0) it reduces **exactly** to step 1/5's pooled t: `df = 2n−2`, `loc = Δ̂`, `scale = se`.
 - **How the posterior was computed:** *conjugate prior–likelihood → closed-form (analytic) update* (`nigUpdate`). The 2-D (Δ, σ²) surfaces are evaluated on a grid only for the equal-volume heatmap drawing (in the variance's own scale, so no Jacobian); the inference itself is the analytic conjugate update, and the Δ marginal is the analytic Student-t.
 - **Critical code** (`03-bayesian-approach.html`, `render`):
@@ -428,16 +428,16 @@ finished than the rest.
 ## Main argument
 
 The exercise re-runs the entire pipeline — prior → likelihood → posterior → expected
-utility → act — on a binary classifier with a single unknown: its success rate *\theta*. It is a
-Jupyter notebook to be completed by the learner
-```
+utility → act — on a binary classifier with a single unknown: its success rate *θ*. It is a
+Jupyter notebook to be completed by the learner.
+
 
 ## Further reading
 
-Add links and explanations about those material:
+Add links and explanations about this material:
 
 - Doing Bayesian Data Analysis, Kruschke => easier, accessible, includes a practical cookbook
 
-- Statistical rethinking, McElreath  => rigorous but accessible, great explanation for conceptual issues, companion course available on the web
+- Statistical Rethinking, McElreath  => rigorous but accessible, great explanation for conceptual issues, companion course available on the web
 
 - Bayesian Data Analysis, Gelman et al. => _the_ rigorous textbook for modern Bayesian inference, very comprehensive, steep in difficulty
