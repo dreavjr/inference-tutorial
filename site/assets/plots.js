@@ -212,15 +212,26 @@ function wireImpliedHover(svgId, { heightAt, label, labelX, labelMinY }) {
    priors). Colour encodes significance, dash encodes a "false" verdict; the run
    animates the panels above through each draw, then makes the bars hoverable so
    pointing at one restores that exact sample. Only the caption and the
-   "false" predicate differ between the pages. */
+   "false" predicate differ between the pages.
 
-function makeIntervalSim({ sliders, simArea, simBtn, resampleBtn, getParams, adopt, caption, isFalse }) {
+   When `tTest` is supplied (step 1) a second panel is stacked above the interval
+   strip, sharing the same per-sample data and synchronised hover: it plots each
+   sample's |t| as a bar rising from t = 0, against one dashed critical-value line
+   (df = 2n−2 and α are fixed across draws, so the threshold is constant). A bar
+   crossing the threshold is significant — exactly when the interval clears 0. */
+
+function makeIntervalSim({ sliders, simArea, simBtn, resampleBtn, getParams, adopt, caption, isFalse, tTest = null }) {
     const SIMW = 960, SIMH = 165, SML = 46, SMR = 24, SMT = 16, SMB = 16;
     const N_SIM = 40, SIM_WAIT = 150;
     const MAROON = "#8C2F39";
     const simMidY = SIMH / 2, simSpacing = (SIMW - SML - SMR) / N_SIM;
     const NS = "http://www.w3.org/2000/svg";
     const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+
+    // stacked t-statistic panel (tTest mode only): t = 0 baseline near the bottom,
+    // bars climb to |t|; same width/x-grid as the interval strip so columns align.
+    const TIMH = 150, TMT = 16, TMB = 26;
+    const tBase = TIMH - TMB, tPlotTop = TMT, tPlotH = tBase - tPlotTop;
 
     let simRunning = false;
     let simEntries = [];
@@ -246,6 +257,8 @@ function makeIntervalSim({ sliders, simArea, simBtn, resampleBtn, getParams, ado
 
         const { delta, varr, n, alpha } = getParams();
         const sigma = Math.sqrt(varr);
+        const df = 2 * n - 2;
+        const tc = tInv(1 - alpha / 2, df);   // two-sided critical value, constant across draws
 
         // draw all samples up front so the vertical scale can be fixed sensibly
         const draws = [];
@@ -256,8 +269,8 @@ function makeIntervalSim({ sliders, simArea, simBtn, resampleBtn, getParams, ado
             const dObs = mean(xb) - mean(xa);
             const sp = Math.sqrt((svar(xa) + svar(xb)) / 2);
             const se = sp * Math.sqrt(2 / n);
-            const half = tInv(1 - alpha / 2, 2 * n - 2) * se;   // (1−α) interval half-width
-            draws.push({ pool: p, dObs, lo: dObs - half, hi: dObs + half });
+            const half = tc * se;                                // (1−α) interval half-width
+            draws.push({ pool: p, dObs, lo: dObs - half, hi: dObs + half, t: dObs / se });
         }
 
         // robust scale: 92nd-percentile spread around Δ, always wide enough to keep
@@ -297,12 +310,48 @@ function makeIntervalSim({ sliders, simArea, simBtn, resampleBtn, getParams, ado
             lx += 22 + label.length * 5.8 + 26;
         }
 
+        // optional top panel: |t| bars against the constant critical-value line
+        let topShell = null, yT = null;
+        if (tTest) {
+            const absT = draws.map(d => Math.abs(d.t)).sort((a, b) => a - b);
+            const tSpread = absT[Math.floor(absT.length * 0.92)] * 1.08;
+            const tmax = Math.max(tSpread, tc * 1.3, 1);
+            yT = (v) => tBase - Math.min(tPlotH, Math.max(0, v) * (tPlotH / tmax));
+            const yc = yT(tc).toFixed(1);
+            topShell = [];
+            topShell.push(`<g id='simTLines'></g>`);
+            topShell.push(`<line id='simTMarker' x1='0' x2='0' y1='${tPlotTop}' y2='${tBase}' stroke='${PAL.ink}' ` +
+                `stroke-width='1' stroke-dasharray='3 3' opacity='0'/>`);
+            topShell.push(`<line x1='${x0}' x2='${x1}' y1='${tBase}' y2='${tBase}' stroke='${PAL.rule}' stroke-width='1'/>`);
+            topShell.push(`<line x1='${x0}' x2='${x1}' y1='${yc}' y2='${yc}' stroke='${MAROON}' ` +
+                `stroke-width='1.2' stroke-dasharray='4 4' opacity='0.75'/>`);
+            topShell.push(`<text x='${x1}' y='${(+yc - 5).toFixed(1)}' text-anchor='end' font-size='11' ` +
+                `fill='${MAROON}'>critical value (p-value = α)</text>`);
+            topShell.push(`<text x='${x1}' y='${(tBase - 5).toFixed(1)}' text-anchor='end' font-size='11' ` +
+                `fill='${PAL.ink}'>t = 0</text>`);
+            topShell.push(`<text x='${(SML - 8).toFixed(1)}' y='${(tPlotTop + 9).toFixed(1)}' text-anchor='end' ` +
+                `font-size='9.5' fill='${PAL.muted}'>|t|</text>`);
+        }
+
         simArea.hidden = false;
-        simArea.innerHTML =
-            `<div class="figcap">3 · ${caption(alpha)}</div>` +
-            `<svg id='simSvg' viewBox='0 0 ${SIMW} ${SIMH}' xmlns='${NS}'>${shell.join("")}</svg>`;
+        if (tTest) {
+            simArea.innerHTML =
+                `<div class="figcap">3 · repeated-sampling simulation</div>` +
+                `<div class="sim-stack">` +
+                `<div class="sim-subcap">${tTest.caption}</div>` +
+                `<svg id='simTSvg' viewBox='0 0 ${SIMW} ${TIMH}' xmlns='${NS}'>${topShell.join("")}</svg>` +
+                `<div class="sim-subcap">${caption(alpha)}</div>` +
+                `<svg id='simSvg' viewBox='0 0 ${SIMW} ${SIMH}' xmlns='${NS}'>${shell.join("")}</svg>` +
+                `</div>`;
+        } else {
+            simArea.innerHTML =
+                `<div class="figcap">3 · ${caption(alpha)}</div>` +
+                `<svg id='simSvg' viewBox='0 0 ${SIMW} ${SIMH}' xmlns='${NS}'>${shell.join("")}</svg>`;
+        }
         const svg = simArea.querySelector("#simSvg");
         const gLines = svg.querySelector("#simLines");
+        const tSvg = tTest ? simArea.querySelector("#simTSvg") : null;
+        const gTopLines = tSvg ? tSvg.querySelector("#simTLines") : null;
 
         simEntries = [];
         for (let i = 0; i < N_SIM; i++) {
@@ -327,6 +376,17 @@ function makeIntervalSim({ sliders, simArea, simBtn, resampleBtn, getParams, ado
             dot.setAttribute("cx", x.toFixed(1)); dot.setAttribute("cy", clampY(d.dObs).toFixed(1));
             dot.setAttribute("r", "2"); dot.setAttribute("fill", PAL.ink);
             gLines.appendChild(dot);
+
+            // (2b) and its |t| bar on the stacked panel, same colour encoding
+            if (gTopLines) {
+                const tline = document.createElementNS(NS, "line");
+                tline.setAttribute("x1", x.toFixed(1)); tline.setAttribute("x2", x.toFixed(1));
+                tline.setAttribute("y1", tBase.toFixed(1)); tline.setAttribute("y2", yT(Math.abs(d.t)).toFixed(1));
+                tline.setAttribute("stroke", significant ? MAROON : PAL.pale);
+                tline.setAttribute("stroke-width", "3"); tline.setAttribute("stroke-linecap", "round");
+                tline.setAttribute("data-idx", i);
+                gTopLines.appendChild(tline);
+            }
             simEntries.push({ pool: d.pool, x });
 
             // (3) hold for a beat
@@ -335,31 +395,41 @@ function makeIntervalSim({ sliders, simArea, simBtn, resampleBtn, getParams, ado
 
         simRunning = false;
         setControlsDisabled(false);
-        wireSimHover(svg, gLines);
+        wireSimHover(svg, gLines, tSvg, gTopLines);
     }
 
-    // once the run is complete, hovering an interval restores its sample above
-    function wireSimHover(svg, gLines) {
+    // once the run is complete, hovering either panel restores its sample above and
+    // highlights the matching column in both
+    function wireSimHover(svg, gLines, tSvg, gTopLines) {
         const marker = svg.querySelector("#simMarker");
+        const tMarker = tSvg ? tSvg.querySelector("#simTMarker") : null;
         let last = -1;
-        const reset = (i) => { const l = gLines.querySelector(`[data-idx='${i}']`); if (l) l.setAttribute("stroke-width", "3"); };
-        svg.addEventListener("pointermove", (e) => {
+        const setW = (g, i, w) => { if (!g) return; const l = g.querySelector(`[data-idx='${i}']`); if (l) l.setAttribute("stroke-width", w); };
+        const restore = (i) => { setW(gLines, i, "3"); setW(gTopLines, i, "3"); };
+        const onMove = (src, e) => {
             if (simRunning) return;
-            const idx = Math.floor((svgPoint(svg, e).x - SML) / simSpacing);
+            const idx = Math.floor((svgPoint(src, e).x - SML) / simSpacing);
             if (idx < 0 || idx >= simEntries.length || idx === last) return;
-            if (last >= 0) reset(last);
+            if (last >= 0) restore(last);
             last = idx;
-            const l = gLines.querySelector(`[data-idx='${idx}']`);
-            if (l) l.setAttribute("stroke-width", "5");
-            marker.setAttribute("x1", simEntries[idx].x); marker.setAttribute("x2", simEntries[idx].x);
-            marker.style.opacity = 1;
+            setW(gLines, idx, "5"); setW(gTopLines, idx, "5");
+            const x = simEntries[idx].x;
+            marker.setAttribute("x1", x); marker.setAttribute("x2", x); marker.style.opacity = 1;
+            if (tMarker) { tMarker.setAttribute("x1", x); tMarker.setAttribute("x2", x); tMarker.style.opacity = 1; }
             adopt(simEntries[idx].pool);
-        });
-        svg.addEventListener("pointerleave", () => {
-            if (last >= 0) reset(last);
-            marker.style.opacity = 0; last = -1;
-        });
-        svg.style.cursor = "pointer";
+        };
+        const onLeave = () => {
+            if (last >= 0) restore(last);
+            marker.style.opacity = 0;
+            if (tMarker) tMarker.style.opacity = 0;
+            last = -1;
+        };
+        for (const s of [svg, tSvg]) {
+            if (!s) continue;
+            s.addEventListener("pointermove", (e) => onMove(s, e));
+            s.addEventListener("pointerleave", onLeave);
+            s.style.cursor = "pointer";
+        }
     }
 
     simBtn.addEventListener("click", run);
